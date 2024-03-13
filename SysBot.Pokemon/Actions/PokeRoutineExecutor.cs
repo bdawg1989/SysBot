@@ -206,36 +206,6 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
             }
         }
 
-        // For non-Distribution trades, we can optionally flag users sending to multiple in-game players.
-        // Can trigger if the user gets sniped, but can also catch abusers sending to many people.
-        if (!isDistribution)
-        {
-            var previous_remote = PreviousUsers.TryGetPreviousRemoteID(poke.Trainer.ID);
-            if (previous_remote != null && previous_remote.Name != TrainerName)
-            {
-                if (AbuseSettings.TradeAbuseAction != TradeAbuseAction.Ignore)
-                {
-                    if (AbuseSettings.TradeAbuseAction == TradeAbuseAction.BlockAndQuit)
-                    {
-                        await BlockUser(token).ConfigureAwait(false);
-                        if (AbuseSettings.BanIDWhenBlockingUser || bot is not PokeRoutineExecutor8SWSH) // Only ban ID if blocking in SWSH, always in other games.
-                        {
-                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "in-game block for sending to multiple in-game players") });
-                            Log($"Added {TrainerNID} to the BannedIDs list.");
-                        }
-                    }
-                    quit = true;
-                }
-
-                var msg = $"Found {user.TrainerName}{useridmsg} sending to multiple in-game players. Previous OT: {previous_remote.Name}, Current OT: {TrainerName}";
-                if (AbuseSettings.EchoNintendoOnlineIDMultiRecipients)
-                    msg += $"\nID: {TrainerNID}";
-                if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiRecipientEchoMention))
-                    msg = $"{AbuseSettings.MultiRecipientEchoMention} {msg}";
-                EchoUtil.Echo(msg);
-            }
-        }
-
         if (quit)
             return PokeTradeResult.SuspiciousActivity;
 

@@ -94,7 +94,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             if (detail.IsMysteryEgg)
             {
                 tradeTitle = "✨ Mystery Egg";
-                embedImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/mysteryegg2.png";
+                embedImageUrl = "https://i.imgur.com/Cygj1tB.png";
             }
             else
             {
@@ -102,19 +102,19 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 {
                     case PokeTradeType.Clone:
                         tradeTitle = "Cloned Pokémon";
-                        embedImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/clonepod.png";
+                        embedImageUrl = "https://i.imgur.com/2gPTbwa.png";
                         break;
                     case PokeTradeType.Dump:
                         tradeTitle = "Pokémon Dump";
-                        embedImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/128x128/dumpball.png";
+                        embedImageUrl = "https://i.imgur.com/hU62wpH.gif";
                         break;
                     case PokeTradeType.FixOT:
                         tradeTitle = "Cloned Pokémon (Fixing OT Info)";
-                        embedImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/128x128/rocketball.png";
+                        embedImageUrl = "https://i.imgur.com/vCJzJ6g.png";
                         break;
                     case PokeTradeType.Seed:
                         tradeTitle = "Cloned Pokémon (Special Request)";
-                        embedImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/specialrequest.png";
+                        embedImageUrl = "https://i.imgur.com/IBur0vM.gif";
                         break;
                     default:
                         tradeTitle = $"{speciesName}";
@@ -127,18 +127,15 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 embedImageUrl = AbstractTrade<T>.PokeImg(detail.TradeData, false, true);
             }
 
-            var (r, g, b) = await GetDominantColorAsync(embedImageUrl);
-            var embedColor = new DiscordColor(r, g, b);
+            var embedColor = new DiscordColor(255, 0, 0); // Example: Red color
 
             var embedBuilder = new EmbedBuilder()
                 .WithColor(embedColor)
-                .WithThumbnailUrl(embedImageUrl) 
                 .WithAuthor(new EmbedAuthorBuilder()
-                    .WithName($"Processing {user.Username}'s {tradeTitle}")
+                    .WithName($"NOW TRADING: {user.Username}")
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
-                .WithDescription($"# Now Trading {tradeTitle}")
-                .WithFooter($"Trade #{detail.ID}")
-                .WithCurrentTimestamp();
+                .WithDescription($"{user.Username} is trading for their **{tradeTitle}** right now!")
+                .WithFooter($"Trade #{detail.ID}.");
 
             var embed = embedBuilder.Build();
             await c.SendMessageAsync(embed: embed);

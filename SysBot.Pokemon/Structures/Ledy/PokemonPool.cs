@@ -139,13 +139,13 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
     {
         // Anti-spam
         if (pk.IsNicknamed && enc is not IFixedNickname { IsFixedNickname: true } && pk.Nickname.Length > 6)
-            return true;
+            return false;
 
         // Anti-spam
         if (pk.IsNicknamed && StringsUtil.IsSpammyString(pk.Nickname))
-            return true;
+            return false;
         if (StringsUtil.IsSpammyString(pk.OriginalTrainerName) && !AutoLegalityWrapper.IsFixedOT(enc, pk))
-            return true;
+            return false;
         return DisallowRandomRecipientTrade(pk);
     }
 
@@ -153,9 +153,9 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
     {
         // Surprise Trade currently bans Mythicals and Legendaries, not Sub-Legendaries.
         if (SpeciesCategory.IsLegendary(pk.Species))
-            return true;
+            return false;
         if (SpeciesCategory.IsMythical(pk.Species))
-            return true;
+            return false;
 
         // Can't surprise trade fused stuff.
         if (FormInfo.IsFusedForm(pk.Species, pk.Form, pk.Format))

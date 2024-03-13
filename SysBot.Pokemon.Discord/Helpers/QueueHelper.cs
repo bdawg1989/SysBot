@@ -95,7 +95,7 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             if (moves[i] == 0) continue; // Skip if no move is assigned
             string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moves[i])?.Text ?? "";
-            moveNames.Add($"\u200B- {moveName} ({movePPs[i]}pp)");
+            moveNames.Add($"\u200B- {moveName} ({movePPs[i]} PP)");
         }
         int level = pk.CurrentLevel;
 
@@ -142,7 +142,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var botct = Info.Hub.Bots.Count;
         var baseEta = position.Position > botct ? Info.Hub.Config.Queues.EstimateDelay(position.Position, botct) : 0;
         var adjustedEta = baseEta + (batchTradeNumber - 1); // Increment ETA by 1 minute for each batch trade
-        var etaMessage = $"Estimated: {adjustedEta:F1} min(s) for trade {batchTradeNumber}/{totalBatchTrades}.";
+        var etaMessage = $"ETA: {adjustedEta:F1} min(s).";
 
         // Determining trade title based on trade type
         string tradeTitle;
@@ -150,19 +150,19 @@ public static class QueueHelper<T> where T : PKM, new()
                      isBatchTrade ? $"Batch Trade #{batchTradeNumber} - {shinyEmoji}{pokemonDisplayName}" :
                      FixOT ? "FixOT Request" :
                      isSpecialRequest ? "Special Request" :
-                     isCloneRequest ? "Clone Pod Activated!" :
-                     isDumpRequest ? "Pokémon Dump" :
+                     isCloneRequest ? "Clone Request" :
+                     isDumpRequest ? "Dump Request" :
                      "";
 
         // Prepare embed details for Discord message
         (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(context, pk, isCloneRequest || isDumpRequest, formName, formArgument);
 
         // Adjust image URL based on request type
-        embedImageUrl = isMysteryEgg ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/mysteryegg2.png" :
-                        isDumpRequest ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/128x128/dumpball.png" :
-                        isCloneRequest ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/clonepod.png" :
-                        isSpecialRequest ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/specialrequest.png" :
-                        FixOT ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/128x128/rocketball.png" :
+        embedImageUrl = isMysteryEgg ? "https://i.imgur.com/Cygj1tB.png" :
+                        isDumpRequest ? "https://i.imgur.com/hU62wpH.gif" :
+                        isCloneRequest ? "https://i.imgur.com/2gPTbwa.png" :
+                        isSpecialRequest ? "https://i.imgur.com/IBur0vM.gif" :
+                        FixOT ? "https://i.imgur.com/vCJzJ6g.png" :
                         embedImageUrl; // Keep original if none of the above
 
         // Prepare held item image URL if available
@@ -187,11 +187,11 @@ public static class QueueHelper<T> where T : PKM, new()
         var embedBuilder = new EmbedBuilder()
             .WithColor(embedColor)
             .WithImageUrl(isLocalFile ? $"attachment://{Path.GetFileName(embedImageUrl)}" : embedImageUrl)
-            .WithFooter($"Current Position: {position.Position}\n{etaMessage}")
+            .WithFooter($"Queue Position: {position.Position}\n{etaMessage}")
             .WithAuthor(new EmbedAuthorBuilder()
                 .WithName(authorName)
                 .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
-                .WithUrl("https://genpkm.com"));
+                .WithUrl("https://play.pokemonshowdown.com/teambuilder"));
 
         // Adding additional text to the embed, if any
         string additionalText = string.Join("\n", SysCordSettings.Settings.AdditionalEmbedText);
@@ -204,20 +204,20 @@ public static class QueueHelper<T> where T : PKM, new()
         if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
             // Preparing content for normal trades
-            string leftSideContent = $"Trainer: {user.Mention}\n";
+            string leftSideContent = $"**Trainer:** {user.Mention}\n";
             if ((GameVersion)pk.Version is GameVersion.SL or GameVersion.VL)
             {
-                leftSideContent += $"Tera Type: {teraTypeString}\nScale: {scaleText} ({scaleNumber})\n";
+                leftSideContent += $"**Tera Type:** {teraTypeString}\n**Scale:** {scaleText} ({scaleNumber})\n";
             }
-            leftSideContent += $"Level: {level}\nAbility: {abilityName}\nNature: {natureName}\nIVs: {ivsDisplay}";
+            leftSideContent += $"**Level:** {level}\n**Ability:** {abilityName}\n**Nature:** {natureName}\n**IVs:** {ivsDisplay}";
             embedBuilder.AddField($"{speciesAndForm}", leftSideContent, inline: true);
             embedBuilder.AddField("\u200B", "\u200B", inline: true); // Spacer
-            embedBuilder.AddField("**Moves:**", movesDisplay, inline: true);
+            embedBuilder.AddField("**__MOVES__**", movesDisplay, inline: true);
         }
         else
         {
             // Preparing content for special types of trades
-            string specialDescription = $"Trainer: {user.Mention}\n" +
+            string specialDescription = $"**Trainer:** {user.Mention}\n" +
                                         (isMysteryEgg ? "Mystery Egg" : isSpecialRequest ? "Special Request" : isCloneRequest ? "Clone Request" : FixOT ? "FixOT Request" : "Dump Request");
             embedBuilder.AddField("\u200B", specialDescription, inline: false);
         }
@@ -225,7 +225,7 @@ public static class QueueHelper<T> where T : PKM, new()
         // Adding thumbnails for clone and special requests, or held items
         if (isCloneRequest || isSpecialRequest)
         {
-            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
+            embedBuilder.WithThumbnailUrl("https://i.imgur.com/BFMLMK2.png");
         }
         else if (!string.IsNullOrEmpty(heldItemUrl))
         {
@@ -305,7 +305,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
         if (pk.IsEgg)
         {
-            string eggImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/egg.png";
+            string eggImageUrl = "https://i.imgur.com/m1oHHvY.png";
             speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true);
             System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
             embedImageUrl = SaveImageLocally(combinedImage);

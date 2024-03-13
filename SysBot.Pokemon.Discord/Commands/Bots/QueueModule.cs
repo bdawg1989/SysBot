@@ -135,7 +135,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireSudo]
     public async Task ListUserQueue()
     {
-        var lines = SysCord<T>.Runner.Hub.Queues.Info.GetUserList("(ID {0}) - Code: {1} - {2} - {3}");
+        var lines = SysCord<T>.Runner.Hub.Queues.Info.GetUserList("{3}");
         var msg = string.Join("\n", lines);
         if (msg.Length < 3)
             await ReplyAsync("Queue list is empty.").ConfigureAwait(false);

@@ -74,13 +74,13 @@ public static class ReusableActions
             .WithThumbnailUrl(speciesImageUrl)
             .Build();
 
-        var botMessage = await channel.SendMessageAsync(embed: embed).ConfigureAwait(false); // Send the embed
-        var warningMessage = await channel.SendMessageAsync("This message will self-destruct in 15 seconds. Please copy your data.").ConfigureAwait(false);
-        await Task.Delay(2000).ConfigureAwait(false);
-        await userMessage.DeleteAsync().ConfigureAwait(false);
-        await Task.Delay(20000).ConfigureAwait(false);
-        await botMessage.DeleteAsync().ConfigureAwait(false);
-        await warningMessage.DeleteAsync().ConfigureAwait(false);
+        //var botMessage = await channel.SendMessageAsync(embed: embed).ConfigureAwait(false); // Send the embed
+        //var warningMessage = await channel.SendMessageAsync("This message will self-destruct in 15 seconds. Please copy your data.").ConfigureAwait(false);
+        //await Task.Delay(2000).ConfigureAwait(false);
+        //await userMessage.DeleteAsync().ConfigureAwait(false);
+        //await Task.Delay(20000).ConfigureAwait(false);
+        //await botMessage.DeleteAsync().ConfigureAwait(false);
+        //await warningMessage.DeleteAsync().ConfigureAwait(false);
     }
 
 
@@ -103,7 +103,17 @@ public static class ReusableActions
             else newShowdown[index] = "Shiny: Star\r";
         }
 
-        newShowdown.InsertRange(1, new string[] { $"OT: {pkm.OriginalTrainerName}", $"TID: {pkm.DisplayTID}", $"SID: {pkm.DisplaySID}", $"OTGender: {(Gender)pkm.OriginalTrainerGender}", $"Language: {(LanguageID)pkm.Language}" });
+        newShowdown.InsertRange(1, new string[] {
+            $"OT: {pkm.OriginalTrainerName}",
+            $"TID: {pkm.DisplayTID}",
+            $"SID: {pkm.DisplaySID}",
+            $"OTGender: {(Gender)pkm.OriginalTrainerGender}",
+            $"Language: {(LanguageID)pkm.Language}",
+            $"\n.FatefulEncounter={pkm.FatefulEncounter}",
+            $"\n.MetLevel={pkm.MetLevel}",
+            $"\n.MetDate=20{pkm.MetYear}{(pkm.MetMonth < 10 ? "0" : "")}{pkm.MetMonth}{(pkm.MetDay < 10 ? "0" : "")}{pkm.MetDay}",
+            $"{(pkm.IsEgg ? "\nIsEgg: Yes" : "")}"}
+            );
         return Format.Code(string.Join("\n", newShowdown).TrimEnd());
     }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 
 namespace SysBot.Pokemon;
@@ -11,16 +11,16 @@ public class FavoredPrioritySettings : IFavoredCPQSetting
 
     // We want to allow hosts to give preferential treatment, while still providing service to users without favor.
     // These are the minimum values that we permit. These values yield a fair placement for the favored.
-    private const int _mfi = 2;
+    private const int _mfi = 1;
     private const float _bmin = 1;
-    private const float _bmax = 3;
-    private const float _mexp = 0.5f;
-    private const float _mmul = 0.1f;
+    private const float _bmax = 1;
+    private const float _mexp = 1.0f;
+    private const float _mmul = 1.0f;
 
     private int _minimumFreeAhead = _mfi;
-    private float _bypassFactor = 1.5f;
-    private float _exponent = 0.777f;
-    private float _multiply = 0.5f;
+    private float _bypassFactor = 1f;
+    private float _exponent = 0.077f;
+    private float _multiply = 2.0f;
 
     [Category(Operation), Description("Determines how the insertion position of favored users is calculated. \"None\" will prevent any favoritism from being applied.")]
     public FavoredMode Mode { get; set; }

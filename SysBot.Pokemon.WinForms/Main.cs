@@ -38,9 +38,7 @@ public sealed partial class Main : Form
         if (IsUpdating)
             return;
         PokeTradeBotSWSH.SeedChecker = new Z3SeedSearchHandler<PK8>();
-        // Update checker
-        UpdateChecker updateChecker = new UpdateChecker();
-        await updateChecker.CheckForUpdatesAsync();
+
         if (File.Exists(Program.ConfigPath))
         {
             var lines = File.ReadAllText(Program.ConfigPath);
@@ -64,7 +62,7 @@ public sealed partial class Main : Form
 
         RTB_Logs.MaxLength = 32_767; // character length
         LoadControls();
-        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "NotPaldea.net" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
+        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "ZE FusionBot |" : Config.Hub.BotName)} Mode: {Config.Mode}";
         Task.Run(BotMonitor);
         InitUtil.InitializeStubs(Config.Mode);
         _isFormLoading = false;
@@ -136,7 +134,7 @@ public sealed partial class Main : Form
         comboBox2.Items.Add("Dark Mode");
         comboBox2.Items.Add("Poke Mode");
         comboBox2.Items.Add("Gengar Mode");
-        comboBox2.Items.Add("Sylveon Mode");
+        comboBox2.Items.Add("Zeraora Mode");
 
         // Load the current theme from configuration and set it in the comboBox2
         string theme = Config.Hub.ThemeOption;
@@ -162,11 +160,11 @@ public sealed partial class Main : Form
             case "Gengar Mode":
                 ApplyGengarTheme();
                 break;
-            case "Sylveon Mode":
-                ApplySylveonTheme();
+            case "Zeraora Mode":
+                ApplyZeraoraTheme();
                 break;
             default:
-                ApplyGengarTheme(); 
+                ApplyZeraoraTheme(); 
                 break;
         }
 
@@ -236,7 +234,7 @@ public sealed partial class Main : Form
     private void UpdateRunnerAndUI()
     {
         RunningEnvironment = GetRunner(Config);
-        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "NotPaldea.net" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
+        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "ZE FusionBot |" : Config.Hub.BotName)} Mode: {Config.Mode}";
     }
 
     private void B_Start_Click(object sender, EventArgs e)
@@ -427,83 +425,85 @@ public sealed partial class Main : Form
                 case "Gengar Mode":
                     ApplyGengarTheme();
                     break;
-                case "Sylveon Mode":
-                    ApplySylveonTheme();
+                case "Zeraora Mode":
+                    ApplyZeraoraTheme();
                     break;
                 default:
-                    ApplyGengarTheme();
+                    ApplyZeraoraTheme();
                     break;
             }
         }
     }
 
-        private void ApplySylveonTheme()
+    private void ApplyZeraoraTheme()
+    {
+        // Define Zeraora-theme colors
+        Color LightGold = Color.FromArgb(255, 255, 204);    // Light gold color
+        Color TealGreen = Color.FromArgb(0, 128, 128);      // Teal green color
+        Color DeepTeal = Color.FromArgb(0, 128, 128);       // Deep teal color
+        Color DeepGold = Color.FromArgb(218, 165, 32);      // Deep gold color
+        Color ElegantWhite = Color.FromArgb(255, 255, 255); // An elegant white for background and contrast
+        Color MidGold = Color.FromArgb(221, 201, 120);      // Medium gold color
+        Color DeepestTeal = Color.FromArgb(8, 114, 104);      // Darker teal
+
+        // Set the background color of the Hub form
+        this.BackColor = ElegantWhite;              // Background color of the Hub
+
+        // Set the foreground color of the main status form
+        this.ForeColor = Color.Black;               // Text color of the trade type and status information
+
+        // Set the background color of the tab control
+        TC_Main.BackColor = TealGreen;
+
+        // Set the background color of each tab page
+        foreach (TabPage page in TC_Main.TabPages)
         {
-            // Define Sylveon-theme colors
-            Color SoftPink = Color.FromArgb(255, 182, 193);   // A soft pink color inspired by Sylveon's body
-            Color DeepPink = Color.FromArgb(255, 105, 180);   // A deeper pink for contrast and visual interest
-            Color SkyBlue = Color.FromArgb(135, 206, 250);    // A soft blue color inspired by Sylveon's eyes and ribbons
-            Color DeepBlue = Color.FromArgb(70, 130, 180);   // A deeper blue for contrast
-            Color ElegantWhite = Color.FromArgb(255, 255, 255);// An elegant white for background and contrast
-
-            // Set the background color of the form
-            this.BackColor = ElegantWhite;
-
-            // Set the foreground color of the form (text color)
-            this.ForeColor = DeepBlue;
-
-            // Set the background color of the tab control
-            TC_Main.BackColor = SkyBlue;
-
-            // Set the background color of each tab page
-            foreach (TabPage page in TC_Main.TabPages)
-            {
-                page.BackColor = ElegantWhite;
-            }
-
-            // Set the background color of the property grid
-            PG_Hub.BackColor = ElegantWhite;
-            PG_Hub.LineColor = SkyBlue;
-            PG_Hub.CategoryForeColor = DeepBlue;
-            PG_Hub.CategorySplitterColor = SkyBlue;
-            PG_Hub.HelpBackColor = SoftPink;
-            PG_Hub.HelpForeColor = DeepBlue;
-            PG_Hub.ViewBackColor = ElegantWhite;
-            PG_Hub.ViewForeColor = DeepBlue;
-
-            // Set the background color of the rich text box
-            RTB_Logs.BackColor = SoftPink;
-            RTB_Logs.ForeColor = DeepBlue;
-
-            // Set colors for other controls
-            TB_IP.BackColor = SkyBlue;
-            TB_IP.ForeColor = DeepBlue;
-
-            CB_Routine.BackColor = SkyBlue;
-            CB_Routine.ForeColor = DeepBlue;
-
-            NUD_Port.BackColor = SkyBlue;
-            NUD_Port.ForeColor = DeepBlue;
-
-            B_New.BackColor = DeepPink;
-            B_New.ForeColor = ElegantWhite;
-
-            FLP_Bots.BackColor = ElegantWhite;
-
-            CB_Protocol.BackColor = SkyBlue;
-            CB_Protocol.ForeColor = DeepBlue;
-
-            comboBox1.BackColor = SkyBlue;
-            comboBox1.ForeColor = DeepBlue;
-
-            B_Stop.BackColor = DeepPink;
-            B_Stop.ForeColor = ElegantWhite;
-
-            B_Start.BackColor = DeepPink;
-            B_Start.ForeColor = ElegantWhite;
+            page.BackColor = DeepGold;              // Background color that sits behind the IP/Port/Mode/Start/Stop options
         }
 
-        private void ApplyGengarTheme()
+        // Set the background color of the Hub
+        PG_Hub.BackColor = ElegantWhite;           // Background color of Hub
+        PG_Hub.LineColor = ElegantWhite;              // Line color that separates each option in the Hub
+        PG_Hub.CategoryForeColor = DeepestTeal;      // Font color of the category text
+        PG_Hub.CategorySplitterColor = ElegantWhite;  // Background color to each category in the Hub
+        PG_Hub.HelpBackColor = ElegantWhite;       // Background color of the helper text box on the bottom
+        PG_Hub.HelpForeColor = DeepGold;           
+        PG_Hub.ViewBackColor = ElegantWhite;
+        PG_Hub.ViewForeColor = DeepGold;
+
+        // Set the colors of the Log tab
+        RTB_Logs.BackColor = ElegantWhite;         // Background color of logs
+        RTB_Logs.ForeColor = DeepGold;             // Text color of logs
+
+        // Set the colors of the IP form
+        TB_IP.BackColor = DeepTeal;                // IP form box background color
+        TB_IP.ForeColor = Color.White;             // IP form box text color
+
+        CB_Routine.BackColor = TealGreen;
+        CB_Routine.ForeColor = DeepGold;
+
+        NUD_Port.BackColor = DeepTeal;             // Background color of the Port box
+        NUD_Port.ForeColor = Color.White;          // Font color of the Port box
+
+        B_New.BackColor = DeepTeal;
+        B_New.ForeColor = ElegantWhite;
+
+        FLP_Bots.BackColor = MidGold;              // Background color behind the trade type and status information
+
+        CB_Protocol.BackColor = TealGreen;
+        CB_Protocol.ForeColor = DeepGold;
+
+        comboBox1.BackColor = TealGreen;
+        comboBox1.ForeColor = DeepGold;
+
+        B_Stop.BackColor = DeepTeal;               // Background color of the STOP button
+        B_Stop.ForeColor = ElegantWhite;           // Font color of the STOP button
+
+        B_Start.BackColor = DeepTeal;              // Background color of the START button
+        B_Start.ForeColor = ElegantWhite;          // Font color of the START button
+    }
+
+    private void ApplyGengarTheme()
         {
             // Define Gengar-theme colors
             Color GengarPurple = Color.FromArgb(88, 88, 120);  // A muted purple, the main color of Gengar

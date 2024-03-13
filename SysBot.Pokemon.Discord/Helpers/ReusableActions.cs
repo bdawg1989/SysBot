@@ -109,9 +109,9 @@ public static class ReusableActions
             $"SID: {pkm.DisplaySID}",
             $"OTGender: {(Gender)pkm.OriginalTrainerGender}",
             $"Language: {(LanguageID)pkm.Language}",
-            $"\n.FatefulEncounter={pkm.FatefulEncounter}",
-            $"\n.MetLevel={pkm.MetLevel}",
-            $"\n.MetDate=20{pkm.MetYear}{(pkm.MetMonth < 10 ? "0" : "")}{pkm.MetMonth}{(pkm.MetDay < 10 ? "0" : "")}{pkm.MetDay}",
+            $".FatefulEncounter={pkm.FatefulEncounter}",
+            $".MetLevel={pkm.MetLevel}",
+            $".MetDate=20{pkm.MetYear}{(pkm.MetMonth < 10 ? "0" : "")}{pkm.MetMonth}{(pkm.MetDay < 10 ? "0" : "")}{pkm.MetDay}",
             $"{(pkm.IsEgg ? "\nIsEgg: Yes" : "")}"}
             );
         return Format.Code(string.Join("\n", newShowdown).TrimEnd());

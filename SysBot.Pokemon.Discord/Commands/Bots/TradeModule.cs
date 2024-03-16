@@ -9,6 +9,7 @@ using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -320,8 +321,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("egg")]
     [Alias("Egg")]
     [Summary("Trades an egg generated from the provided Pokémon name.")]
+    public async Task TradeEgg([Remainder] string egg)
+    {
+        var code = Info.GetRandomTradeCode();
+        await TradeEggAsync(code, egg).ConfigureAwait(false);
+    }
+
+    [Command("egg")]
+    [Alias("Egg")]
+    [Summary("Trades an egg generated from the provided Pokémon name.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task TradeEggAsync([Summary("Showdown Set")][Remainder] string content)
+    public async Task TradeEggAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
         // Check if the user is already in the queue
         var userID = Context.User.Id;
@@ -350,7 +360,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pk.IsNicknamed = false; // Make sure we don't set a nickname
             AbstractTrade<T>.EggTrade(pk, template);
 
-            var code = Info.GetRandomTradeCode();
             var sig = Context.User.GetFavor();
             await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User).ConfigureAwait(false);
 
@@ -389,7 +398,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var context = new EntityContext(); 
             var eggEncounter = new EncounterEgg(speciesId, 0, 1, 9, GameVersion.SV, context);
             var pk = eggEncounter.ConvertToPKM(sav);
-            SetPerfectIVsAndShiny(pk);
+            TradeModule<T>.SetPerfectIVsAndShiny(pk);
 
             if (pk is not T pkT)
             {
@@ -416,7 +425,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    private void SetPerfectIVsAndShiny(PKM pk)
+    private static void SetPerfectIVsAndShiny(PKM pk)
     {
         // Set IVs to perfect
         pk.IVs = [31, 31, 31, 31, 31, 31];
@@ -441,7 +450,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Alias("t")]
     [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task TradeAsync(int code, string content)
+    public async Task TradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
         var lgcode = Info.GetRandomLGTradeCode();
         // Check if the user is already in the queue
@@ -649,6 +658,112 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                             .ToList();
         return trades;
     }
+
+    [Command("batchtradezip")]
+    [Alias("btz")]
+    [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task BatchTradeZipAsync()
+    {
+        // First, check if batch trades are allowed
+        if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
+        {
+            await ReplyAsync("Batch trades are currently disabled.").ConfigureAwait(false);
+            return;
+        }
+
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            return;
+        }
+
+        var attachment = Context.Message.Attachments.FirstOrDefault();
+        if (attachment == default)
+        {
+            await ReplyAsync("No attachment provided!").ConfigureAwait(false);
+            return;
+        }
+
+        if (!attachment.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            await ReplyAsync("Invalid file format. Please provide a .zip file.").ConfigureAwait(false);
+            return;
+        }
+
+        var zipBytes = await new HttpClient().GetByteArrayAsync(attachment.Url);
+        using var zipStream = new MemoryStream(zipBytes);
+        using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+
+        var entries = archive.Entries.ToList();
+        var maxTradesAllowed = 6; // for full team in the zip created
+
+        // Check if batch mode is allowed and if the number of trades exceeds the limit
+        if (maxTradesAllowed < 1 || entries.Count > maxTradesAllowed)
+        {
+            await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of Pokémon in your .zip file.").ConfigureAwait(false);
+
+            await Task.Delay(5000);
+            await Context.Message.DeleteAsync();
+            return;
+        }
+
+        var batchTradeCode = Info.GetRandomTradeCode();
+        int batchTradeNumber = 1;
+        _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
+
+        foreach (var entry in entries)
+        {
+            using var entryStream = entry.Open();
+            var pkBytes = await TradeModule<T>.ReadAllBytesAsync(entryStream).ConfigureAwait(false);
+            var pk = EntityFormat.GetFromBytes(pkBytes);
+
+            if (pk is T)
+            {
+                await ProcessSingleTradeAsync((T)pk, batchTradeCode, true, batchTradeNumber, entries.Count);
+                batchTradeNumber++;
+            }
+        }
+    }
+
+    private static async Task<byte[]> ReadAllBytesAsync(Stream stream)
+    {
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
+        return memoryStream.ToArray();
+    }
+
+    private async Task ProcessSingleTradeAsync(T pk, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
+    {
+        try
+        {
+            var la = new LegalityAnalysis(pk);
+            var spec = GameInfo.Strings.Species[pk.Species];
+
+            if (!la.Valid)
+            {
+                await ReplyAsync($"The {spec} in the provided file is not legal.").ConfigureAwait(false);
+                return;
+            }
+
+            pk.ResetPartyStats();
+
+            var code = Info.GetRandomTradeCode();
+            var lgcode = Info.GetRandomLGTradeCode();
+
+            // Add the trade to the queue
+            var sig = Context.User.GetFavor();
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
+        }
+    }
+
+
 
     private async Task ProcessSingleTradeAsync(string tradeContent, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
     {
@@ -1124,7 +1239,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             clone.HandlingTrainerGender = pk.OriginalTrainerGender;
 
             if (clone is PK8 or PA8 or PB8 or PK9)
-                ((dynamic)clone).HT_Language = (byte)pk.Language;
+                ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
 
             clone.CurrentHandler = 1;
 

@@ -12,11 +12,19 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     private const string CountStats = nameof(CountStats);
     private const string HOMELegality = nameof(HOMELegality);
     private const string TradeConfig = nameof(TradeConfig);
+    private const string VGCPastesConfig = nameof(VGCPastesConfig);
     private const string Miscellaneous = nameof(Miscellaneous);
     private const string RequestFolders = nameof(RequestFolders);
+    private const string EmbedSettings = nameof(EmbedSettings);
 
     [Category(TradeConfig), Description("Settings related to Trade Configuration."), Browsable(true)]
     public TradeSettingsCategory TradeConfiguration { get; set; } = new();
+
+    [Category(VGCPastesConfig), Description("Settings related to VGCPastes Configuration."), Browsable(true)]
+    public VGCPastesCategory VGCPastesConfiguration { get; set; } = new();
+
+    [Category(EmbedSettings), Description("Settings related to the Trade Embed in Discord."), Browsable(true)]
+    public TradeEmbedSettingsCategory TradeEmbedSettings { get; set; } = new();
 
     [Category(HOMELegality), Description("Settings related to HOME Legality."), Browsable(true)]
     public HOMELegalitySettingsCategory HomeLegalitySettings { get; set; } = new();
@@ -91,6 +99,59 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
     }
 
+    [Category(EmbedSettings), TypeConverter(typeof(CategoryConverter<TradeEmbedSettingsCategory>))]
+    public class TradeEmbedSettingsCategory
+    {
+        public override string ToString() => "Trade Embed Configuration Settings";
+
+        [Category(EmbedSettings), Description("Will show Move Type Icons next to moves in trade embed (Discord only).")]
+        public bool MoveTypeEmojis { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Gender Icons in trade embed (Discord only).")]
+        public bool GenderEmojis { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Mystery Gift Emoji in trade embed if in Cherish Ball (Discord only).")]
+        public bool MysteryGiftEmoji { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Alpha Mark Emoji in trade embed (Discord only).")]
+        public bool AlphaMarkEmoji { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Mightiest Mark Emoji in trade embed (Discord only).")]
+        public bool MightiesMarkEmoji { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Scale in trade embed (SV & Discord only).")]
+        public bool ShowScale { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Tera Type in trade embed (SV & Discord only).")]
+        public bool ShowTeraType { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Level in trade embed (Discord only).")]
+        public bool ShowLevel { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Ability in trade embed (Discord only).")]
+        public bool ShowAbility { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Nature in trade embed (Discord only).")]
+        public bool ShowNature { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show IVs in trade embed (Discord only).")]
+        public bool ShowIVs { get; set; } = true;
+    }
+
+
+    [Category(VGCPastesConfig), TypeConverter(typeof(CategoryConverter<VGCPastesCategory>))]
+    public class VGCPastesCategory
+    {
+        public override string ToString() => "VGCPastes Configuration Settings";
+
+        [Category(VGCPastesConfig), Description("Allow users to request and generate teams using the VGCPastes Spreadsheet.")]
+        public bool AllowRequests { get; set; } = true;
+
+        [Category(VGCPastesConfig), Description("GID of Spreadsheet tab you would like to pull from.  Hint: https://docs.google.com/spreadsheets/d/ID/gid=1837599752")]
+        public int GID { get; set; } = 1837599752; // Reg F Tab
+
+    }
+
     [Category(HOMELegality), TypeConverter(typeof(CategoryConverter<HOMELegalitySettingsCategory>))]
     public class HOMELegalitySettingsCategory
     {
@@ -117,6 +178,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
     [Category(Miscellaneous), Description("Miscellaneous Settings")]
     public bool ScreenOff { get; set; } = false;
+
 
     /// <summary>
     /// Gets a random trade code based on the range settings.

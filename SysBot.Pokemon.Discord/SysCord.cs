@@ -122,8 +122,8 @@ public sealed class SysCord<T> where T : PKM, new()
         var fullStatusMessage = $"# {botName} is {status}!";
 
         var thumbnailUrl = status == "Online"
-            ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/botgo.png"
-            : "https://raw.githubusercontent.com/bdawg1989/sprites/main/botstop.png";
+            ? "https://i.imgur.com/gOEp9BV.png"
+            : "https://i.imgur.com/krI9XlI.png";
 
         var embed = new EmbedBuilder()
             .WithTitle($"{botName} Status")
@@ -158,7 +158,7 @@ public sealed class SysCord<T> where T : PKM, new()
                 LogUtil.LogText($"AnnounceBotStatus: Exception when sending message to channel {channelId}: {ex.Message}");
             }
         }
-}
+    }
 
     // If any services require the client, or the CommandService, or something else you keep on hand,
     // pass them as parameters into this method as needed.
@@ -315,133 +315,154 @@ public sealed class SysCord<T> where T : PKM, new()
                 }
             }
         }
-        // fun little trick for users that like to thank the bot after a trade
+        // Replies for thanking or showing love to the bot.
         string thanksText = msg.Content.ToLower();
-        if (thanksText.Contains("thank") || thanksText.Contains("thx"))
+        string[] thanksWords = {
+            "thank",
+            "thx",
+            "ty",
+            "arigato",
+            "thank you",
+            "thanks",
+            "appreciate",
+            "much appreciated",
+            "i love you",
+            "awesome",
+            "amazing",
+            "the best"
+        };
+
+        if (thanksWords.Any(word => thanksText.Contains(word)))
         {
             var channel = msg.Channel;
             await channel.TriggerTypingAsync();
             await Task.Delay(1_500);
 
             var responses = new List<string>
-        {
-            "You're welcome! ❤️",
-            "No problem at all!",
-            "Anytime, glad to help!",
-            "It's my pleasure! ❤️",
-            "Not a problem! You're welcome!",
-            "Always here to help!",
-            "Glad I could assist!",
-            "Happy to serve!",
-            "Of course! You're welcome!",
-            "Sure thing!"
-        };
+    {
+        "You're welcome! ❤️",
+        "No problem at all!",
+        "Anytime, glad to help!",
+        "It's my pleasure! ❤️",
+        "Not a problem! You're welcome!",
+        "Always here to help!",
+        "Glad I could assist!",
+        "Happy to serve!",
+        "Of course! You're welcome!",
+        "Sure thing!",
+        "You got it!",
+        "No problemo.",
+        "It's been an honor serving you.",
+        "I deserve all of the credit.",
+        "You're welcome, my friendly yet weak human.",
+        "That's what I'm here for!"
+    };
 
-            var randomResponse = responses[new Random().Next(responses.Count)];
-            var finalResponse = $"{randomResponse}";
+            var random = new Random();
+            var randomIndex = random.Next(responses.Count);
+            var finalResponse = responses[randomIndex];
 
             await msg.Channel.SendMessageAsync(finalResponse).ConfigureAwait(false);
             return;
-        }
-    }
+        } }
 
-    private async Task<bool> TryHandleCommandAsync(SocketUserMessage msg, int pos)
-    {
-        // Create a Command Context.
-        var context = new SocketCommandContext(_client, msg);
-
-        // Check Permission
-        var mgr = Manager;
-        if (!mgr.CanUseCommandUser(msg.Author.Id))
+        private async Task<bool> TryHandleCommandAsync(SocketUserMessage msg, int pos)
         {
-            await msg.Channel.SendMessageAsync("You are not permitted to use this command.").ConfigureAwait(false);
-            return true;
-        }
-        if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
-        {
-            if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
-                await msg.Channel.SendMessageAsync("You can't use that command here.").ConfigureAwait(false);
-            return true;
-        }
+            // Create a Command Context.
+            var context = new SocketCommandContext(_client, msg);
 
-        // Execute the command. (result does not indicate a return value, 
-        // rather an object stating if the command executed successfully).
-        var guild = msg.Channel is SocketGuildChannel g ? g.Guild.Name : "Unknown Guild";
-        await Log(new LogMessage(LogSeverity.Info, "Command", $"Executing command from {guild}#{msg.Channel.Name}:@{msg.Author.Username}. Content: {msg}")).ConfigureAwait(false);
-        var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
-
-        if (result.Error == CommandError.UnknownCommand)
-            return false;
-
-        // Uncomment the following lines if you want the bot
-        // to send a message if it failed.
-        // This does not catch errors from commands with 'RunMode.Async',
-        // subscribe a handler for '_commands.CommandExecuted' to see those.
-        if (!result.IsSuccess)
-            await msg.Channel.SendMessageAsync(result.ErrorReason).ConfigureAwait(false);
-        return true;
-    }
-
-    private async Task MonitorStatusAsync(CancellationToken token)
-    {
-        const int Interval = 20; // seconds
-        // Check datetime for update
-        UserStatus state = UserStatus.Idle;
-        while (!token.IsCancellationRequested)
-        {
-            var time = DateTime.Now;
-            var lastLogged = LogUtil.LastLogged;
-            if (Hub.Config.Discord.BotColorStatusTradeOnly)
+            // Check Permission
+            var mgr = Manager;
+            if (!mgr.CanUseCommandUser(msg.Author.Id))
             {
-                var recent = Hub.Bots.ToArray()
-                    .Where(z => z.Config.InitialRoutine.IsTradeBot())
-                    .MaxBy(z => z.LastTime);
-                lastLogged = recent?.LastTime ?? time;
+                await msg.Channel.SendMessageAsync("You are not permitted to use this command.").ConfigureAwait(false);
+                return true;
             }
-            var delta = time - lastLogged;
-            var gap = TimeSpan.FromSeconds(Interval) - delta;
-
-            bool noQueue = !Hub.Queues.Info.GetCanQueue();
-            if (gap <= TimeSpan.Zero)
+            if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
             {
-                var idle = noQueue ? UserStatus.DoNotDisturb : UserStatus.Idle;
-                if (idle != state)
+                if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
+                    await msg.Channel.SendMessageAsync("You can't use that command here.").ConfigureAwait(false);
+                return true;
+            }
+
+            // Execute the command. (result does not indicate a return value, 
+            // rather an object stating if the command executed successfully).
+            var guild = msg.Channel is SocketGuildChannel g ? g.Guild.Name : "Unknown Guild";
+            await Log(new LogMessage(LogSeverity.Info, "Command", $"Executing command from {guild}#{msg.Channel.Name}:@{msg.Author.Username}. Content: {msg}")).ConfigureAwait(false);
+            var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
+
+            if (result.Error == CommandError.UnknownCommand)
+                return false;
+
+            // Uncomment the following lines if you want the bot
+            // to send a message if it failed.
+            // This does not catch errors from commands with 'RunMode.Async',
+            // subscribe a handler for '_commands.CommandExecuted' to see those.
+            if (!result.IsSuccess)
+                await msg.Channel.SendMessageAsync(result.ErrorReason).ConfigureAwait(false);
+            return true;
+        }
+
+        private async Task MonitorStatusAsync(CancellationToken token)
+        {
+            const int Interval = 20; // seconds
+                                     // Check datetime for update
+            UserStatus state = UserStatus.Idle;
+            while (!token.IsCancellationRequested)
+            {
+                var time = DateTime.Now;
+                var lastLogged = LogUtil.LastLogged;
+                if (Hub.Config.Discord.BotColorStatusTradeOnly)
                 {
-                    state = idle;
+                    var recent = Hub.Bots.ToArray()
+                        .Where(z => z.Config.InitialRoutine.IsTradeBot())
+                        .MaxBy(z => z.LastTime);
+                    lastLogged = recent?.LastTime ?? time;
+                }
+                var delta = time - lastLogged;
+                var gap = TimeSpan.FromSeconds(Interval) - delta;
+
+                bool noQueue = !Hub.Queues.Info.GetCanQueue();
+                if (gap <= TimeSpan.Zero)
+                {
+                    var idle = noQueue ? UserStatus.DoNotDisturb : UserStatus.Idle;
+                    if (idle != state)
+                    {
+                        state = idle;
+                        await _client.SetStatusAsync(state).ConfigureAwait(false);
+                    }
+                    await Task.Delay(2_000, token).ConfigureAwait(false);
+                    continue;
+                }
+
+                var active = noQueue ? UserStatus.DoNotDisturb : UserStatus.Online;
+                if (active != state)
+                {
+                    state = active;
                     await _client.SetStatusAsync(state).ConfigureAwait(false);
                 }
-                await Task.Delay(2_000, token).ConfigureAwait(false);
-                continue;
+                await Task.Delay(gap, token).ConfigureAwait(false);
             }
+        }
 
-            var active = noQueue ? UserStatus.DoNotDisturb : UserStatus.Online;
-            if (active != state)
-            {
-                state = active;
-                await _client.SetStatusAsync(state).ConfigureAwait(false);
-            }
-            await Task.Delay(gap, token).ConfigureAwait(false);
+        private async Task LoadLoggingAndEcho()
+        {
+            if (MessageChannelsLoaded)
+                return;
+
+            // Restore Echoes
+            EchoModule.RestoreChannels(_client, Hub.Config.Discord);
+
+            // Restore Logging
+            LogModule.RestoreLogging(_client, Hub.Config.Discord);
+            TradeStartModule<T>.RestoreTradeStarting(_client);
+
+            // Don't let it load more than once in case of Discord hiccups.
+            await Log(new LogMessage(LogSeverity.Info, "LoadLoggingAndEcho()", "Logging and Echo channels loaded!")).ConfigureAwait(false);
+            MessageChannelsLoaded = true;
+
+            var game = Hub.Config.Discord.BotGameStatus;
+            if (!string.IsNullOrWhiteSpace(game))
+                await _client.SetGameAsync(game).ConfigureAwait(false);
         }
     }
-
-    private async Task LoadLoggingAndEcho()
-    {
-        if (MessageChannelsLoaded)
-            return;
-
-        // Restore Echoes
-        EchoModule.RestoreChannels(_client, Hub.Config.Discord);
-
-        // Restore Logging
-        LogModule.RestoreLogging(_client, Hub.Config.Discord);
-        TradeStartModule<T>.RestoreTradeStarting(_client);
-
-        // Don't let it load more than once in case of Discord hiccups.
-        await Log(new LogMessage(LogSeverity.Info, "LoadLoggingAndEcho()", "Logging and Echo channels loaded!")).ConfigureAwait(false);
-        MessageChannelsLoaded = true;
-
-        var game = Hub.Config.Discord.BotGameStatus;
-        if (!string.IsNullOrWhiteSpace(game))
-            await _client.SetGameAsync(game).ConfigureAwait(false);
-    }
-}

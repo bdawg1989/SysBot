@@ -27,7 +27,7 @@ public static class QueueHelper<T> where T : PKM, new()
     private static Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
     private static Dictionary<ulong, int> userBatchTradeMaxDetailId = new Dictionary<ulong, int>();
 
-    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
+    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
         if ((uint)code > MaxTradeCode)
         {
@@ -50,7 +50,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 }
             }
 
-            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, formArgument, isMysteryEgg, lgcode).ConfigureAwait(false);
+            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode).ConfigureAwait(false);
 
         }
         catch (HttpException ex)
@@ -64,7 +64,7 @@ public static class QueueHelper<T> where T : PKM, new()
         return AddToQueueAsync(context, code, trainer, sig, trade, routine, type, context.User);
     }
 
-    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
+    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
         var user = trader;
         var userID = user.Id;
@@ -144,7 +144,7 @@ public static class QueueHelper<T> where T : PKM, new()
         byte scaleNumber = 0;
         if (pk is PK9 pk9)
         {
-            teraTypeString = pk9.TeraTypeOverride == (MoveType)99 ? "Stellar" : pk9.TeraType.ToString();
+            teraTypeString = GetTeraTypeString(pk9);
             scaleText = $"{PokeSizeDetailedUtil.GetSizeRating(pk9.Scale)}";
             scaleNumber = pk9.Scale;
         }
@@ -163,6 +163,13 @@ public static class QueueHelper<T> where T : PKM, new()
             genderSymbol == "F" ? (useGenderIcons ? "<:female_mark:1218977655010099221>" : "(F)") : "") +
             alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji;
         formName = ShowdownParsing.GetStringFromForm(pk.Form, strings, pk.Species, pk.Context);
+        string toppingName = "";
+        if (pk.Species == (int)Species.Alcremie && pk is IFormArgument formArgument)
+        {
+            AlcremieDecoration topping = (AlcremieDecoration)formArgument.FormArgument;
+            toppingName = $"-{topping}";
+            formName += toppingName;
+        }
         speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")} {displayGender}**";
         heldItemName = strings.itemlist[pk.HeldItem];
         ballName = strings.balllist[pk.Ball];
@@ -198,7 +205,7 @@ public static class QueueHelper<T> where T : PKM, new()
                      "";
 
         // Prepare embed details for Discord message
-        (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(context, pk, isCloneRequest || isDumpRequest, formName, formArgument);
+        (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk);
 
         // Adjust image URL based on request type
         embedImageUrl = isMysteryEgg ? "https://i.imgur.com/Cygj1tB.png" :
@@ -314,6 +321,24 @@ public static class QueueHelper<T> where T : PKM, new()
         return new TradeQueueResult(true);
     }
 
+    private static string GetTeraTypeString(PK9 pk9)
+    {
+        if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar)
+        {
+            return "Stellar";
+        }
+        else if ((int)pk9.TeraType == 99) // Terapagos
+        {
+            return "Stellar";
+        }
+        // Fallback to default TeraType string representation if not Stellar
+        else
+        {
+            return pk9.TeraType.ToString();
+        }
+    }
+
+
     private static string GetImageFolderPath()
     {
         // Get the base directory where the executable is located
@@ -345,7 +370,7 @@ public static class QueueHelper<T> where T : PKM, new()
         return filePath;
     }
 
-    private static async Task<(string, DiscordColor)> PrepareEmbedDetails(SocketCommandContext context, T pk, bool isCloneRequest, string formName, int formArgument = 0)
+    private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk)
     {
         string embedImageUrl;
         string speciesImageUrl;

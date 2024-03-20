@@ -88,6 +88,10 @@ public abstract class PokeBotRunner<T> : BotRunner<PokeBotState>, IPokeBotRunner
 
     public override void StopAll()
     {
+        // Raise the BotStopped event
+        BotStopped?.Invoke(this, EventArgs.Empty);
+
+
         base.StopAll();
 
         // bots currently don't de-register
@@ -96,9 +100,6 @@ public abstract class PokeBotRunner<T> : BotRunner<PokeBotState>, IPokeBotRunner
         int count = Hub.BotSync.Barrier.ParticipantCount;
         if (count != 0)
             Hub.BotSync.Barrier.RemoveParticipants(count);
-
-        // Raise the BotStopped event
-        BotStopped?.Invoke(this, EventArgs.Empty);
     }
 
     public override void PauseAll()

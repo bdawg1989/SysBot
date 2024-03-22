@@ -320,7 +320,6 @@ public sealed class SysCord<T> where T : PKM, new()
         string[] thanksWords = {
             "thank",
             "thx",
-            "ty",
             "arigato",
             "thank you",
             "thanks",

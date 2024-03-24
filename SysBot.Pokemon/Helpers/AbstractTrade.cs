@@ -156,8 +156,8 @@ namespace SysBot.Pokemon.Helpers
         " the Apathetic"," the Arrogant"," the Reluctant"," the Humble"," the Pompous"," the Lively"," the Worn-Out", " of the Distant Past", " the Twinkling Star", " the Paldea Champion", " the Great", " the Teeny", " the Treasure Hunter",
         " the Reliable Partner", " the Gourmet", " the One-in-a-Million", " the Former Alpha", " the Unrivaled", " the Former Titan",
         ];
-    
-    public static PKM TrashBytes(PKM pkm, LegalityAnalysis? la = null)
+
+        public static PKM TrashBytes(PKM pkm, LegalityAnalysis? la = null)
         {
             var pkMet = (T)pkm.Clone();
             if (pkMet.Version is not GameVersion.GO)
@@ -686,4 +686,7 @@ namespace SysBot.Pokemon.Helpers
         }
 
     }
+
 }
+
+

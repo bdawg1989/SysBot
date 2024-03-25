@@ -78,13 +78,13 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
 
             if (dest.Species == 0)
             {
-                LogUtil.LogInfo("SKIPPED: Provided file is not valid: " + dest.FileName, nameof(PokemonPool<T>));
+                LogUtil.LogInfo("**SKIPPED:** Provided file is not valid: " + dest.FileName, nameof(PokemonPool<T>));
                 continue;
             }
 
             if (!dest.CanBeTraded())
             {
-                LogUtil.LogInfo("SKIPPED: Provided file cannot be traded: " + dest.FileName, nameof(PokemonPool<T>));
+                LogUtil.LogInfo("**SKIPPED:** Provided file cannot be traded: " + dest.FileName, nameof(PokemonPool<T>));
                 continue;
             }
 
@@ -92,7 +92,7 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
             if (!la.Valid)
             {
                 var reason = la.Report();
-                LogUtil.LogInfo($"SKIPPED: Provided file is not legal: {dest.FileName} -- {reason}", nameof(PokemonPool<T>));
+                LogUtil.LogInfo($"**SKIPPED:** Provided file is not legal: {dest.FileName} -- {reason}", nameof(PokemonPool<T>));
                 continue;
             }
 

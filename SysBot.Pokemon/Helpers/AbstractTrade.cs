@@ -684,9 +684,7 @@ namespace SysBot.Pokemon.Helpers
             pk.SetSuggestedHyperTrainingData();
             pk.SetSuggestedRibbons(template, enc, true);
         }
-
     }
-
 }
 
 

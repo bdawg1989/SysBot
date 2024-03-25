@@ -24,8 +24,8 @@ public static class QueueHelper<T> where T : PKM, new()
     private const uint MaxTradeCode = 9999_9999;
 
     // A dictionary to hold batch trade file paths and their deletion status
-    private static Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
-    private static Dictionary<ulong, int> userBatchTradeMaxDetailId = new Dictionary<ulong, int>();
+    private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
+    private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
@@ -291,7 +291,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var embed = embedBuilder.Build();
         if (embed == null)
         {
-            Console.WriteLine("Error: Embed is null.");
+            Console.WriteLine("**Error:** Embed is null.");
             await context.Channel.SendMessageAsync("An error occurred while preparing the trade details.");
             return new TradeQueueResult(false);
         }

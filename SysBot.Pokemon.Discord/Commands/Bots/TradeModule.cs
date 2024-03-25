@@ -1,4 +1,5 @@
 using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
@@ -130,7 +131,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         var code = Info.GetRandomTradeCode();
@@ -155,7 +156,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         var trainerName = Context.User.Username;
@@ -212,7 +213,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         keyword = keyword.ToLower().Trim();
@@ -236,7 +237,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         if (pkm is not T pk || !la.Valid)
         {
             var reason = result == "Timeout" ? "That set took too long to generate." : "I wasn't able to create something from that.";
-            var imsg = $"Oops! {reason} Here's my best attempt for that Ditto!";
+            var imsg = $"Here's my best attempt at creating that Ditto!";
             await Context.Channel.SendPKMAsync(pkm, imsg).ConfigureAwait(false);
             return;
         }
@@ -270,7 +271,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         Species species = Info.Hub.Config.Trade.TradeConfiguration.ItemTradeSpecies == Species.None ? Species.Diglett : Info.Hub.Config.Trade.TradeConfiguration.ItemTradeSpecies;
@@ -290,7 +291,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         if (pkm is not T pk || !la.Valid)
         {
             var reason = result == "Timeout" ? "That set took too long to generate." : "I wasn't able to create something from that.";
-            var imsg = $"Oops! {reason} Here's my best attempt for that {species}!";
+            var imsg = $"Here's my best attempt at creating that {species}!";
             await Context.Channel.SendPKMAsync(pkm, imsg).ConfigureAwait(false);
             return;
         }
@@ -342,7 +343,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         content = ReusableActions.StripCodeBlock(content);
@@ -357,7 +358,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (pkm is not T pk)
             {
-                await ReplyAsync($"Oops! I wasn't able to create an egg for that.").ConfigureAwait(false);
+                await ReplyAsync($"**Error:** Unable to create an egg from that.").ConfigureAwait(false);
                 return;
             }
 
@@ -381,6 +382,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
+
     [Command("mysteryegg")]
     [Alias("me")]
     [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
@@ -391,7 +393,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         try
@@ -407,7 +409,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (pk is not T pkT)
             {
-                await ReplyAsync("Oops! I wasn't able to create a mystery egg.").ConfigureAwait(false);
+                await ReplyAsync("**Error:** Unable to create a mystery egg.").ConfigureAwait(false);
                 return;
             }
 
@@ -429,7 +431,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync("An error occurred while processing the request.").ConfigureAwait(false);
         }
     }
-
     private static void SetPerfectIVsAndShiny(PKM pk)
     {
         // Set IVs to perfect
@@ -439,6 +440,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         // Set hidden ability
         pk.RefreshAbility(2);
     }
+
+
+
 
     [Command("trade")]
     [Alias("t")]
@@ -462,7 +466,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
 
@@ -472,7 +476,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         int formArgument = ExtractFormArgument(content);
         if (set.InvalidLines.Count != 0)
         {
-            var msg = $"Unable to parse Showdown Set:\n{string.Join("\n", set.InvalidLines)}";
+            var msg = $"Unable to understand your Showdown Format\n{string.Join("\n", set.InvalidLines)}\nCheck for a typo or improper spacing. Remember to use proper capitalization.";
             await ReplyAsync(msg).ConfigureAwait(false);
             await Task.Delay(2000); 
             await Context.Message.DeleteAsync();
@@ -507,7 +511,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 {
                     if (pkm.IsShiny)
                     {
-                        await ReplyAsync("Mew can **not** be Shiny in LGPE. PoGo Mew does not transfer and Pokeball Plus Mew is shiny locked.");
+                        await ReplyAsync("Mew **cannot** be shiny in LGPE. POGO Mew does not transfer. Poke Ball Plus Mew is shiny locked.");
                         return;
                     }
                 }
@@ -517,22 +521,22 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
             if (pkm is not T pk || !la.Valid)
             {
-                var reason = result == "Timeout" ? $"That {spec} set took too long to generate." :
-                             result == "VersionMismatch" ? "Request refused: PKHeX and Auto-Legality Mod version mismatch." :
-                             $"I wasn't able to create a {spec} from that set.";
+                var reason = result == "Timeout" ? $"That {spec} set took too long for me to generate legally." :
+                             result == "Version Mismatch" ? "**Request Refused:** PKHeX.Core & PKHeX.Core.AutoMod versions do not match. Did you try updating the Directory.Build.props?" :
+                             $"**Request Error:** I wasn't able to create a {spec} from that Showdown Format. Try asking for help in the appropriate channel.";
 
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle("Trade Creation Failed.")
                     .WithColor(Color.Red)
-                    .AddField("Status", $"Failed to create {spec}.")
-                    .AddField("Reason", reason);
+                    .AddField("**Request Error:**", $"Failed to create {spec}. Try asking for help in the appropriate channel.")
+                    .AddField("**Error Reason:**", reason);
 
                 if (result == "Failed")
                 {
                     var hint = AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm);
-                    if (hint.Contains("Requested shiny value (ShinyType."))
+                    if (hint.Contains("**Request Error:** Requested shiny value (ShinyType."))
                     {
-                        hint = $"{spec} **cannot** be shiny. Please try again.";
+                        hint = $"{spec} **cannot** be shiny. Please try again or try asking for help in the appropriate channel.";
                     }
                     embedBuilder.AddField("Hint", hint);
                 }
@@ -555,7 +559,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         catch (Exception ex)
         {
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            var msg = $"Oops! An unexpected problem happened with this Showdown Set:\n```{string.Join("\n", set.GetSetLines())}```";
+            var msg = $"**Showdown Format Error:**\n```{string.Join("\n", set.GetSetLines())}```";
 
             await Task.Delay(2000); 
             await Context.Message.DeleteAsync(); 
@@ -681,14 +685,14 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Wait until it's processed before attempting to join another.").ConfigureAwait(false);
             return;
         }
 
         var attachment = Context.Message.Attachments.FirstOrDefault();
         if (attachment == default)
         {
-            await ReplyAsync("No attachment provided!").ConfigureAwait(false);
+            await ReplyAsync("You can't trade nothing. It looks like you forgot your PKM file or Showdown Set.").ConfigureAwait(false);
             return;
         }
 
@@ -807,11 +811,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 var reason = result switch
                 {
                     "Timeout" => $"That {spec} set took too long to generate.",
-                    "VersionMismatch" => "Request refused: PKHeX and Auto-Legality Mod version mismatch.",
-                    _ => $"I wasn't able to create a {spec} from that set."
+                    "Version Mismatch" => "**Request Error:** PKHeX.Core and PKHeX.Core.AutoMod versions do not match. Did you check the Directory.Build.props?",
+                    _ => $"**Request Error:** Your **{spec}** is illegal. Try asking for help in the appropriate channel."
                 };
 
-                var imsg = $"Oops! {reason}";
+                var imsg = $"**Error:** {reason}";
                 if (result == "Failed")
                     imsg += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
 
@@ -837,7 +841,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("specialrequestpokemon")]
     [Alias("srp")]
-    [Summary("Lists available wondercard events from the specified generation or game and sends the list via DM.")]
+    [Summary("Lists available Wonder Card events from the specified generation or game, then sends the list via DM.")]
     public async Task ListSpecialEventsAsync(string generationOrGame, [Remainder] string args = "")
     {
         const int itemsPerPage = 25; // discord limit
@@ -979,7 +983,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("specialrequestpokemon")]
     [Alias("srp")]
-    [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
+    [Summary("Downloads Wonder Card event attachments from the specified generation and adds it to the Trade Queue.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task SpecialEventRequestAsync(string generationOrGame, int index)
     {
@@ -987,7 +991,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         try
@@ -1059,7 +1063,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (download.Data is null)
             {
-                await ReplyAsync($"Failed to convert wondercard data to the required PKM type.");
+                await ReplyAsync($"Failed to convert Wonder Card data to the required PKM type.");
                 return;
             }
 
@@ -1067,7 +1071,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (pk is null)
             {
-                await ReplyAsync("Wondercard data provided is not compatible with this module!");
+                await ReplyAsync("Wonder Card data provided is not compatible with this module!");
                 return;
             }
 
@@ -1079,7 +1083,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         catch (Exception ex)
         {
-            await ReplyAsync($"An error occurred: {ex.Message}");
+            await ReplyAsync($"**Error:** {ex.Message}");
         }
         finally
         {
@@ -1090,11 +1094,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-
-
     [Command("listevents")]
     [Alias("le")]
-    [Summary("Lists available event files, filtered by a specific letter or substring, and sends the list via DM.")]
+    [Summary("Lists available event files, filtered by a specific letter or substring, then sends the list via DM.")]
     public async Task ListEventsAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
@@ -1167,7 +1169,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 {
                     var dmChannel = await user.CreateDMChannelAsync();
                     await dmChannel.SendMessageAsync(embed: embed.Build());
-                    replyMessage = await ReplyAsync($"{Context.User.Mention}, I've sent you a DM with the list of events.");
+                    replyMessage = await ReplyAsync($"{Context.User.Mention}, I've sent you a DM with a list of events.");
                 }
                 catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
                 {
@@ -1191,7 +1193,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("eventrequest")]
     [Alias("er")]
-    [Summary("Downloads event attachments from the specified EventsFolder and adds to trade queue.")]
+    [Summary("Downloads event attachments from the specified EventsFolder and adds it to the Trade Queue.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task EventRequestAsync(int index)
     {
@@ -1199,7 +1201,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         try
@@ -1219,7 +1221,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (index < 1 || index > eventFiles.Count)
             {
-                await ReplyAsync("Invalid event index. Please use a valid event number from the `.le` command.").ConfigureAwait(false);
+                await ReplyAsync("Invalid event index. Please use a valid event number from the `le` command.").ConfigureAwait(false);
                 return;
             }
 
@@ -1247,7 +1249,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         catch (Exception ex)
         {
-            await ReplyAsync($"An error occurred: {ex.Message}").ConfigureAwait(false);
+            await ReplyAsync($"**Error:** {ex.Message}").ConfigureAwait(false);
         }
         finally
         {
@@ -1260,7 +1262,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("battlereadylist")]
     [Alias("brl")]
-    [Summary("Lists available battle-ready files, filtered by a specific letter or substring, and sends the list via DM.")]
+    [Summary("Lists available battle-ready files, filtered by a specific letter or substring, then sends the list via DM.")]
     public async Task BattleReadyListAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
@@ -1365,7 +1367,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
         try
@@ -1385,7 +1387,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (index < 1 || index > battleReadyFiles.Count)
             {
-                await ReplyAsync("Invalid battle-ready file index. Please use a valid file number from the `.blr` command.").ConfigureAwait(false);
+                await ReplyAsync("Invalid battle-ready file index. Please use a valid file number from the `blr` command.").ConfigureAwait(false);
                 return;
             }
 
@@ -1408,12 +1410,12 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var code = Info.GetRandomTradeCode();
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
-            await ReplyAsync($"Battle-ready request added to queue.").ConfigureAwait(false);
+            await ReplyAsync($"Battle-Ready request added to queue.").ConfigureAwait(false);
             await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            await ReplyAsync($"An error occurred: {ex.Message}").ConfigureAwait(false);
+            await ReplyAsync($"**Error:** {ex.Message}").ConfigureAwait(false);
         }
         finally
         {
@@ -1462,7 +1464,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var attachment = Context.Message.Attachments.FirstOrDefault();
         if (attachment == default)
         {
-            await ReplyAsync("No attachment provided!").ConfigureAwait(false);
+            await ReplyAsync("You can't trade nothing. You're forgetting your PKM file or Showdown Format.").ConfigureAwait(false);
             return;
         }
 
@@ -1470,7 +1472,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var pk = GetRequest(att);
         if (pk == null)
         {
-            await ReplyAsync("Attachment provided is not compatible with this module!").ConfigureAwait(false);
+            await ReplyAsync("**Error:** Attachment provided is not compatible with this module!").ConfigureAwait(false);
             return;
         }
 
@@ -1497,7 +1499,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         if (!pk.CanBeTraded())
         {
-            var reply = await ReplyAsync("Provided Pokémon content is blocked from trading!").ConfigureAwait(false);
+            var reply = await ReplyAsync("The PKM file or Showdown Format you provided is illegal. Try asking for help in the appropriate channel.").ConfigureAwait(false);
             await Task.Delay(6000); // Delay for 6 seconds
             await reply.DeleteAsync().ConfigureAwait(false);
             return;
@@ -1526,8 +1528,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         if (!la.Valid)
         {
-            string responseMessage = pk.IsEgg ? "Invalid Showdown Set for this Egg. Please review your information and try again." :
-                $"{typeof(T).Name} attachment is not legal, and cannot be traded!";
+            string responseMessage = pk.IsEgg ? "Invalid Showdown Format for this Egg. Try asking for help in the appropriate channel." :
+                $"{typeof(T).Name} attachment is illegal. I cannot trade it for you.";
             if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
             {
                 // Allow the owner to prevent trading entities that require a HOME Tracker even if the file has one already.
@@ -1561,5 +1563,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
 
         return randomPictocodes;
+
     }
 }

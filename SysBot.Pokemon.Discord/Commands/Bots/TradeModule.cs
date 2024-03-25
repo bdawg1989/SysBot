@@ -554,7 +554,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pk.ResetPartyStats();
 
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, formArgument: formArgument, lgcode: lgcode).ConfigureAwait(false);
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -626,7 +626,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var trades = ParseBatchTradeContent(content);
+        var trades = TradeModule<T>.ParseBatchTradeContent(content);
         var maxTradesAllowed = SysCord<T>.Runner.Config.Trade.TradeConfiguration.MaxPkmsPerTrade;
 
         // Check if batch mode is allowed and if the number of trades exceeds the limit
@@ -659,7 +659,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    private List<string> ParseBatchTradeContent(string content)
+    private static List<string> ParseBatchTradeContent(string content)
     {
         var delimiters = new[] { "---", "—-" }; // Includes both three hyphens and an em dash followed by a hyphen
         var trades = content.Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
@@ -764,7 +764,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             // Add the trade to the queue
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode).ConfigureAwait(false);
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -831,7 +831,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             // Add the trade to the queue
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode).ConfigureAwait(false);
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1491,7 +1491,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         };
     }
 
-    private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
+    private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific)
     {
         if (lgcode == null)
         {
@@ -1548,7 +1548,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, PokeTradeType.Specific, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode).ConfigureAwait(false);
     }
     private List<Pictocodes> GenerateRandomPictocodes(int count)
     {

@@ -48,7 +48,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var embedBuilder = new EmbedBuilder()
             .WithTitle($"List of Guilds - Page {page}/{totalPages}")
             .WithDescription("Here are the guilds I'm currently in:")
-            .WithColor(Color.Blue); 
+            .WithColor(Color.Blue);
 
         foreach (var guild in guilds)
         {
@@ -61,7 +61,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         if (Context.Message is IUserMessage userMessage)
         {
-            await Task.Delay(2000); 
+            await Task.Delay(2000);
             await userMessage.DeleteAsync().ConfigureAwait(false);
         }
     }
@@ -141,7 +141,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, lgcode).ConfigureAwait(false);
         if (Context.Message is IUserMessage userMessage)
         {
-            await Task.Delay(2000); 
+            await Task.Delay(2000);
             await userMessage.DeleteAsync().ConfigureAwait(false);
         }
     }
@@ -199,7 +199,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         if (Context.Message is IUserMessage userMessage)
         {
-            await Task.Delay(2000); 
+            await Task.Delay(2000);
             await userMessage.DeleteAsync().ConfigureAwait(false);
         }
     }
@@ -280,7 +280,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
         var pkm = sav.GetLegal(template, out var result);
         pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
-        if (pkm.HeldItem == 0 )
+        if (pkm.HeldItem == 0)
         {
             await ReplyAsync($"{Context.User.Username}, the item you entered wasn't recognized.").ConfigureAwait(false);
             return;
@@ -302,7 +302,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         if (Context.Message is IUserMessage userMessage)
         {
-            await Task.Delay(2000); 
+            await Task.Delay(2000);
             await userMessage.DeleteAsync().ConfigureAwait(false);
         }
     }
@@ -400,9 +400,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var speciesList = BreedableSpeciesGenerator.GetBreedableSpeciesForSV();
-            var randomIndex = new Random().Next(speciesList.Count); 
+            var randomIndex = new Random().Next(speciesList.Count);
             ushort speciesId = speciesList[randomIndex];
-            var context = new EntityContext(); 
+            var context = new EntityContext();
             var eggEncounter = new EncounterEgg(speciesId, 0, 1, 9, GameVersion.SV, context);
             var pk = eggEncounter.ConvertToPKM(sav);
             TradeModule<T>.SetPerfectIVsAndShiny(pk);
@@ -421,7 +421,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (Context.Message is IUserMessage userMessage)
             {
-                await Task.Delay(2000); 
+                await Task.Delay(2000);
                 await userMessage.DeleteAsync().ConfigureAwait(false);
             }
         }
@@ -478,7 +478,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var msg = $"Unable to understand your Showdown Format\n{string.Join("\n", set.InvalidLines)}\nCheck for a typo or improper spacing. Remember to use proper capitalization.";
             await ReplyAsync(msg).ConfigureAwait(false);
-            await Task.Delay(2000); 
+            await Task.Delay(2000);
             await Context.Message.DeleteAsync();
             return;
         }
@@ -561,8 +561,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
             var msg = $"**Showdown Format Error:**\n```{string.Join("\n", set.GetSetLines())}```";
 
-            await Task.Delay(2000); 
-            await Context.Message.DeleteAsync(); 
+            await Task.Delay(2000);
+            await Context.Message.DeleteAsync();
         }
         _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
     }
@@ -634,8 +634,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of trades in your batch.").ConfigureAwait(false);
 
-            await Task.Delay(5000); 
-            await Context.Message.DeleteAsync(); 
+            await Task.Delay(5000);
+            await Context.Message.DeleteAsync();
             return;
         }
         // Check if the number of trades exceeds the limit
@@ -643,8 +643,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of trades in your batch.").ConfigureAwait(false);
 
-            await Task.Delay(2000); 
-            await Context.Message.DeleteAsync(); 
+            await Task.Delay(2000);
+            await Context.Message.DeleteAsync();
             return;
         }
 
@@ -663,7 +663,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         var delimiters = new[] { "---", "—-" }; // Includes both three hyphens and an em dash followed by a hyphen
         var trades = content.Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(trade => trade.Trim()) 
+                            .Select(trade => trade.Trim())
                             .ToList();
         return trades;
     }
@@ -1391,7 +1391,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var selectedFile = battleReadyFiles[index - 1]; 
+            var selectedFile = battleReadyFiles[index - 1];
             var fileData = await File.ReadAllBytesAsync(Path.Combine(battleReadyFolderPath, selectedFile));
 
             var download = new Download<PKM>

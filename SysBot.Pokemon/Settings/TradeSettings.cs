@@ -175,6 +175,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category("RequestFolders"), Description("Path to your BattleReady Folder. Create a new folder called 'battleready' and copy the path here.")]
         public string BattleReadyPKMFolder { get; set; } = string.Empty;
 
+        [Category("RequestFolders"), Description("Path to your HOME-eady Folder. Create a new folder called 'homeready' and copy the path here.")]
+        public string HOMEReadyPKMFolder { get; set; } = string.Empty;
+
     }
 
     [Category(Miscellaneous), Description("Miscellaneous Settings")]

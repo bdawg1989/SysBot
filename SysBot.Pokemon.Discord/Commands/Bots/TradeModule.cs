@@ -2,6 +2,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
+using Microsoft.VisualBasic;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
 using SysBot.Base;
@@ -13,8 +14,10 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
 
 namespace SysBot.Pokemon.Discord;

@@ -127,15 +127,16 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 embedImageUrl = AbstractTrade<T>.PokeImg(detail.TradeData, false, true);
             }
 
-            var embedColor = new DiscordColor(255, 0, 0); // Example: Red color
+            var embedColor = new DiscordColor(0, 0, 0); // Example: Red color
 
             var embedBuilder = new EmbedBuilder()
                 .WithColor(embedColor)
+                .WithThumbnailUrl(embedImageUrl)
                 .WithAuthor(new EmbedAuthorBuilder()
-                    .WithName($"NOW TRADING: {user.Username}")
+                    .WithName($"Up Next: {user.Username}")
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
-                .WithDescription($"{user.Username} is trading for their **{tradeTitle}** right now!")
-                .WithFooter($"Trade #{detail.ID}.");
+                .WithDescription($"**Receiving:** {tradeTitle}\n**Total Bot Trades:** {detail.ID}")
+                .WithFooter($"Typical processing time at this stage is about one minute\n");
 
             var embed = embedBuilder.Build();
             await c.SendMessageAsync(embed: embed);

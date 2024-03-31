@@ -91,6 +91,9 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showAlphaMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji;
         bool showMightiesMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiesMarkEmoji;
         bool showMysteryGift = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji;
+        bool showOT = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowOT;
+        bool showTID = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTID;
+        bool showSID = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowSID;
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);
@@ -139,6 +142,9 @@ public static class QueueHelper<T> where T : PKM, new()
             moveNames.Add($"\u200B {formattedMove}");
         }
         int level = pk.CurrentLevel;
+        string originalTrainerName = pk.OriginalTrainerName;
+        uint tidDisplay = pk.TrainerTID7;
+        uint sidDisplay = pk.TrainerSID7;
 
         // Pokémon appearance and type details
         string teraTypeString = "", scaleText = "", abilityName, natureName, speciesName, formName, speciesAndForm, heldItemName, ballName, formDecoration = "";
@@ -262,7 +268,10 @@ public static class QueueHelper<T> where T : PKM, new()
                 (showLevel ? $"**Level:** {level}\n" : "") +
                 (showAbility ? $"**Ability:** {abilityName}\n" : "") +
                 (showNature ? $"**Nature**: {natureName}\n" : "") +
-                (showIVs ? $"**IVs**: {ivsDisplay}\n" : "");
+                (showIVs ? $"**IVs**: {ivsDisplay}\n" : "") +
+                (showOT ? $"**OT:** {originalTrainerName}\n" : "") +
+                (showTID ? $"**TID:** {tidDisplay}\n" : "") +
+                (showSID ? $"**SID:** {sidDisplay}\n" : "");
 
             leftSideContent = leftSideContent.TrimEnd('\n');
             embedBuilder.AddField($"{speciesAndForm}", leftSideContent, inline: true);

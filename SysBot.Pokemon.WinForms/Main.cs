@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using SysBot.Pokemon.Helpers;
 using System.Drawing;
 using SysBot.Pokemon.WinForms.Properties;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SysBot.Pokemon.WinForms;
 

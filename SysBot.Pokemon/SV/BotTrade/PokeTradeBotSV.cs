@@ -329,8 +329,6 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
                 if (poke.TotalBatchTrades > 1)
                 {
                     // If it's part of a batch trade, remove the current trade from the queue
-                    var routineType = GetRoutineType(poke.Type);
-                    Hub.Queues.Info.Remove(new TradeEntry<PK9>(poke, poke.Trainer.ID, routineType, poke.Trainer.TrainerName, poke.UniqueTradeID));
                     Log($"No trainer found for trade {completedTrades + 1} of {poke.TotalBatchTrades}. Removing from the queue.");
                 }
 
@@ -490,7 +488,6 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
                 // Remove the current trade from the queue
                 var routineType = GetRoutineType(poke.Type);
-                Hub.Queues.Info.Remove(new TradeEntry<PK9>(poke, poke.Trainer.ID, routineType, poke.Trainer.TrainerName, poke.UniqueTradeID));
 
                 if (completedTrades < poke.TotalBatchTrades)
                 {

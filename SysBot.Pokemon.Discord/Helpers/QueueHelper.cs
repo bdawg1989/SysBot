@@ -133,7 +133,7 @@ public static class QueueHelper<T> where T : PKM, new()
             string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moves[i])?.Text ?? "";
             byte moveTypeId = MoveInfo.GetType(moves[i], default);
             MoveType moveType = (MoveType)moveTypeId;
-            string formattedMove = $"{moveName} ({movePPs[i]} PP)";
+            string formattedMove = $"*{moveName}* ({movePPs[i]} PP)";
             if (useTypeEmojis)
             {
                 string typeEmoji = typeEmojis.TryGetValue(moveType, out var moveEmoji) ? moveEmoji : string.Empty;
@@ -261,7 +261,7 @@ public static class QueueHelper<T> where T : PKM, new()
         if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
             // Preparing content for normal trades
-            string leftSideContent = $"**Trainer:** {user.Mention}\n";
+            string leftSideContent = $"**User:** {user.Mention}\n";
             leftSideContent +=
                 (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeString}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +

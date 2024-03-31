@@ -1653,7 +1653,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         }
     }
-    
+
 
 
     [Command("homereadyrequest")]
@@ -1769,42 +1769,57 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Displays instructions on how to use the HOME-Ready module.")]
     public async Task HomeReadyInstructionsAsync()
     {
-        var embed = new EmbedBuilder()
+        var embed0 = new EmbedBuilder()
+            .WithTitle("-------HOME-READY MODULE INSTRUCTIONS-------");
 
-            .WithTitle("HOME-Ready Module Instructions")
-            .WithColor(Color.DarkPurple)
-            .WithDescription("Here are the instructions on how to use the HOME-Ready module:");
-
-        embed.AddField("## GET LIST, OPTION 1: 'hrl <Pokemon>'",
-                        "- This will search for any Pokemon in the entire HOME-Ready Module, regardless of game.\n" +
-                        "**Example:** `hrl Mewtwo` will show all results for a Mewtwo with a legal HOME tracker from USUM/LGPE/POGO/BDSP/SWSH/PLA/SV.\n");
-
-        embed.AddField("## GET LIST, OPTION 2: 'hrl <From(OriginGame)To(OtherGame)>'",
-                        "- This will search for any Pokemon from one game that can be transferred to another.\n" +
-                        "**Example:** `hrl FromBDSPtoSV` will show results for all Pokemon originating from BDSP that have a legal HOME tracker meant for trading into SV.\n");
-
-        embed.AddField("## CHANGING PAGES: 'hrl <page>'",
-                        "- This will change the page you're viewing. You can also use variables to refine your search.\n" +
-                        "**Example:** 'hrl 5 Charmander' will show you page 5 of the Charmander list.\n");
+        embed0.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message0 = await ReplyAsync(embed: embed0.Build());
 
 
-        embed.AddField("## TRADING FILES: 'hrr <number>'",
-                        "- This will trade you the Pokemon automatically through the bot via the number beneath its filename.\n" +
-                        "**Example:** 'hrr 682' sends the file to the bot for trade.\n");
+        var embed1 = new EmbedBuilder()
+            .AddField("GET LIST: `hrl <Pokemon>`",
+                      "- This will search for any Pokemon in the entire module.\n" +
+                      "**Example:** `hrl Mewtwo`\n");
 
-        embed.AddField("## DOWNLOADING FILES: `hrd <number>'",
-                        "- This will give you the file of the Pokemon to download to use as you see fit.\n" +
-                        "**Example:** 'hrd 682' will send you the file you numerically choose\n");
+        embed1.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message1 = await ReplyAsync(embed: embed1.Build());
 
-        var message = await ReplyAsync(embed: embed.Build());
+
+        var embed2 = new EmbedBuilder()
+            .AddField("CHANGE PAGES: `hrl <page>`",
+                      "- This will change the page you're viewing, with or without additional variables.\n" +
+                      "**Example:** `hrl 5 Charmander`\n");
+
+        embed2.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message2 = await ReplyAsync(embed: embed2.Build());
+
+        var embed3 = new EmbedBuilder()
+            .AddField("TRADING FILES: `hrr <number>`",
+                      "- This will trade you the Pokemon through the bot via the designated number.\n" +
+                      "**Example:** `hrr 682`\n");
+
+        embed3.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message3 = await ReplyAsync(embed: embed3.Build());
+
+        var embed4 = new EmbedBuilder()
+            .AddField("DOWNLOADING FILES: `hrd <number>`",
+                      "- This will give you the file of the Pokemon to download.\n" +
+                      "**Example:** `hrd 682`\n");
+
+        embed4.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message4 = await ReplyAsync(embed: embed4.Build());
 
         // Delay for 40 seconds
         await Task.Delay(120_000);
 
-        // Delete the message
-        await message.DeleteAsync();
-
+        // Delete the messages
+        await message0.DeleteAsync();
+        await message1.DeleteAsync();
+        await message2.DeleteAsync();
+        await message3.DeleteAsync();
+        await message4.DeleteAsync();
     }
 }
+
 
 

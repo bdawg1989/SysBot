@@ -1756,7 +1756,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var fileStream = File.OpenRead(selectedFile);
             await Context.Channel.SendFileAsync(fileStream, Path.GetFileName(selectedFile), "Sure thing! Here's the file!");
-            await ReplyAsync($"**File Chosen:** *{Path.GetFileName(selectedFile)}*");
         }
         catch (Exception ex)
         {

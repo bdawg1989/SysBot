@@ -1,7 +1,7 @@
 using PKHeX.Core;
 using System;
-using System.Threading;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace SysBot.Pokemon
 {
@@ -10,10 +10,13 @@ namespace SysBot.Pokemon
         // ReSharper disable once StaticMemberInGenericType
         /// <summary> Global variable indicating the amount of trades created. </summary>
         private static int CreatedCount;
+
         /// <summary> Indicates if this trade data should be given priority for queue insertion. </summary>
         public bool IsFavored { get; }
+
         /// <summary> Customized trade parameters. </summary>
         public Dictionary<string, object> Context = [];
+
         /// <summary>
         /// Trade Code
         /// </summary>
@@ -33,6 +36,7 @@ namespace SysBot.Pokemon
 
         /// <summary> Time the object was created at </summary>
         public readonly DateTime Time;
+
         /// <summary> Unique incremented ID </summary>
         public readonly int ID;
 
@@ -106,7 +110,6 @@ namespace SysBot.Pokemon
                 return $"{queuePosition:00}: {Trainer.TrainerName}";
             return $"{queuePosition:00}: {Trainer.TrainerName}, {(Species)TradeData.Species}";
         }
-
     }
     public enum Pictocodes
     {

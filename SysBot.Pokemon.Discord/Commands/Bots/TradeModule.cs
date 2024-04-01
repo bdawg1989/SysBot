@@ -1827,6 +1827,3 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         await message4.DeleteAsync();
     }
 }
-
-
-

@@ -137,6 +137,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(EmbedSettings), Description("Will show IVs in trade embed (Discord only).")]
         public bool ShowIVs { get; set; } = true;
 
+        [Category(EmbedSettings), Description("Will show EVs in trade embed (Discord only).")]
+        public bool ShowEVs { get; set; } = true;
+
         [Category(EmbedSettings), Description("Will show OT in trade embed (Discord only).")]
         public bool ShowOT { get; set; } = true;
 

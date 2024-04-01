@@ -88,6 +88,7 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showAbility = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowAbility;
         bool showNature = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowNature;
         bool showIVs = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowIVs;
+        bool showEVs = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowEVs;
         bool showAlphaMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji;
         bool showMightiesMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiesMarkEmoji;
         bool showMysteryGift = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji;
@@ -123,6 +124,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
         // Basic Pokémon details
         int[] ivs = pk.IVs;
+        int[] evs = [pk.EV_HP, pk.EV_ATK, pk.EV_DEF, pk.EV_SPA, pk.EV_SPD, pk.EV_SPE];
         ushort[] moves = new ushort[4];
         pk.GetMoves(moves.AsSpan());
         int[] movePPs = [pk.Move1_PP, pk.Move2_PP, pk.Move3_PP, pk.Move4_PP];
@@ -190,6 +192,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
         // Display elements
         string ivsDisplay = $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
+        string evsDisplay = $"{evs[0]}/{evs[1]}/{evs[2]}/{evs[3]}/{evs[4]}/{evs[5]}";
         string movesDisplay = string.Join("\n", moveNames);
         string shinyEmoji = pk.IsShiny ? "✨ " : "";
         string pokemonDisplayName = pk.IsNicknamed ? pk.Nickname : GameInfo.GetStrings(1).Species[pk.Species];
@@ -269,6 +272,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 (showAbility ? $"**Ability:** {abilityName}\n" : "") +
                 (showNature ? $"**Nature**: {natureName}\n" : "") +
                 (showIVs ? $"**IVs**: {ivsDisplay}\n" : "") +
+                (showEVs ? $"**EVs**: {evsDisplay}\n" : "") +
                 (showOT ? $"**OT:** {originalTrainerName}\n" : "") +
                 (showTID ? $"**TID:** {tidDisplay}\n" : "") +
                 (showSID ? $"**SID:** {sidDisplay}\n" : "");

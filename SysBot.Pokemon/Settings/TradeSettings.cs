@@ -148,6 +148,15 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
         [Category(EmbedSettings), Description("Will show SID in trade embed (Discord only).")]
         public bool ShowSID { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only).")]
+        public bool ShowMetLevel { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only).")]
+        public bool ShowFatefulEncounter { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only).")]
+        public bool ShowWasEgg { get; set; } = true;
     }
 
 

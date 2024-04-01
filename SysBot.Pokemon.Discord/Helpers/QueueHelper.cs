@@ -95,6 +95,9 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showOT = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowOT;
         bool showTID = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTID;
         bool showSID = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowSID;
+        bool showMetLevel = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowMetLevel;
+        bool showFatefulEncounter = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowFatefulEncounter;
+        bool showWasEgg = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowWasEgg;
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);
@@ -147,6 +150,9 @@ public static class QueueHelper<T> where T : PKM, new()
         string originalTrainerName = pk.OriginalTrainerName;
         uint tidDisplay = pk.TrainerTID7;
         uint sidDisplay = pk.TrainerSID7;
+        byte metLevelDisplay = pk.MetLevel;
+        Boolean fatefulEncounterDisplay = pk.FatefulEncounter;
+        Boolean wasEggDisplay = pk.WasEgg;
 
         // Pokémon appearance and type details
         string teraTypeString = "", scaleText = "", abilityName, natureName, speciesName, formName, speciesAndForm, heldItemName, ballName, formDecoration = "";
@@ -266,16 +272,20 @@ public static class QueueHelper<T> where T : PKM, new()
             // Preparing content for normal trades
             string leftSideContent = $"**User:** {user.Mention}\n";
             leftSideContent +=
-                (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeString}\n" : "") +
-                (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +
+                (showOT ? $"**OT:** {originalTrainerName}\n" : "") +
+                (showTID ? $"**TID:** {tidDisplay}\n" : "") +
+                (showSID ? $"**SID:** {sidDisplay}\n" : "") +
                 (showLevel ? $"**Level:** {level}\n" : "") +
                 (showAbility ? $"**Ability:** {abilityName}\n" : "") +
                 (showNature ? $"**Nature**: {natureName}\n" : "") +
                 (showIVs ? $"**IVs**: {ivsDisplay}\n" : "") +
                 (showEVs ? $"**EVs**: {evsDisplay}\n" : "") +
-                (showOT ? $"**OT:** {originalTrainerName}\n" : "") +
-                (showTID ? $"**TID:** {tidDisplay}\n" : "") +
-                (showSID ? $"**SID:** {sidDisplay}\n" : "");
+                (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeString}\n" : "") +
+                (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +
+                (showMetLevel ? $"**Met Level:** {metLevelDisplay}\n" : "") +
+                (showFatefulEncounter ? $"**Event/Gift:** {fatefulEncounterDisplay}\n" : "") +
+                (showWasEgg ? $"**From Egg:** {wasEggDisplay}\n" : "");
+
 
             leftSideContent = leftSideContent.TrimEnd('\n');
             embedBuilder.AddField($"{speciesAndForm}", leftSideContent, inline: true);

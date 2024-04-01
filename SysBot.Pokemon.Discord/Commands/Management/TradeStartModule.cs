@@ -136,7 +136,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                     .WithName($"Up Next: {user.Username}")
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
                 .WithDescription($"**Receiving:** {tradeTitle}\n**Total Bot Trades:** {detail.ID}")
-                .WithFooter($"Typical processing time at this stage is about one minute\n");
+                .WithFooter($"Typical processing time at this stage is about 1-2 minutes.\n");
 
             var embed = embedBuilder.Build();
             await c.SendMessageAsync(embed: embed);

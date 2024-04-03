@@ -1,3 +1,4 @@
+using PersonalCodeLogic;
 using PKHeX.Core;
 using PKHeX.Core.Searching;
 using SysBot.Base;
@@ -238,12 +239,25 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         await Click(A, 1_500, token).ConfigureAwait(false);
         await Click(A, 2_000, token).ConfigureAwait(false);
 
+        // Determine the trade code to use
+        var code = poke.Code;
+        if (poke.Type != PokeTradeType.Random)
+        {
+            // Check if the user has set their personal Link Trade Code
+            var personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(poke.Trainer.ID);
+            if (personalCode != 0)
+            {
+                // Use the user's personal Link Trade Code
+                code = personalCode;
+            }
+        }
+
         // Loading code entry.
         if (poke.Type != PokeTradeType.Random)
             Hub.Config.Stream.StartEnterCode(this);
         await Task.Delay(Hub.Config.Timings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
 
-        var code = poke.Code;
+        var tradeCode = poke.Code;
         Log($"Entering Link Trade code: {code:0000 0000}...");
         await EnterLinkCode(code, Hub.Config, token).ConfigureAwait(false);
 

@@ -1,3 +1,4 @@
+using PersonalCodeLogic;
 using PKHeX.Core;
 using PKHeX.Core.Searching;
 using SysBot.Base;
@@ -238,9 +239,8 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
         }
 
-
         // Enter Union Room. Shouldn't do anything if we're already there.
-        if (!await EnterUnionRoomWithCode(poke.Type, poke.Code, token).ConfigureAwait(false))
+        if (!await EnterUnionRoomWithCode(poke.Type, poke.Code, poke.Trainer.ID, token).ConfigureAwait(false))
         {
             // We don't know how far we made it in, so restart the game to be safe.
             await RestartGameBDSP(token).ConfigureAwait(false);
@@ -309,6 +309,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
                     return PokeTradeResult.RecoverReturnOverworld;
             }
             return PokeTradeResult.SuspiciousActivity;
+
         }
 
         await Task.Delay(2_000 + Hub.Config.Timings.ExtraTimeOpenBox, token).ConfigureAwait(false);
@@ -465,7 +466,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         return PokeTradeResult.TrainerTooSlow;
     }
 
-    private async Task<bool> EnterUnionRoomWithCode(PokeTradeType tradeType, int tradeCode, CancellationToken token)
+    private async Task<bool> EnterUnionRoomWithCode(PokeTradeType tradeType, int tradeCode, ulong userId, CancellationToken token)
     {
         // Already in Union Room.
         if (await IsUnionWork(UnionGamingOffset, token).ConfigureAwait(false))
@@ -526,10 +527,23 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         await Click(A, 0_050, token).ConfigureAwait(false);
         await PressAndHold(A, 6_500, 0, token).ConfigureAwait(false);
 
+        // Determine the trade code to use
+        var code = tradeCode;
+        if (tradeType != PokeTradeType.Random)
+        {
+            // Check if the user has set their personal Link Trade Code
+            var personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(userId);
+            if (personalCode != 0)
+            {
+                // Use the user's personal Link Trade Code
+                code = personalCode;
+            }
+        }
+
         if (tradeType != PokeTradeType.Random)
             Hub.Config.Stream.StartEnterCode(this);
-        Log($"Entering Link Trade code: {tradeCode:0000 0000}...");
-        await EnterLinkCode(tradeCode, Hub.Config, token).ConfigureAwait(false);
+        Log($"Entering Link Trade code: {code:0000 0000}...");
+        await EnterLinkCode(code, Hub.Config, token).ConfigureAwait(false);
 
         // Wait for Barrier to trigger all bots simultaneously.
         WaitAtBarrierIfApplicable(token);
@@ -537,8 +551,8 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         Hub.Config.Stream.EndEnterCode(this);
         Log("Entering the Union Room.");
 
-        // Wait until we're past the communication message.
-        int tries = 100;
+    // Wait until we're past the communication message.
+    int tries = 100;
         while (!await IsUnionWork(UnionGamingOffset, token).ConfigureAwait(false))
         {
             await Click(A, 0_300, token).ConfigureAwait(false);

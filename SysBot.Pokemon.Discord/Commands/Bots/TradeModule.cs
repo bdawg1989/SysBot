@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
 using Microsoft.VisualBasic;
+using PersonalCodeLogic;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
 using SysBot.Base;
@@ -1810,7 +1811,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         embed4.WithImageUrl("https://i.imgur.com/avEzFTC.png");
         var message4 = await ReplyAsync(embed: embed4.Build());
 
-        // Delay for 40 seconds
+        // Delay for 120 seconds
         await Task.Delay(120_000);
 
         // Delete the messages
@@ -1819,5 +1820,72 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         await message2.DeleteAsync();
         await message3.DeleteAsync();
         await message4.DeleteAsync();
+    }
+}
+public class TradeModule : ModuleBase<SocketCommandContext>
+{
+    // Command to set personal Link Trade Code
+    [Command("myltc")]
+    [Summary("Set your personal Link Trade Code.")]
+    public async Task SetPersonalLinkTradeCodeAsync(int code)
+    {
+        var user = Context.User;
+        var userId = user.Id;
+
+        // Store the user's chosen Link Trade Code using the utility class
+        PersonalLinkTradeCode.SetPersonalLinkTradeCode(userId, code);
+
+        await ReplyAsync($"Your personal Link Trade Code has been set to: {code:0000 0000}");
+    }
+
+    // Command to delete personal Link Trade Code
+    [Command("myltc delete")]
+    [Summary("Delete your personal Link Trade Code.")]
+    public async Task DeletePersonalLinkTradeCodeAsync()
+    {
+        var user = Context.User;
+        var userId = user.Id;
+
+        // Delete the user's personal Link Trade Code
+        PersonalLinkTradeCode.DeletePersonalLinkTradeCode(userId);
+
+        await ReplyAsync($"Your personal Link Trade Code has been deleted.");
+    }
+
+    // Command to initiate a trade
+    [Command("trade")]
+    [Summary("Initiate a trade.")]
+    public async Task TradeAsync(int code)
+    {
+        var user = Context.User;
+        var userId = user.Id;
+
+        var personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(userId);
+
+        // Check if the user has set their personal Link Trade Code
+        if (personalCode != 0)
+        {
+            // Initiate trade using the user's personal Link Trade Code
+            await InitiateTradeWithPersonalLinkTradeCode(user, personalCode);
+        }
+        else
+        {
+            // Initiate trade with random Link Trade Code
+            await InitiateTradeWithRandomCode(user, code);
+        }
+    }
+
+    // Method to initiate a trade with the user's personal Link Trade Code
+    private async Task InitiateTradeWithPersonalLinkTradeCode(SocketUser user, int personalCode)
+    {
+        // Your trade initiation logic here using the personalCode
+        await InitiateTradeWithPersonalLinkTradeCode(user, personalCode);
+    }
+
+    // Method to initiate a trade with a random Link Trade Code
+    private async Task InitiateTradeWithRandomCode(SocketUser user, int code)
+    {
+        // Your trade initiation logic here using the random code
+        await InitiateTradeWithRandomCode(user, code);
     }
 }

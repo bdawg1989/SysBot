@@ -16,6 +16,7 @@ using System.IO;
 using SysBot.Pokemon.Helpers;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
+using PersonalCodeLogic;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -37,6 +38,8 @@ public static class QueueHelper<T> where T : PKM, new()
 
         try
         {
+            int personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(trader.Id);
+
             if (!isBatchTrade || batchTradeNumber == 1)
             {
                 if (trade is PB7 && lgcode != null)
@@ -46,7 +49,10 @@ public static class QueueHelper<T> where T : PKM, new()
                 }
                 else
                 {
-                    await trader.SendMessageAsync($"Your trade code will be: **{code:0000 0000}**.\nI will DM you when your trade is about to start.").ConfigureAwait(false);
+                    string message = personalCode != 0
+                        ? $"Your personal trade code will be: **{personalCode}**.\nI will DM you when your trade is about to start."
+                        : $"Your trade code will be: **{code:0000 0000}**.\nI will DM you when your trade is about to start.";
+                    await trader.SendMessageAsync(message).ConfigureAwait(false);
                 }
             }
 

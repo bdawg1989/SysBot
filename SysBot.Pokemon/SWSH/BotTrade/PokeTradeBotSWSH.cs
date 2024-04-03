@@ -1,3 +1,4 @@
+using PersonalCodeLogic;
 using PKHeX.Core;
 using PKHeX.Core.Searching;
 using SysBot.Base;
@@ -264,6 +265,15 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         await Task.Delay(hub.Config.Timings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
 
         var code = poke.Code;
+
+        // Check if the user has set their personal Link Trade Code
+        var personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(poke.Trainer.ID);
+        if (personalCode != 0)
+        {
+            // Use the user's personal Link Trade Code
+            code = personalCode;
+        }
+
         Log($"Entering Link Trade code: {code:0000 0000}...");
         await EnterLinkCode(code, hub.Config, token).ConfigureAwait(false);
 

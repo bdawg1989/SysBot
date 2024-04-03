@@ -30,10 +30,10 @@ public class LegalitySettings
     }
 
     [Category(Generate), Description("Default 16-bit Trainer ID (TID) for requests that don't match any of the provided trainer data files. This should be a 5-digit number.")]
-    public ushort GenerateTID16 { get; set; } = 12345;
+    public ushort GenerateTID16 { get; set; } = 13131;
 
     [Category(Generate), Description("Default 16-bit Secret ID (SID) for requests that don't match any of the provided trainer data files. This should be a 5-digit number.")]
-    public ushort GenerateSID16 { get; set; } = 54321;
+    public ushort GenerateSID16 { get; set; } = 09724;
 
     [Category(Generate), Description("Default language for PKM files that don't match any of the provided PKM files.")]
     public LanguageID GenerateLanguage { get; set; } = LanguageID.English;

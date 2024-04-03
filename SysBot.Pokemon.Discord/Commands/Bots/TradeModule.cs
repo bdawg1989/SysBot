@@ -394,7 +394,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         await TradeMysteryEggAsync(code).ConfigureAwait(false);
     }
 
-
     [Command("mysteryegg")]
     [Alias("me")]
     [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
@@ -452,9 +451,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         pk.RefreshAbility(2);
     }
 
-
-
-
     [Command("trade")]
     [Alias("t")]
     [Summary("Makes the bot trade you the provided Pokémon file.")]
@@ -464,7 +460,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var sig = Context.User.GetFavor();
         return TradeAsyncAttach(code, sig, Context.User);
     }
-
 
     [Command("trade")]
     [Alias("t")]
@@ -1577,7 +1572,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     }
 
-    ///////// USUM/LGPE/POGO/BDSP/SWSH/PLA -> SV: https://drive.google.com/file/d/1f66rA6sGSfweG_9nGl17DSaCXearyf6g //////////
+    // USUM/LGPE/POGO/BDSP/SWSH/PLA -> SV                                //
+    // https://drive.google.com/file/d/1f66rA6sGSfweG_9nGl17DSaCXearyf6g //
 
     [Command("homereadylist")]
     [Alias("hrl")]
@@ -1661,8 +1657,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         }
     }
-
-
 
     [Command("homereadyrequest")]
     [Alias("hrr")]

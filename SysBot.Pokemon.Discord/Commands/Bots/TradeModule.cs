@@ -1835,7 +1835,13 @@ public class TradeModule : ModuleBase<SocketCommandContext>
         // Store the user's chosen Link Trade Code using the utility class
         PersonalLinkTradeCode.SetPersonalLinkTradeCode(userId, code);
 
-        await ReplyAsync($"Your personal Link Trade Code has been set to: {code:0000 0000}");
+        var replyMessage = await ReplyAsync($"Your personal Link Trade Code has been set to: {code:0000 0000}");
+
+        // Delay for 5 seconds
+        await Task.Delay(5_000);
+
+        // Delete the message
+        await replyMessage.DeleteAsync();
     }
 
     // Command to delete personal Link Trade Code

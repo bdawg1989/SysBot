@@ -1835,20 +1835,27 @@ public class TradeModule : ModuleBase<SocketCommandContext>
         // Store the user's chosen Link Trade Code using the utility class
         PersonalLinkTradeCode.SetPersonalLinkTradeCode(userId, code);
 
+        // Send a message to the channel indicating that the personal Link Trade Code has been set
+        var userMention = user.Mention; ;
+        var botMention = Context.Client.CurrentUser.Mention;
+        var replyMessage = await Context.Channel.SendMessageAsync($"{userMention}'s personal Link Trade Code for {botMention} has been set. Check your DMs for verification.").ConfigureAwait(false);
+
         // Delete the command message
         await Context.Message.DeleteAsync();
 
-        var replyMessage = await ReplyAsync($"Your personal Link Trade Code has been set to: {code:0000 0000}");
+        // Send a message to the user's DMs indicating that their personal Link Trade Code has been set
+        var dmChannel = await user.CreateDMChannelAsync();
+        await dmChannel.SendMessageAsync($"Your personal Link Trade Code has been successfully set to: **{code}**.\nPlease keep in mind this code will reset each time the bot is restarted.");
 
         // Delay for 5 seconds
-        await Task.Delay(5_000);
+        await Task.Delay(20_000);
 
         // Delete the message
         await replyMessage.DeleteAsync();
     }
 
-    // Command to delete personal Link Trade Code
-    [Command("myltc delete")]
+// Command to delete personal Link Trade Code
+[Command("myltc delete")]
     [Summary("Delete your personal Link Trade Code.")]
     public async Task DeletePersonalLinkTradeCodeAsync()
     {

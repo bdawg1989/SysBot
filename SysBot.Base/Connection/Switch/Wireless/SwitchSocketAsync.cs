@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -235,5 +236,64 @@ public sealed class SwitchSocketAsync : SwitchSocket, ISwitchConnectionAsync
         var offsetBytes = await ReadBytesFromCmdAsync(SwitchCommand.PointerRelative(jumps), sizeof(ulong), token).ConfigureAwait(false);
         Array.Reverse(offsetBytes, 0, 8);
         return BitConverter.ToUInt64(offsetBytes, 0);
+    }
+
+    public async Task<byte[]> PixelPeek(CancellationToken token)
+    {
+        try
+        {
+            await SendAsync(SwitchCommand.PixelPeek(), token).ConfigureAwait(false);
+
+            // Consider using a fixed delay or a more precise calculation
+            await Task.Delay(CalculateDelay(), token).ConfigureAwait(false);
+
+            var data = await FlexRead(token).ConfigureAwait(false);
+            return Decoder.ConvertHexByteStringToBytes(data);
+        }
+        catch (Exception e)
+        {
+            LogError($"Error occurred during PixelPeek: {e.Message}");
+            return Array.Empty<byte>();
+        }
+    }
+
+    private int CalculateDelay()
+    {
+        // Calculate delay based on specific requirements or use a fixed delay
+        return BaseDelay; // Example of using a fixed delay
+    }
+
+    private void LogError(string message)
+    {
+        // Log error message with appropriate logging framework
+        Console.WriteLine($"Error: {message}");
+    }
+
+    private async Task<byte[]> FlexRead(CancellationToken token)
+    {
+        List<byte> flexBuffer = new();
+        int available = Connection.Available;
+        Connection.ReceiveTimeout = 1_000;
+
+        do
+        {
+            byte[] buffer = new byte[available];
+            try
+            {
+                Connection.Receive(buffer, available, SocketFlags.None);
+                flexBuffer.AddRange(buffer);
+            }
+            catch (Exception ex)
+            {
+                LogError($"Socket exception thrown while receiving data:\n{ex.Message}");
+                return Array.Empty<byte>();
+            }
+
+            await Task.Delay(MaximumTransferSize / DelayFactor + BaseDelay, token).ConfigureAwait(false);
+            available = Connection.Available;
+        } while (flexBuffer.Count == 0 || flexBuffer.Last() != (byte)'\n');
+
+        Connection.ReceiveTimeout = 0;
+        return flexBuffer.ToArray();
     }
 }

@@ -143,8 +143,7 @@ public static class SwitchCommand
     /// <param name="count">Amount of bytes</param>
     /// <param name="crlf">Line terminator (unused by USB protocol)</param>
     /// <returns>Encoded command bytes</returns>
-    public static byte[] Peek(uint offset, int count, bool crlf = true)
-        => Encode($"peek 0x{offset:X8} {count}", crlf);
+    public static byte[] Peek(uint offset, int count, bool crlf = true) => Encode($"peek 0x{offset:X8} {count}", crlf);
 
     /// <summary>
     /// Requests the Bot to send concat bytes from offsets of sizes in the <see cref="offsetSizeDictionary"/> relative to the heap.
@@ -152,8 +151,7 @@ public static class SwitchCommand
     /// <param name="offsetSizeDictionary">Dictionary of offset and sizes to be looked up</param>
     /// <param name="crlf">Line terminator (unused by USB protocol)</param>
     /// <returns>Encoded command bytes</returns>
-    public static byte[] PeekMulti(IReadOnlyDictionary<ulong, int> offsetSizeDictionary, bool crlf = true)
-        => Encode($"peekMulti{Encode(offsetSizeDictionary)}", crlf);
+    public static byte[] PeekMulti(IReadOnlyDictionary<ulong, int> offsetSizeDictionary, bool crlf = true) => Encode($"peekMulti{string.Concat(offsetSizeDictionary.Select(z => $" 0x{z.Key:X16} {z.Value}"))}", crlf);
 
     /// <summary>
     /// Sends the Bot <see cref="data"/> to be written to <see cref="offset"/>.
@@ -172,8 +170,7 @@ public static class SwitchCommand
     /// <param name="count">Amount of bytes</param>
     /// <param name="crlf">Line terminator (unused by USB protocol)</param>
     /// <returns>Encoded command bytes</returns>
-    public static byte[] PeekAbsolute(ulong offset, int count, bool crlf = true)
-        => Encode($"peekAbsolute 0x{offset:X16} {count}", crlf);
+    public static byte[] PeekAbsolute(ulong offset, int count, bool crlf = true) => Encode($"peekAbsolute 0x{offset:X16} {count}", crlf);
 
     /// <summary>
     /// Requests the Bot to send concat bytes from offsets of sizes in the <see cref="offsetSizeDictionary"/> in absolute space.
@@ -181,8 +178,7 @@ public static class SwitchCommand
     /// <param name="offsetSizeDictionary">Dictionary of offset and sizes to be looked up</param>
     /// <param name="crlf">Line terminator (unused by USB protocol)</param>
     /// <returns>Encoded command bytes</returns>
-    public static byte[] PeekAbsoluteMulti(IReadOnlyDictionary<ulong, int> offsetSizeDictionary, bool crlf = true)
-        => Encode($"peekAbsoluteMulti{Encode(offsetSizeDictionary)}", crlf);
+    public static byte[] PeekAbsoluteMulti(IReadOnlyDictionary<ulong, int> offsetSizeDictionary, bool crlf = true) => Encode($"peekAbsoluteMulti{string.Concat(offsetSizeDictionary.Select(z => $" 0x{z.Key:X16} {z.Value}"))}", crlf);
 
     /// <summary>
     /// Sends the Bot <see cref="data"/> to be written to absolute <see cref="offset"/>.
@@ -339,4 +335,11 @@ public static class SwitchCommand
     /// <returns>Encoded command bytes</returns>
     public static byte[] IsProgramRunning(ulong pid, bool crlf = true)
         => Encode($"isProgramRunning 0x{pid:x16}", crlf);
+
+    /// <summary>
+    /// Takes and sends a raw screenshot.
+    /// </summary>
+    /// <param name="crlf">Line terminator (unused by USB's protocol)</param>
+    /// <returns>Encoded command bytes</returns>
+    public static byte[] PixelPeek(bool includeLineTerminator = true) => Encode("PixelPeek", includeLineTerminator);
 }

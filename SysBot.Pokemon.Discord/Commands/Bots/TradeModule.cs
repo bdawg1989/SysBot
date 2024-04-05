@@ -17,6 +17,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
@@ -262,6 +263,41 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             await Task.Delay(2000);
             await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
+    }
+
+    [Command("peek")]
+    [Summary("Take and send a screenshot from the specified Switch.")]
+    [RequireOwner]
+    public async Task Peek(string address)
+    {
+        try
+        {
+            var bot = SysCord<T>.Runner.GetBot(address);
+            if (bot == null)
+            {
+                await ReplyAsync($"No bot found with the specified address ({address}).").ConfigureAwait(false);
+                return;
+            }
+
+            var bytes = await bot.Bot.Connection.PixelPeek(CancellationToken.None).ConfigureAwait(false);
+            if (bytes.Length == 1)
+            {
+                await ReplyAsync($"Failed to take a screenshot for bot at {address}. Is the bot connected?").ConfigureAwait(false);
+                return;
+            }
+
+            var ms = new MemoryStream(bytes);
+            var img = "1.jpg";
+            var embed = new EmbedBuilder { ImageUrl = $"attachment://{img}", Color = Color.Red }
+                .WithFooter(new EmbedFooterBuilder { Text = $"Captured image from bot at address {address}." });
+            await Context.Channel.SendFileAsync(ms, img, "", false, embed: embed.Build()).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // Log or handle the exception appropriately
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            await ReplyAsync("An unexpected error occurred while executing the command.").ConfigureAwait(false);
         }
     }
 

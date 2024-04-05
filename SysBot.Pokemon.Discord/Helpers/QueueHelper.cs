@@ -16,7 +16,6 @@ using System.IO;
 using SysBot.Pokemon.Helpers;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
-using PersonalCodeLogic;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -28,7 +27,7 @@ public static class QueueHelper<T> where T : PKM, new()
     private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
     private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
 
-    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
+    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, bool ignoreAutoOT = false)
     {
         if ((uint)code > MaxTradeCode)
         {
@@ -38,8 +37,6 @@ public static class QueueHelper<T> where T : PKM, new()
 
         try
         {
-            int personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(trader.Id);
-
             if (!isBatchTrade || batchTradeNumber == 1)
             {
                 if (trade is PB7 && lgcode != null)
@@ -49,14 +46,11 @@ public static class QueueHelper<T> where T : PKM, new()
                 }
                 else
                 {
-                    string message = personalCode != 0
-                        ? $"Your personal trade code will be: **{personalCode}**.\nI will DM you when your trade is about to start."
-                        : $"Your trade code will be: **{code:0000 0000}**.\nI will DM you when your trade is about to start.";
-                    await trader.SendMessageAsync(message).ConfigureAwait(false);
+                    await trader.SendMessageAsync($"Your trade code will be: **{code:0000 0000}**.\nI will DM you when your trade is about to start.").ConfigureAwait(false);
                 }
             }
 
-            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, isBatchTrade ? PokeTradeType.Batch : type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode).ConfigureAwait(false);
+            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, isBatchTrade ? PokeTradeType.Batch : type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
 
         }
         catch (HttpException ex)
@@ -65,12 +59,12 @@ public static class QueueHelper<T> where T : PKM, new()
         }
     }
 
-    public static Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type)
+    public static Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, bool ignoreAutoOT = false)
     {
-        return AddToQueueAsync(context, code, trainer, sig, trade, routine, type, context.User);
+        return AddToQueueAsync(context, code, trainer, sig, trade, routine, type, context.User, ignoreAutoOT: ignoreAutoOT);
     }
 
-    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, string[] markTitles = null)
+    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, bool ignoreAutoOT = false)
     {
         var user = trader;
         var userID = user.Id;
@@ -79,7 +73,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var trainer = new PokeTradeTrainerInfo(trainerName, userID);
         var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode);
         var uniqueTradeID = GenerateUniqueTradeID();
-        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored, lgcode, batchTradeNumber, totalBatchTrades, isMysteryEgg, uniqueTradeID);
+        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored, lgcode, batchTradeNumber, totalBatchTrades, isMysteryEgg, uniqueTradeID, ignoreAutoOT);
         var trade = new TradeEntry<T>(detail, userID, PokeRoutineType.LinkTrade, name, uniqueTradeID);
         var strings = GameInfo.GetStrings(1);
         var hub = SysCord<T>.Runner.Hub;

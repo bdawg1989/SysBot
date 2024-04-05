@@ -1,6 +1,5 @@
 using PKHeX.Core;
 using PKHeX.Core.Searching;
-using PersonalCodeLogic;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
@@ -275,35 +274,12 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
             // Loading code entry.
             if (poke.Type != PokeTradeType.Random)
-            {
-                // Check if the user has set their personal Link Trade Code
-                var personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(poke.Trainer.ID);
-                if (personalCode != 0)
-                {
-                    // Use the user's personal Link Trade Code
-                    await EnterLinkCode(personalCode, Hub.Config, token).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Continue with random Link Trade Code as before
-                    Hub.Config.Stream.StartEnterCode(this);
-                    await Task.Delay(Hub.Config.Timings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
-
-                    var code = poke.Code;
-                    Log($"Entering Link Trade code: {code:0000 0000}...");
-                    await EnterLinkCode(code, Hub.Config, token).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                // Continue with random Link Trade Code as before
                 Hub.Config.Stream.StartEnterCode(this);
-                await Task.Delay(Hub.Config.Timings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
+            await Task.Delay(Hub.Config.Timings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
 
-                var code = poke.Code;
-                Log($"Entering Link Trade code: {code:0000 0000}...");
-                await EnterLinkCode(code, Hub.Config, token).ConfigureAwait(false);
-            }
+            var code = poke.Code;
+            Log($"Entering Link Trade code: {code:0000 0000}...");
+            await EnterLinkCode(code, Hub.Config, token).ConfigureAwait(false);
 
             await Click(PLUS, 3_000, token).ConfigureAwait(false);
             StartFromOverworld = false;
@@ -411,7 +387,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             await ExitTradeToPortal(false, token).ConfigureAwait(false);
             return result;
         }
-        if (Hub.Config.Legality.UseTradePartnerInfo)
+        if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
         {
             await SetBoxPkmWithSwappedIDDetailsSV(toSend, tradePartnerFullInfo, sav, token);
         }
@@ -598,7 +574,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
             poke.SendNotification(this, $"Found Link Trade partner: {tradePartner.TrainerName}. TID: {tradePartner.TID7} SID: {tradePartner.SID7} Waiting for a Pokémon...");
 
-            if (Hub.Config.Legality.UseTradePartnerInfo)
+            if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
             {
                 await SetBoxPkmWithSwappedIDDetailsSV(toSend, tradePartnerFullInfo, sav, token);
             }

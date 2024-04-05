@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
 using Microsoft.VisualBasic;
-using PersonalCodeLogic;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
 using SysBot.Base;
@@ -138,7 +137,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
         }
-        var code = Info.GetRandomTradeCode();
+        var code = Info.GetRandomTradeCode(userID);
         var trainerName = Context.User.Username;
         var lgcode = Info.GetRandomLGTradeCode();
         var sig = Context.User.GetFavor();
@@ -198,7 +197,14 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Makes the bot trade you a Ditto with a requested stat spread and language.")]
     public async Task DittoTrade([Summary("A combination of \"ATK/SPA/SPE\" or \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
     {
-        var code = Info.GetRandomTradeCode();
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            return;
+        }
+        var code = Info.GetRandomTradeCode(userID);
         await DittoTrade(code, keyword, language, nature).ConfigureAwait(false);
 
         if (Context.Message is IUserMessage userMessage)
@@ -222,7 +228,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         keyword = keyword.ToLower().Trim();
         if (Enum.TryParse(language, true, out LanguageID lang))
+        {
             language = lang.ToString();
+        }
         else
         {
             await Context.Message.ReplyAsync($"Couldn't recognize language: {language}.").ConfigureAwait(false);
@@ -262,7 +270,14 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Makes the bot trade you a Pokémon holding the requested item, or Ditto if stat spread keyword is provided.")]
     public async Task ItemTrade([Remainder] string item)
     {
-        var code = Info.GetRandomTradeCode();
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            return;
+        }
+        var code = Info.GetRandomTradeCode(userID);
         await ItemTrade(code, item).ConfigureAwait(false);
     }
 
@@ -333,7 +348,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Trades an egg generated from the provided Pokémon name.")]
     public async Task TradeEgg([Remainder] string egg)
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         await TradeEggAsync(code, egg).ConfigureAwait(false);
     }
 
@@ -391,7 +407,14 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Trades an egg generated from the provided Pokémon name.")]
     public async Task TradeMysteryEggAsync()
     {
-        var code = Info.GetRandomTradeCode();
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            return;
+        }
+        var code = Info.GetRandomTradeCode(userID);
         await TradeMysteryEggAsync(code).ConfigureAwait(false);
     }
 
@@ -478,6 +501,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
 
         content = ReusableActions.StripCodeBlock(content);
+        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
         int formArgument = ExtractFormArgument(content);
@@ -496,21 +520,37 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var pkm = sav.GetLegal(template, out var result);
             if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
             {
-                if (pkm is ITechRecord tr)
+                if (pkm is PK9 pk9)
                 {
-                    tr.SetRecordFlagsAll();
+                    pk9.SetRecordFlagsAll();
+                }
+                else if (pkm is PK8 pk8)
+                {
+                    pk8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB8 pb8)
+                {
+                    pb8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB7 pb7)
+                {
+                    // not applicable for PB7 (LGPE)
+                }
+                else if (pkm is PA8 pa8)
+                {
+                    // not applicable for PA8 (Legends: Arceus)
                 }
             }
             // Check if the Pokémon is from "Legends: Arceus"
             bool isLegendsArceus = pkm.Version == GameVersion.PLA;
 
-            if (!isLegendsArceus && pkm.HeldItem == 0 && !pkm.IsEgg)
+            if (pkm is PA8)
             {
                 pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
             }
             else if (isLegendsArceus)
             {
-                pkm.HeldItem = (int)HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
+                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
             }
             if (pkm is PB7)
             {
@@ -561,7 +601,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pk.ResetPartyStats();
 
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode).ConfigureAwait(false);
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -580,7 +620,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public Task TradeAsync([Summary("Showdown Set")][Remainder] string content)
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         return TradeAsync(code, content);
     }
 
@@ -590,7 +631,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeAsyncAttach()
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         var sig = Context.User.GetFavor();
 
         await TradeAsyncAttach(code, sig, Context.User);
@@ -655,7 +697,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var batchTradeCode = Info.GetRandomTradeCode();
+        var batchTradeCode = Info.GetRandomTradeCode(userID);
         int batchTradeNumber = 1;
         _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
 
@@ -726,7 +768,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var batchTradeCode = Info.GetRandomTradeCode();
+        var batchTradeCode = Info.GetRandomTradeCode(userID);
         int batchTradeNumber = 1;
         _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
 
@@ -766,7 +808,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             pk.ResetPartyStats();
 
-            var code = Info.GetRandomTradeCode();
+            var userID = Context.User.Id;
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
 
             // Add the trade to the queue
@@ -833,7 +876,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pk.ResetPartyStats();
 
             // Use a predefined or random trade code
-            var code = Info.GetRandomTradeCode();
+            var userID = Context.User.Id;
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
 
             // Add the trade to the queue
@@ -1082,7 +1126,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var code = Info.GetRandomTradeCode();
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
             await ReplyAsync($"Special event request added to queue.");
@@ -1248,7 +1292,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var code = Info.GetRandomTradeCode();
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
             await ReplyAsync($"Event request added to queue.").ConfigureAwait(false);
@@ -1414,7 +1458,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var code = Info.GetRandomTradeCode();
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
             await ReplyAsync($"Battle-Ready request added to queue.").ConfigureAwait(false);
@@ -1462,7 +1506,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireSudo]
     public Task TradeAsyncAttachUser([Remainder] string _)
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         return TradeAsyncAttachUser(code, _);
     }
 
@@ -1471,7 +1516,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var attachment = Context.Message.Attachments.FirstOrDefault();
         if (attachment == default)
         {
-            await ReplyAsync("You can't trade nothing. You're forgetting your PKM file or Showdown Format.").ConfigureAwait(false);
+            await ReplyAsync("You can't trade thin air. You're forgetting your PKM file or Showdown Format.").ConfigureAwait(false);
             return;
         }
 
@@ -1498,7 +1543,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         };
     }
 
-    private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific)
+    private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
     {
         if (lgcode == null)
         {
@@ -1555,7 +1600,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
     }
     private List<Pictocodes> GenerateRandomPictocodes(int count)
     {
@@ -1710,7 +1755,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var code = Info.GetRandomTradeCode();
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
             var tradeMessage = await Context.Channel.SendMessageAsync($"HOME-Ready request added to queue.");
@@ -1820,88 +1865,5 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         await message2.DeleteAsync();
         await message3.DeleteAsync();
         await message4.DeleteAsync();
-    }
-}
-public class TradeModule : ModuleBase<SocketCommandContext>
-{
-    // Command to set personal Link Trade Code
-    [Command("myltc")]
-    [Summary("Set your personal Link Trade Code.")]
-    public async Task SetPersonalLinkTradeCodeAsync(int code)
-    {
-        var user = Context.User;
-        var userId = user.Id;
-
-        // Store the user's chosen Link Trade Code using the utility class
-        PersonalLinkTradeCode.SetPersonalLinkTradeCode(userId, code);
-
-        // Send a message to the channel indicating that the personal Link Trade Code has been set
-        var userMention = user.Mention; ;
-        var botMention = Context.Client.CurrentUser.Mention;
-        var replyMessage = await Context.Channel.SendMessageAsync($"{userMention}'s personal Link Trade Code for {botMention} has been set. Check your DMs for verification.").ConfigureAwait(false);
-
-        // Delete the command message
-        await Context.Message.DeleteAsync();
-
-        // Send a message to the user's DMs indicating that their personal Link Trade Code has been set
-        var dmChannel = await user.CreateDMChannelAsync();
-        await dmChannel.SendMessageAsync($"Your personal Link Trade Code has been successfully set to: **{code}**.\nPlease keep in mind this code will reset each time the bot is restarted.");
-
-        // Delay for 5 seconds
-        await Task.Delay(20_000);
-
-        // Delete the message
-        await replyMessage.DeleteAsync();
-    }
-
-// Command to delete personal Link Trade Code
-[Command("myltc delete")]
-    [Summary("Delete your personal Link Trade Code.")]
-    public async Task DeletePersonalLinkTradeCodeAsync()
-    {
-        var user = Context.User;
-        var userId = user.Id;
-
-        // Delete the user's personal Link Trade Code
-        PersonalLinkTradeCode.DeletePersonalLinkTradeCode(userId);
-
-        await ReplyAsync($"Your personal Link Trade Code has been deleted.");
-    }
-
-    // Command to initiate a trade
-    [Command("trade")]
-    [Summary("Initiate a trade.")]
-    public async Task TradeAsync(int code)
-    {
-        var user = Context.User;
-        var userId = user.Id;
-
-        var personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(userId);
-
-        // Check if the user has set their personal Link Trade Code
-        if (personalCode != 0)
-        {
-            // Initiate trade using the user's personal Link Trade Code
-            await InitiateTradeWithPersonalLinkTradeCode(user, personalCode);
-        }
-        else
-        {
-            // Initiate trade with random Link Trade Code
-            await InitiateTradeWithRandomCode(user, code);
-        }
-    }
-
-    // Method to initiate a trade with the user's personal Link Trade Code
-    private async Task InitiateTradeWithPersonalLinkTradeCode(SocketUser user, int personalCode)
-    {
-        // Your trade initiation logic here using the personalCode
-        await InitiateTradeWithPersonalLinkTradeCode(user, personalCode);
-    }
-
-    // Method to initiate a trade with a random Link Trade Code
-    private async Task InitiateTradeWithRandomCode(SocketUser user, int code)
-    {
-        // Your trade initiation logic here using the random code
-        await InitiateTradeWithRandomCode(user, code);
     }
 }

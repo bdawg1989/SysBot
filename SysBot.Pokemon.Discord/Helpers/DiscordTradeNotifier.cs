@@ -1,10 +1,8 @@
 using Discord;
 using Discord.WebSocket;
-using PersonalCodeLogic;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
-
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -42,34 +40,35 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
 
     public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
-        int personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(Trader.Id);
-        string message;
-        string receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})"; // Declare receive variable here
-
-        if (Data is PB7 && LGCode != null && LGCode.Count != 0)
+        if (Data is PK9)
         {
+            var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
+            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
+            var message = $"Initializing trade{receive}{batchInfo}. Please be ready. Your code is **{Code:0000 0000}**.";
+
+            if (TotalBatchTrades > 1 && BatchTradeNumber == 1)
+            {
+                message += "\n**Please stay in the trade until all batch trades are completed.**";
+            }
+
+            Trader.SendMessageAsync(message).ConfigureAwait(false);
+        }
+        else if (Data is PB7)
+        {
+            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
             var (thefile, lgcodeembed) = CreateLGLinkCodeSpriteEmbed(LGCode);
             Trader.SendFileAsync(thefile, $"Initializing trade{receive}. Please be ready. Your code is", embed: lgcodeembed).ConfigureAwait(false);
-            return;
         }
-
-        // For other cases
-        var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
-        var codeMessage = personalCode != 0 ? $"Your personal trade code is **{personalCode}**." : $"Your code is **{Code:0000 0000}**.";
-
-        message = $"Initializing trade{receive}{batchInfo}. Please be ready. {codeMessage}";
-
-        if (TotalBatchTrades > 1 && BatchTradeNumber == 1)
+        else
         {
-            message += "\n**Please stay in the trade until all batch trades are completed.**";
+            var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
+            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
+            var message = $"Initializing trade{receive}{batchInfo}. Please be ready. Your code is **{Code:0000 0000}**.";
+            Trader.SendMessageAsync(message).ConfigureAwait(false);
         }
-
-        Trader.SendMessageAsync(message).ConfigureAwait(false);
     }
-
     public void TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
-        int personalCode = PersonalLinkTradeCode.GetUserPersonalLinkTradeCode(Trader.Id);
         var batchInfo = TotalBatchTrades > 1 ? $" for batch trade (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
         var name = Info.TrainerName;
         var trainer = string.IsNullOrEmpty(name) ? string.Empty : $" {name}";
@@ -77,23 +76,24 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
 
         if (Data is PB7 && LGCode != null && LGCode.Count != 0)
         {
-            // Code for PB7 with LGCode
             message = $"I'm waiting for you{trainer}{batchInfo}! My IGN is **{routine.InGameName}**.";
         }
         else
         {
-            var codeMessage = personalCode != 0 ? $"Your personal trade code is **{personalCode}**." : $"Your code is **{Code:0000 0000}**.";
-            message = $"I'm waiting for you{trainer}{batchInfo}! Please be ready. {codeMessage}";
-
             if (TotalBatchTrades > 1 && BatchTradeNumber > 1)
             {
                 var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
                 message = $"Now trading{receive} (Trade {BatchTradeNumber} of {TotalBatchTrades}). **Select the Pokémon you wish to trade!**";
             }
+            else
+            {
+                message = $"I'm waiting for you{trainer}{batchInfo}! Your code is **{Code:0000 0000}**. My IGN is **{routine.InGameName}**.";
+            }
         }
 
         Trader.SendMessageAsync(message).ConfigureAwait(false);
     }
+
 
     public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {

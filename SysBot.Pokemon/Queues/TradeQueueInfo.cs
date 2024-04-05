@@ -16,6 +16,7 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
     private readonly object _sync = new();
     private readonly List<TradeEntry<T>> UsersInQueue = [];
     public readonly PokeTradeHub<T> Hub = Hub;
+    private readonly TradeCodeStorage _tradeCodeStorage = new();
     public bool IsUserInQueue(ulong userId)
     {
         lock (_sync)
@@ -203,7 +204,18 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
         }
     }
 
-    public int GetRandomTradeCode() => Hub.Config.Trade.GetRandomTradeCode();
+    public int GetRandomTradeCode(ulong trainerID)
+    {
+        if (Hub.Config.Trade.TradeConfiguration.StoreTradeCodes)
+        {
+            return _tradeCodeStorage.GetTradeCode(trainerID);
+        }
+        else
+        {
+            return Hub.Config.Trade.GetRandomTradeCode();
+        }
+    }
+
     public List<Pictocodes> GetRandomLGTradeCode()
     {
         var code = new List<Pictocodes>();

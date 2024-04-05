@@ -342,7 +342,7 @@ namespace SysBot.Pokemon.Helpers
 
             if (!JudgeInvalidCount(invalidCount, psList.Count)) return;
 
-            var code = queueInfo.GetRandomTradeCode();
+            var code = queueInfo.GetRandomTradeCode(12345);
             var __ = AddToTradeQueue(pkms, code, skipAutoOTList,
                 PokeRoutineType.LinkTrade, out string message);
             SendMessage(message);
@@ -357,7 +357,7 @@ namespace SysBot.Pokemon.Helpers
 
             if (!JudgeInvalidCount(invalidCount, chinesePsList.Count)) return;
 
-            var code = queueInfo.GetRandomTradeCode();
+            var code = queueInfo.GetRandomTradeCode(12345);
             var __ = AddToTradeQueue(pkms, code, skipAutoOTList,
                 PokeRoutineType.LinkTrade, out string message);
             SendMessage(message);
@@ -388,7 +388,7 @@ namespace SysBot.Pokemon.Helpers
 
             if (!JudgeInvalidCount(invalidCount, rawPkms.Count)) return;
 
-            var code = queueInfo.GetRandomTradeCode();
+            var code = queueInfo.GetRandomTradeCode(12345);
             var __ = AddToTradeQueue(pkms, code, skipAutoOTList,
                 PokeRoutineType.LinkTrade, out string message);
             SendMessage(message);
@@ -466,7 +466,7 @@ namespace SysBot.Pokemon.Helpers
 
         public void StartTradeWithoutCheck(T pkm, bool foreign = false)
         {
-            var code = queueInfo.GetRandomTradeCode();
+            var code = queueInfo.GetRandomTradeCode(12345);
             var __ = AddToTradeQueue(pkm, code, foreign,
                 PokeRoutineType.LinkTrade, out string message);
             SendMessage(message);
@@ -474,7 +474,7 @@ namespace SysBot.Pokemon.Helpers
 
         public void StartDump()
         {
-            var code = queueInfo.GetRandomTradeCode();
+            var code = queueInfo.GetRandomTradeCode(12345);
             var __ = AddToTradeQueue(new T(), code, false,
                 PokeRoutineType.Dump, out string message);
             SendMessage(message);

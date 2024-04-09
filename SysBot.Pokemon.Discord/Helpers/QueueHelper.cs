@@ -84,6 +84,7 @@ public static class QueueHelper<T> where T : PKM, new()
         bool useGenderIcons = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.GenderEmojis;
         bool showScale = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowScale;
         bool showTeraType = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTeraType;
+        bool useTeraTypeEmoji = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTeraTypeEmoji;
         bool showLevel = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowLevel;
         bool showAbility = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowAbility;
         bool showNature = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowNature;
@@ -129,6 +130,30 @@ public static class QueueHelper<T> where T : PKM, new()
             [MoveType.Normal] = "<:normal_type:1218977610051092540>",
             [MoveType.Poison] = "<:poison_type:1218977611275833445>",
             [MoveType.Fairy] = "<:fairy_type:1218977872488693880>",
+        };
+
+        var teraTypeEmojis = new Dictionary<string, string>
+        {
+            ["Bug"] = "<:bug_tera:1227219575230431262>",
+            ["Fire"] = "<:fire_tera:1227219612802875442>",
+            ["Dark"] = "<:dark_tera:1227229020920479816>",
+            ["Dragon"] = "<:dragon_tera:1227229022031839345>",
+            ["Electric"] = "<:electric_tera:1227229022937812993>",
+            ["Fairy"] = "<:fairy_tera:1227229023843913738>",
+            ["Fighting"] = "<:fighting_tera:1227229023843913738>",
+            ["Flying"] = "<:flying_tera:1227229025882214484>",
+            ["Ghost"] = "<:ghost_tera:1227229026964209694>",
+            ["Ground"] = "<:ground_tera:1227229029531389982>",
+            ["Normal"] = "<:normal_tera:1227229031645319209>",
+            ["Psychic"] = "<:psychic_tera:1227229035441160275>",
+            ["Steel"] = "<:steel_tera:1227229039077621870>",
+            ["Water"] = "<:water_tera:1227229042206310433>",
+            ["Grass"] = "<:grass_tera:1227229310583050282>",
+            ["Ice"] = "<:ice_tera:1227229311745003530>",
+            ["Poison"] = "<:poison_tera:1227229312697110669>",
+            ["Rock"] = "<:rock_tera:1227229313552613396>",
+            ["Stellar"] = "<:stellar_tera:1227229314660044850>",
+
         };
 
         // Basic Pokémon details
@@ -297,7 +322,8 @@ public static class QueueHelper<T> where T : PKM, new()
             if (userDetails.SID != 0)
                 leftSideContent += $"**SID:** {userDetails.SID:D4}\n";
 
-
+            string teraTypeEmoji = teraTypeEmojis.ContainsKey(teraTypeString) ? teraTypeEmojis[teraTypeString] : "";
+            string teraTypeWithEmoji = $"{teraTypeEmoji} {teraTypeString}";
 
             leftSideContent +=
                 (showLevel ? $"**Level:** {level}\n" : "") +
@@ -305,7 +331,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 (showNature ? $"**Nature**: {natureName}\n" : "") +
                 (showIVs ? $"**IVs**: {ivsDisplay}\n" : "") +
                 (showEVs ? $"**EVs**: {evsDisplay}\n" : "") +
-                (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeString}\n" : "") +
+                (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeWithEmoji}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +
                 (showMetLevel ? $"**Met Level:** {metLevelDisplay}\n" : "") +
                 (showFatefulEncounter ? $"**Event/Gift:** {fatefulEncounterDisplay}\n" : "") +

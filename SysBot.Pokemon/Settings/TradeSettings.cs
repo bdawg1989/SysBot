@@ -128,6 +128,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(EmbedSettings), Description("Will show Tera Type in trade embed (SV & Discord only).")]
         public bool ShowTeraType { get; set; } = true;
 
+        [Category(EmbedSettings), Description("Will show Tera Type Emojis in the trade embed (SV & Discord only).")]
+        public bool ShowTeraTypeEmoji { get; set; } = true;
+
         [Category(EmbedSettings), Description("Will show Level in trade embed (Discord only).")]
         public bool ShowLevel { get; set; } = true;
 

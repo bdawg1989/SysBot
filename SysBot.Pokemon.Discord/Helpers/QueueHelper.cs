@@ -16,6 +16,7 @@ using System.IO;
 using SysBot.Pokemon.Helpers;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
+using Newtonsoft.Json;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -97,6 +98,12 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showMetLevel = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowMetLevel;
         bool showFatefulEncounter = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowFatefulEncounter;
         bool showWasEgg = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowWasEgg;
+        var tradeCodeStorage = new TradeCodeStorage();
+        int totalTradeCount = tradeCodeStorage.GetTradeCount(trader.Id);
+        var tradeDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
+        string otText = tradeDetails?.OT != null ? $"OT: {tradeDetails.OT}" : "";
+        string tidText = tradeDetails?.TID != 0 ? $"TID: {tradeDetails.TID}" : "";
+        string sidText = tradeDetails?.SID != 0 ? $"SID: {tradeDetails.SID}" : "";
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);
@@ -207,7 +214,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var botct = Info.Hub.Bots.Count;
         var baseEta = position.Position > botct ? Info.Hub.Config.Queues.EstimateDelay(position.Position, botct) : 0;
         var adjustedEta = baseEta + (batchTradeNumber - 1); // Increment ETA by 1 minute for each batch trade
-        var etaMessage = $"Estimated Trade Time: {baseEta:F1} min(s)\nCurrent Batch Trade: {batchTradeNumber} of {totalBatchTrades}";
+        var etaMessage = $"Estimated Wait Time: {baseEta:F1} min(s)\nCurrent Batch Trade: {batchTradeNumber} of {totalBatchTrades}";
 
         // Determining trade title based on trade type
         string tradeTitle;
@@ -248,11 +255,20 @@ public static class QueueHelper<T> where T : PKM, new()
                             $"{userName}'s {tradeTitle}" :
                             $"{userName}'s {isPkmShiny}{pokemonDisplayName}";
 
+        // Build footer
+        string footerText = $"Current Queue Position: {position.Position}";
+
+        TradeCodeStorage.TradeCodeDetails userDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
+        string userDetailsText = $"User's Total Trades: {totalTradeCount}";
+
+        footerText += $"\n{userDetailsText}\n{etaMessage}";
+
+
         // Initializing the embed builder with general settings
         var embedBuilder = new EmbedBuilder()
             .WithColor(embedColor)
             .WithImageUrl(isLocalFile ? $"attachment://{Path.GetFileName(embedImageUrl)}" : embedImageUrl)
-            .WithFooter($"Queue Position: {position.Position}\n{etaMessage}")
+            .WithFooter(footerText)
             .WithAuthor(new EmbedAuthorBuilder()
                 .WithName(authorName)
                 .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
@@ -270,10 +286,20 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             // Preparing content for normal trades
             string leftSideContent = $"**User:** {user.Mention}\n";
+
+            // Add OT, TID, and SID only if they are available
+            if (!string.IsNullOrEmpty(userDetails?.OT))
+                leftSideContent += $"**OT:** {userDetails.OT}\n";
+
+            if (userDetails.TID != 0)
+                leftSideContent += $"**TID:** {userDetails.TID:D6}\n";
+
+            if (userDetails.SID != 0)
+                leftSideContent += $"**SID:** {userDetails.SID:D4}\n";
+
+
+
             leftSideContent +=
-                (showOT ? $"**OT:** {originalTrainerName}\n" : "") +
-                (showTID ? $"**TID:** {tidDisplay}\n" : "") +
-                (showSID ? $"**SID:** {sidDisplay}\n" : "") +
                 (showLevel ? $"**Level:** {level}\n" : "") +
                 (showAbility ? $"**Ability:** {abilityName}\n" : "") +
                 (showNature ? $"**Nature**: {natureName}\n" : "") +

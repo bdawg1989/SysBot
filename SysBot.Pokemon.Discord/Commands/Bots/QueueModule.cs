@@ -1,6 +1,5 @@
 using Discord;
 using Discord.Commands;
-using Discord.Net;
 using Discord.WebSocket;
 using PKHeX.Core;
 using System.Threading.Tasks;
@@ -163,11 +162,11 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task DeleteTradeCodeAsync()
     {
         var userID = Context.User.Id;
-        string msg = QueueModule<T>.DeleteTradeCode(userID);
+        string msg = await DeleteTradeCode(userID);
         await ReplyAsync(msg).ConfigureAwait(false);
     }
 
-    private static string DeleteTradeCode(ulong userID)
+    private async Task<string> DeleteTradeCode(ulong userID)
     {
         var tradeCodeStorage = new TradeCodeStorage();
         bool success = tradeCodeStorage.DeleteTradeCode(userID);
@@ -236,7 +235,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("addTradeCode")]
     [Alias("atc")]
     [Summary("Sets the trade code for the user.")]
-    public async Task SetTradeCodeAsync(int tradeCode)
+    public async Task SetTradeCodeAsync(int tradeCode, string ot = null, int tid = 0, int sid = 0)
     {
         var user = Context.User as SocketUser;
         var userID = user.Id;
@@ -246,9 +245,9 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         if (IsValidTradeCode(tradeCode))
         {
             await Context.Message.DeleteAsync();
-            await SetTradeCode(userID, tradeCode);
+            await SetTradeCode(userID, tradeCode, ot, tid, sid);
 
-            await Context.Channel.SendMessageAsync($"{userMention}, your Link Trade Code for {botMention} has been successfully set.").ConfigureAwait(false);
+            await Context.Channel.SendMessageAsync($"Your Link Trade Code for {botMention} has been successfully set.").ConfigureAwait(false);
         }
         else
         {
@@ -261,10 +260,10 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return tradeCode <= 99999999 && tradeCode >= 00000000;
     }
 
-    private async Task SetTradeCode(ulong userID, int tradeCode)
+    private async Task SetTradeCode(ulong userID, int tradeCode, string ot, int tid, int sid)
     {
         var tradeCodeStorage = new TradeCodeStorage();
-        bool success = tradeCodeStorage.AddOrUpdateTradeCode(userID, tradeCode);
+        bool success = tradeCodeStorage.AddOrUpdateTradeCode(userID, tradeCode, ot, tid, sid);
 
         if (!success)
             await Context.Channel.SendMessageAsync("Failed to update Trade Code.").ConfigureAwait(false);

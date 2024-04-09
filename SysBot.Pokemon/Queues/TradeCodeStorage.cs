@@ -1,30 +1,76 @@
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.IO;
+using PKHeX.Core;
 
 namespace SysBot.Pokemon;
 
 public class TradeCodeStorage
 {
+
+    public bool AddOrUpdateTradeCode(ulong userID, int tradeCode, string ot, int tid, int sid)
+    {
+        LoadFromFile();
+
+        if (_tradeCodeDetails.ContainsKey(userID))
+        {
+            // If the user already exists, update the trade code and keep the existing OT, TID, and SID
+            _tradeCodeDetails[userID].Code = tradeCode;
+        }
+        else
+        {
+            // If the user doesn't exist, add a new entry with the specified trade code and OT, TID, SID
+            _tradeCodeDetails[userID] = new TradeCodeDetails
+            {
+                Code = tradeCode,
+                OT = ot,
+                TID = tid,
+                SID = sid,
+                TradeCount = 0
+            };
+        }
+
+        SaveToFile();
+        return true;
+    }
+
+
     private const string FileName = "tradecodes.json";
-    private Dictionary<ulong, int> _tradeCodes;
+    private Dictionary<ulong, TradeCodeDetails> _tradeCodeDetails;
+
+    public class TradeCodeDetails
+    {
+        public int Code { get; set; }
+        public string OT { get; set; }
+        public int TID { get; set; }
+        public int SID { get; set; }
+        public int TradeCount { get; set; }
+    }
+
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true
+    };
 
     public TradeCodeStorage()
     {
-        _tradeCodes = LoadFromFile();
+        LoadFromFile();
     }
 
     public int GetTradeCode(ulong trainerID)
     {
-        // Load the trade codes from the JSON file
-        _tradeCodes = LoadFromFile();
+        LoadFromFile();
 
+        if (_tradeCodeDetails.TryGetValue(trainerID, out var details))
+        {
+            details.TradeCount++;
+            SaveToFile();
+            return details.Code;
+        }
 
-        if (_tradeCodes.TryGetValue(trainerID, out int code))
-            return code;
-
-        code = GenerateRandomTradeCode();
-        _tradeCodes[trainerID] = code;
+        var code = GenerateRandomTradeCode();
+        _tradeCodeDetails[trainerID] = new TradeCodeDetails { Code = code, TradeCount = 1 };
         SaveToFile();
         return code;
     }
@@ -35,24 +81,27 @@ public class TradeCodeStorage
         return settings.GetRandomTradeCode();
     }
 
-    private static Dictionary<ulong, int> LoadFromFile()
+    private void LoadFromFile()
     {
         if (File.Exists(FileName))
         {
             string json = File.ReadAllText(FileName);
-            return JsonConvert.DeserializeObject<Dictionary<ulong, int>>(json);
+            _tradeCodeDetails = JsonSerializer.Deserialize<Dictionary<ulong, TradeCodeDetails>>(json, SerializerOptions);
         }
-        return [];
+        else
+        {
+            _tradeCodeDetails = new Dictionary<ulong, TradeCodeDetails>();
+        }
     }
 
     public bool DeleteTradeCode(ulong trainerID)
     {
-        // Load the trade codes from the JSON file
-        _tradeCodes = LoadFromFile();
+        LoadFromFile();
 
-
-        if (_tradeCodes.Remove(trainerID))
+        if (_tradeCodeDetails.TryGetValue(trainerID, out var details))
         {
+            // Remove only the trade code
+            details.Code = 0;
             SaveToFile();
             return true;
         }
@@ -61,14 +110,42 @@ public class TradeCodeStorage
 
     private void SaveToFile()
     {
-        string json = JsonConvert.SerializeObject(_tradeCodes);
+        string json = JsonSerializer.Serialize(_tradeCodeDetails, SerializerOptions);
         File.WriteAllText(FileName, json);
     }
 
-    public bool AddOrUpdateTradeCode(ulong trainerID, int tradeCode)
+    public int GetTradeCount(ulong trainerID)
     {
-        _tradeCodes[trainerID] = tradeCode;
-        SaveToFile();
-        return true;
+        LoadFromFile();
+
+        if (_tradeCodeDetails.TryGetValue(trainerID, out var details))
+        {
+            return details.TradeCount;
+        }
+        return 0;
+    }
+
+    public TradeCodeDetails GetTradeDetails(ulong trainerID)
+    {
+        LoadFromFile();
+
+        if (_tradeCodeDetails.TryGetValue(trainerID, out var details))
+        {
+            return details;
+        }
+        return null;
+    }
+
+    public void UpdateTradeDetails(ulong trainerID, string ot, int tid, int sid)
+    {
+        LoadFromFile();
+
+        if (_tradeCodeDetails.TryGetValue(trainerID, out var details))
+        {
+            details.OT = ot;
+            details.TID = tid;
+            details.SID = sid;
+            SaveToFile();
+        }
     }
 }

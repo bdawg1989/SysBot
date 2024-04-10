@@ -194,12 +194,12 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         if (result.ShouldAttemptRetry() && detail.Type != PokeTradeType.Random && !detail.IsRetry)
         {
             detail.IsRetry = true;
-            hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
-            detail.SendNotification(this, "Oops! Something happened. I'll requeue you for another attempt.");
+            Hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
+            detail.SendNotification(this, "**Error:** Unknown\n**Result:** Re-queueing");
         }
         else
         {
-            detail.SendNotification(this, $"Oops! Something happened. Canceling the trade: {result}.");
+            detail.SendNotification(this, $"**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
             detail.TradeCanceled(this, result);
         }
     }

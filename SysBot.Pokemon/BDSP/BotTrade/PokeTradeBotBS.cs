@@ -204,11 +204,11 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         {
             detail.IsRetry = true;
             Hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
-            detail.SendNotification(this, "Oops! Something happened. I'll requeue you for another attempt.");
+            detail.SendNotification(this, "**Error:** Unknown\n**Result:** Re-queueing");
         }
         else
         {
-            detail.SendNotification(this, $"Oops! Something happened. Canceling the trade: {result}.");
+            detail.SendNotification(this, $"**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
             detail.TradeCanceled(this, result);
         }
     }

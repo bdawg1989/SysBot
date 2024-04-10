@@ -27,6 +27,7 @@ public static class QueueHelper<T> where T : PKM, new()
     // A dictionary to hold batch trade file paths and their deletion status
     private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
     private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
+    private static DiscordColor embedColor = DiscordColor.LightGrey;
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, bool ignoreAutoOT = false)
     {
@@ -38,16 +39,21 @@ public static class QueueHelper<T> where T : PKM, new()
 
         try
         {
+            EmbedBuilder embedBuilder = new EmbedBuilder()
+                .WithTitle("Trade Code...")
+                .WithDescription($"# **{code:0000 0000}**\nI'll notify you when your trade starts")
+                .WithColor(embedColor);
+
             if (!isBatchTrade || batchTradeNumber == 1)
             {
                 if (trade is PB7 && lgcode != null)
                 {
                     var (thefile, lgcodeembed) = CreateLGLinkCodeSpriteEmbed(lgcode);
-                    await trader.SendFileAsync(thefile, $"Your trade code will be.", embed: lgcodeembed).ConfigureAwait(false);
+                    await trader.SendFileAsync(thefile, null, embed: lgcodeembed).ConfigureAwait(false);
                 }
                 else
                 {
-                    await trader.SendMessageAsync($"Your trade code will be: **{code:0000 0000}**.\nI will DM you when your trade is about to start.").ConfigureAwait(false);
+                    await trader.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
                 }
             }
 
@@ -59,6 +65,7 @@ public static class QueueHelper<T> where T : PKM, new()
             await HandleDiscordExceptionAsync(context, trader, ex).ConfigureAwait(false);
         }
     }
+
 
     public static Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, bool ignoreAutoOT = false)
     {

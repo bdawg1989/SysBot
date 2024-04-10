@@ -140,7 +140,7 @@ public static class QueueHelper<T> where T : PKM, new()
             ["Dragon"] = "<:dragon_tera:1227229022031839345>",
             ["Electric"] = "<:electric_tera:1227229022937812993>",
             ["Fairy"] = "<:fairy_tera:1227229023843913738>",
-            ["Fighting"] = "<:fighting_tera:1227229023843913738>",
+            ["Fighting"] = "<:fighting_tera:1227229025064189992>",
             ["Flying"] = "<:flying_tera:1227229025882214484>",
             ["Ghost"] = "<:ghost_tera:1227229026964209694>",
             ["Ground"] = "<:ground_tera:1227229029531389982>",
@@ -331,7 +331,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 (showNature ? $"**Nature**: {natureName}\n" : "") +
                 (showIVs ? $"**IVs**: {ivsDisplay}\n" : "") +
                 (showEVs ? $"**EVs**: {evsDisplay}\n" : "") +
-                (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeWithEmoji}\n" : "") +
+                (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeEmoji}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +
                 (showMetLevel ? $"**Met Level:** {metLevelDisplay}\n" : "") +
                 (showFatefulEncounter ? $"**Event/Gift:** {fatefulEncounterDisplay}\n" : "") +

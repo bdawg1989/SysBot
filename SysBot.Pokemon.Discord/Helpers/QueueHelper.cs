@@ -17,6 +17,7 @@ using SysBot.Pokemon.Helpers;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -27,7 +28,8 @@ public static class QueueHelper<T> where T : PKM, new()
     // A dictionary to hold batch trade file paths and their deletion status
     private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
     private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
-    private static DiscordColor embedColor = DiscordColor.LightGrey;
+    private static DiscordColor embedColor = DiscordColor.Gold;
+    private static SocketUser Trader { get; }
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, bool ignoreAutoOT = false)
     {
@@ -39,10 +41,15 @@ public static class QueueHelper<T> where T : PKM, new()
 
         try
         {
+            string imageUrl = "https://i.imgur.com/4Fuw4Un.gif";
             EmbedBuilder embedBuilder = new EmbedBuilder()
-                .WithTitle("Trade Code...")
-                .WithDescription($"# **{code:0000 0000}**\nI'll notify you when your trade starts")
-                .WithColor(embedColor);
+                .WithTitle("Here's your Trade Code!")
+                .WithDescription($"# **{code:0000 0000}**\n*I'll notify you when your trade starts*")
+                .WithColor(embedColor)
+                .WithThumbnailUrl(imageUrl);
+            Embed embed = embedBuilder.Build(); // Build the Embed object
+
+            // Assuming Trader is a DiscordSocketClient object
 
             if (!isBatchTrade || batchTradeNumber == 1)
             {
@@ -53,7 +60,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 }
                 else
                 {
-                    await trader.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+                    await trader.SendMessageAsync(embed: embed).ConfigureAwait(false); // Use the built Embed object
                 }
             }
 
@@ -65,7 +72,6 @@ public static class QueueHelper<T> where T : PKM, new()
             await HandleDiscordExceptionAsync(context, trader, ex).ConfigureAwait(false);
         }
     }
-
 
     public static Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, bool ignoreAutoOT = false)
     {
@@ -522,7 +528,7 @@ public static class QueueHelper<T> where T : PKM, new()
             if (!ballImageLoaded)
             {
                 Console.WriteLine($"Ball image could not be loaded: {ballImgUrl}");
-               // await context.Channel.SendMessageAsync($"Ball image could not be loaded: {ballImgUrl}");
+                // await context.Channel.SendMessageAsync($"Ball image could not be loaded: {ballImgUrl}");
             }
         }
 

@@ -53,10 +53,12 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
                 message += "\n*Please stay in the trade until all batch trades are completed*";
             }
 
+            string imageUrl = "https://i.imgur.com/rixGxsH.gif";
             var embed = new EmbedBuilder()
-                .WithTitle("Starting Trade...")
+                .WithTitle("Initializing Bot...")
                 .WithDescription(message)
-                .WithColor(Color.DarkerGrey)
+                .WithColor(Color.Green)
+                .WithThumbnailUrl(imageUrl)
                 .Build();
 
             Trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
@@ -100,27 +102,27 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
             }
         }
 
-        
+        string imageUrl = "https://i.imgur.com/WBJ05TJ.gif";
         var embed = new EmbedBuilder()
             .WithTitle("Now Searching...")
             .WithDescription(message)
-            .WithColor(Color.DarkGrey)
+            .WithColor(Color.DarkGreen)
+            .WithThumbnailUrl(imageUrl)
             .Build();
 
         Trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
-    
-        
-    
 
 
-            public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
+    public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {
         OnFinish?.Invoke(routine);
+        string imageUrl = "https://i.imgur.com/KnpoU86.gif";
         var embed = new EmbedBuilder()
-            .WithTitle("Trade Canceled...")
-            .WithDescription($"**Reason:** {msg}")
+            .WithTitle("Uh-Oh...")
+            .WithDescription($"*Sorry, but there was an error*\n**Reason:** {msg}")
             .WithColor(Color.DarkRed)
+            .WithThumbnailUrl(imageUrl)
             .Build();
 
         Trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
@@ -130,10 +132,15 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
     {
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
-        var message = tradedToUser != 0 ? (IsMysteryEgg ? "Trade finished. Enjoy your **Mystery Egg**!" : $"Trade finished. Enjoy your **{(Species)tradedToUser}**!") : "Trade finished!";
+        string imageUrl = "https://i.imgur.com/9x9wj0t.gif";
+        var message = tradedToUser != 0 ? (IsMysteryEgg ? "*Enjoy your Mystery Egg!*" : $"*Enjoy your {(Species)tradedToUser}!*") : "*Trade finished!*";
+
+
         var embed = new EmbedBuilder()
+            .WithTitle("Trade Finished!")
             .WithDescription(message)
-            .WithColor(Color.Green)
+            .WithColor(Color.DarkPurple)
+            .WithThumbnailUrl(imageUrl)
             .Build();
 
         Trader.SendMessageAsync(embed: embed).ConfigureAwait(false);

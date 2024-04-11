@@ -241,7 +241,7 @@ public abstract class SwitchUSB : IConsoleConnection
         }
     }
 
-    protected byte[] PixelPeekUSB(CancellationToken token)
+    protected byte[] PixelPeekUSB()
     {
         Thread.Sleep(1);
         lock (_sync)

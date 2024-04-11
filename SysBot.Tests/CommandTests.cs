@@ -29,10 +29,13 @@ public class DecodeTests
     [Fact]
     public void DecodeTest()
     {
-        ReadOnlySpan<byte> raw = [0x30, 0x31, 0x30, 0x32, 0x30, 0x33, 0x30, 0x34, 0x30, 0x41, 0x30, 0x46];
-        ReadOnlySpan<byte> expect = [1, 2, 3, 4, 10, 15];
+        byte[] rawBytes = { 0x30, 0x31, 0x30, 0x32, 0x30, 0x33, 0x30, 0x34, 0x30, 0x41, 0x30, 0x46 };
+        byte[] expectBytes = { 1, 2, 3, 4, 10, 15 };
 
-        var convert = Decoder.ConvertHexByteStringToBytes(raw);
+        ReadOnlySpan<byte> raw = new ReadOnlySpan<byte>(rawBytes);
+        ReadOnlySpan<byte> expect = new ReadOnlySpan<byte>(expectBytes);
+
+        var convert = Decoder.ConvertHexByteStringToBytes(raw.ToArray()); // Convert ReadOnlySpan<byte> to byte[]
         expect.SequenceEqual(convert).Should().BeTrue();
     }
 }

@@ -219,54 +219,23 @@ public sealed class SwitchSocketAsync : SwitchSocket, ISwitchConnectionAsync
         return ReadBytesFromCmdAsync(SwitchCommand.PointerPeek(jumps, size), size, token);
     }
 
-    public async Task PointerPoke(byte[] data, IEnumerable<long> jumps, CancellationToken token)
-    {
-        await SendAsync(SwitchCommand.PointerPoke(jumps, data), token).ConfigureAwait(false);
-    }
-
-    public async Task<ulong> PointerAll(IEnumerable<long> jumps, CancellationToken token)
-    {
-        var offsetBytes = await ReadBytesFromCmdAsync(SwitchCommand.PointerAll(jumps), sizeof(ulong), token).ConfigureAwait(false);
-        Array.Reverse(offsetBytes, 0, 8);
-        return BitConverter.ToUInt64(offsetBytes, 0);
-    }
-
-    public async Task<ulong> PointerRelative(IEnumerable<long> jumps, CancellationToken token)
-    {
-        var offsetBytes = await ReadBytesFromCmdAsync(SwitchCommand.PointerRelative(jumps), sizeof(ulong), token).ConfigureAwait(false);
-        Array.Reverse(offsetBytes, 0, 8);
-        return BitConverter.ToUInt64(offsetBytes, 0);
-    }
-
     public async Task<byte[]> PixelPeek(CancellationToken token)
     {
+        await SendAsync(SwitchCommand.PixelPeek(), token).ConfigureAwait(false);
+        await Task.Delay(Connection.ReceiveBufferSize / DelayFactor + BaseDelay, token).ConfigureAwait(false);
+
+        var data = await FlexRead(token).ConfigureAwait(false);
+        var result = Array.Empty<byte>();
         try
         {
-            await SendAsync(SwitchCommand.PixelPeek(), token).ConfigureAwait(false);
-
-            // Consider using a fixed delay or a more precise calculation
-            await Task.Delay(CalculateDelay(), token).ConfigureAwait(false);
-
-            var data = await FlexRead(token).ConfigureAwait(false);
-            return Decoder.ConvertHexByteStringToBytes(data);
+            result = Decoder.ConvertHexByteStringToBytes(data);
         }
         catch (Exception e)
         {
-            LogError($"Error occurred during PixelPeek: {e.Message}");
-            return Array.Empty<byte>();
+            LogError($"Malformed screenshot data received:\n{e.Message}");
         }
-    }
 
-    private int CalculateDelay()
-    {
-        // Calculate delay based on specific requirements or use a fixed delay
-        return BaseDelay; // Example of using a fixed delay
-    }
-
-    private void LogError(string message)
-    {
-        // Log error message with appropriate logging framework
-        Console.WriteLine($"Error: {message}");
+        return result;
     }
 
     private async Task<byte[]> FlexRead(CancellationToken token)
@@ -295,5 +264,24 @@ public sealed class SwitchSocketAsync : SwitchSocket, ISwitchConnectionAsync
 
         Connection.ReceiveTimeout = 0;
         return flexBuffer.ToArray();
+    }
+
+    public async Task PointerPoke(byte[] data, IEnumerable<long> jumps, CancellationToken token)
+    {
+        await SendAsync(SwitchCommand.PointerPoke(jumps, data), token).ConfigureAwait(false);
+    }
+
+    public async Task<ulong> PointerAll(IEnumerable<long> jumps, CancellationToken token)
+    {
+        var offsetBytes = await ReadBytesFromCmdAsync(SwitchCommand.PointerAll(jumps), sizeof(ulong), token).ConfigureAwait(false);
+        Array.Reverse(offsetBytes, 0, 8);
+        return BitConverter.ToUInt64(offsetBytes, 0);
+    }
+
+    public async Task<ulong> PointerRelative(IEnumerable<long> jumps, CancellationToken token)
+    {
+        var offsetBytes = await ReadBytesFromCmdAsync(SwitchCommand.PointerRelative(jumps), sizeof(ulong), token).ConfigureAwait(false);
+        Array.Reverse(offsetBytes, 0, 8);
+        return BitConverter.ToUInt64(offsetBytes, 0);
     }
 }

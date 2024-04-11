@@ -118,6 +118,15 @@ public sealed class SwitchUSBAsync(int Port) : SwitchUSB(Port), ISwitchConnectio
         }, token);
     }
 
+    public Task<byte[]> PixelPeek(CancellationToken token)
+    {
+        return Task.Run(() =>
+        {
+            Send(SwitchCommand.PixelPeek(false));
+            return PixelPeekUSB();
+        }, token);
+    }
+
     public Task PointerPoke(byte[] data, IEnumerable<long> jumps, CancellationToken token)
     {
         return Task.Run(() => Send(SwitchCommand.PointerPoke(jumps, data, false)), token);
@@ -133,17 +142,13 @@ public sealed class SwitchUSBAsync(int Port) : SwitchUSB(Port), ISwitchConnectio
         }, token);
     }
 
-    public Task<byte[]> PixelPeek(CancellationToken token)
+    public Task<ulong> PointerRelative(IEnumerable<long> jumps, CancellationToken token)
     {
         return Task.Run(() =>
         {
-            Send(SwitchCommand.PixelPeek(false));
-            return PixelPeekUSB(token); // Pass the token to PixelPeekUSB
+            Send(SwitchCommand.PointerRelative(jumps, false));
+            byte[] baseBytes = ReadBulkUSB();
+            return BitConverter.ToUInt64(baseBytes, 0);
         }, token);
-    }
-
-    public Task<ulong> PointerRelative(IEnumerable<long> jumps, CancellationToken token)
-    {
-        throw new NotImplementedException();
     }
 }

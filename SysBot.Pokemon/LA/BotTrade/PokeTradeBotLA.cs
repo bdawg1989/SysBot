@@ -1,9 +1,12 @@
+using Discord;
+using Discord.WebSocket;
 using PKHeX.Core;
 using PKHeX.Core.Searching;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -37,6 +40,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
     /// Tracks failed synchronized starts to attempt to re-sync.
     /// </summary>
     public int FailedBarrier { get; private set; }
+    private SocketUser Trader { get; }
 
     // Cached offsets that stay the same per session.
     private ulong BoxStartOffset;
@@ -174,7 +178,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         {
             result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
             if (result == PokeTradeResult.Success)
-            return;
+                return;
         }
         catch (SocketException socket)
         {
@@ -202,7 +206,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         }
         else
         {
-            detail.SendNotification(this, $"**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
+            detail.SendNotification(this, $"### **Error Details...**\n**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
             detail.TradeCanceled(this, result);
         }
     }
@@ -298,7 +302,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
             return partnerCheck;
         }
 
-        poke.SendNotification(this, $"Found Link Trade partner: {tradePartner.TrainerName}. TID: {tradePartner.TID7} SID: {tradePartner.SID7} Waiting for a Pokémon...");
+        poke.SendNotification(this, $"**### Found You!**\n**Trainer:** {tradePartner.TrainerName}\n**TID:** {tradePartner.TID7}\n**SID:** {tradePartner.SID7}\n*Waiting for a Pokémon...*");
 
         if (poke.Type == PokeTradeType.Dump)
         {
@@ -600,9 +604,17 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
 
             var report = la.Report();
             Log(report);
-            poke.SendNotification(this, "This Pokémon is not legal per PKHeX's legality checks. I am forbidden from cloning this. Exiting trade.");
-            poke.SendNotification(this, report);
+            var trader = Trader;
+            string imageUrl = "https://i.imgur.com/7L4EEiw.gif";
+            var embed = new EmbedBuilder()
+                .WithTitle("Legality Error!")
+                .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
+                .WithColor(Discord.Color.DarkRed)
+                .WithThumbnailUrl(imageUrl)
+                .Build();
 
+            var discordUser = trader as IUser;
+            await (discordUser?.SendMessageAsync(embed: embed)).ConfigureAwait(false);
             return (offered, PokeTradeResult.IllegalTrade);
         }
 
@@ -610,13 +622,20 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         if (Hub.Config.Legality.ResetHOMETracker)
             clone.Tracker = 0;
 
-        poke.SendNotification(this, $"**Cloned your {GameInfo.GetStrings(1).Species[clone.Species]}!**\nNow press B to cancel your offer and trade me a Pokémon you don't want.");
+        string imageUrlCloned = "https://i.imgur.com/SLSm2Fy.gif";
+        var embedClone = new EmbedBuilder()
+            .WithTitle($"Cloned {GameInfo.GetStrings(1).Species[clone.Species]}!")
+            .WithDescription("**01)** Press B to cancel\n**02) Trade me a Pokémon you don't want\n**03)** Enjoy!")
+            .WithColor(Discord.Color.DarkGreen)
+            .WithThumbnailUrl(imageUrlCloned)
+            .Build();
+
         Log($"Cloned a {(Species)clone.Species}. Waiting for user to change their Pokémon...");
 
         if (!await CheckCloneChangedOffer(token).ConfigureAwait(false))
         {
             // They get one more chance.
-            poke.SendNotification(this, "**HEY CHANGE IT NOW OR I AM LEAVING!!!**");
+            poke.SendNotification(this, "### **Warning...**\n*Change the Pokémon now*");
             if (!await CheckCloneChangedOffer(token).ConfigureAwait(false))
             {
                 Log("Trade partner did not change their Pokémon.");
@@ -741,7 +760,13 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         var laInit = new LegalityAnalysis(offered);
         if (!adOT && laInit.Valid)
         {
-            poke.SendNotification(this, "No ad detected in Nickname or OT, and the Pokémon is legal. Exiting trade.");
+            var imageUrlAd = "https://i.imgur.com/jOmmGSw.gif";
+            var embed = new EmbedBuilder()
+                .WithTitle("Cannot Continue...")
+                .WithDescription($"**Issue:** No ad detected\n**Reason:** Pokémon is legal\n*Exiting trade*")
+                .WithColor(Discord.Color.Orange)
+                .WithThumbnailUrl(imageUrlAd)
+                .Build();
             return (offered, PokeTradeResult.TrainerRequestBad);
         }
 
@@ -766,7 +791,11 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
             Log($"FixOT request has detected an illegal Pokémon from {name}: {(Species)offered.Species}");
             var report = laInit.Report();
             Log(laInit.Report());
-            poke.SendNotification(this, $"**Shown Pokémon is not legal. Attempting to regenerate...**\n\n```{report}```");
+            var embedFixOT = new EmbedBuilder()
+                  .WithTitle("Illegal Pokémon Detected")
+                  .WithDescription($"**Issue:** Shown Pokémon is not legal\n*Attempting to regenerate...*\n\n```{report}```")
+                  .WithColor(Discord.Color.Red)
+                  .Build();
             if (DumpSetting.Dump)
                 DumpPokemon(DumpSetting.DumpFolder, "hacked", offered);
         }
@@ -788,11 +817,22 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         var la = new LegalityAnalysis(clone);
         if (!la.Valid)
         {
-            poke.SendNotification(this, "This Pokémon is not legal per PKHeX's legality checks. I was unable to fix this. Exiting trade.");
+            string imageUrlCloned = "https://i.imgur.com/7L4EEiw.gif";
+            var embedCloned = new EmbedBuilder()
+                .WithTitle($"Illegal Pokémon!")
+                .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
+                .WithColor(Discord.Color.DarkGreen)
+                .WithThumbnailUrl(imageUrlCloned)
+                .Build();
             return (clone, PokeTradeResult.IllegalTrade);
         }
 
-        poke.SendNotification(this, $"{(!laInit.Valid ? "**Legalized" : "**Fixed Nickname/OT for")} {(Species)clone.Species}**! Now confirm the trade!");
+        string imageUrl = "https://i.imgur.com/SLSm2Fy.gif";
+        var embedLegalized = new EmbedBuilder()
+            .WithTitle($"{(!laInit.Valid ? "Legalized!" : "Fixed Nickname/OT for")} {(Species)clone.Species}!")
+            .WithColor(Discord.Color.Green)
+            .WithThumbnailUrl(imageUrl)
+            .Build();
         Log($"{(!laInit.Valid ? "Legalized" : "Fixed Nickname/OT for")} {(Species)clone.Species}!");
 
         if (await CheckCloneChangedOffer(token).ConfigureAwait(false))

@@ -1,14 +1,15 @@
+using Discord.WebSocket;
 using PKHeX.Core;
 using PKHeX.Core.Searching;
 using SysBot.Base;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsLGPE;
 
@@ -31,6 +32,8 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
     /// Synchronized start for multiple bots.
     /// </summary>
     public bool ShouldWaitAtBarrier { get; private set; }
+
+    private SocketUser Trader { get; }
 
     /// <summary>
     /// Tracks failed synchronized starts to attempt to re-sync.
@@ -155,7 +158,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         {
             result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
             if (result == PokeTradeResult.Success)
-            return;
+                return;
         }
         catch (SocketException socket)
         {
@@ -183,7 +186,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         }
         else
         {
-            detail.SendNotification(this, $"**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
+            detail.SendNotification(this, $"### **Error Details...**\n**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
             detail.TradeCanceled(this, result);
         }
     }
@@ -289,7 +292,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         if (tradepartnersav2.OT != sav.OT)
         {
             Log($"Found Link Trade Partner: {tradepartnersav2.OT}, TID: {tradepartnersav2.TID16}, SID: {tradepartnersav2.SID16}");
-            var modifiedPokemon = await SetPkmWithTradePartnerDetails(toSend, tradepartnersav2, token); 
+            var modifiedPokemon = await SetPkmWithTradePartnerDetails(toSend, tradepartnersav2, token);
             if (modifiedPokemon != null)
             {
                 poke.TradeData = modifiedPokemon; // Update the Pokémon to be traded with the modified version
@@ -708,5 +711,5 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         }
     }
 
-    }
+}
 

@@ -56,6 +56,7 @@ namespace SysBot.Pokemon
         public bool IsCanceled { get; set; }
         public bool IsMysteryEgg { get; }
         public bool IgnoreAutoOT { get; }
+        public object Trader { get; internal set; }
 
         public PokeTradeDetail(TPoke pkm, PokeTradeTrainerInfo info, IPokeTradeNotifier<TPoke> notifier, PokeTradeType type, int code, bool favored = false, List<Pictocodes> lgcode = null, int batchTradeNumber = 0, int totalBatchTrades = 0, bool isMysteryEgg = false, int uniqueTradeID = 0, bool ignoreAutoOT = false)
         {

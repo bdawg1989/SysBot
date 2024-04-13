@@ -46,7 +46,8 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
         {
             var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
             var receive = Data.Species == 0 ? string.Empty : $" {Data.Nickname}";
-            var message = $"**Pokémon:** {receive}{batchInfo}\n**Trade Code:** {Code:0000 0000}\n*Your trade will begin in a moment*";
+            var speciesInfo = Data.Species == 0 ? string.Empty : $"**Pokémon:**{receive}\n";
+            var message = $"{speciesInfo}**Trade Code:** {Code:0000 0000}{batchInfo}\n*Your trade will begin in a moment*";
 
             if (TotalBatchTrades > 1 && BatchTradeNumber == 1)
             {
@@ -65,16 +66,33 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
         }
         else if (Data is PB7)
         {
-            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
+            var receive = Data.Species == 0 ? string.Empty : $" {Data.Nickname}";
             var (thefile, lgcodeembed) = CreateLGLinkCodeSpriteEmbed(LGCode);
             Trader.SendFileAsync(thefile, $"**Pokémon:** {receive}\n**Trade Code:**", embed: lgcodeembed).ConfigureAwait(false);
         }
         else
         {
             var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
-            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
-            var message = $"**Pokémon:** {receive}{batchInfo}\n**Trade Code:** {Code:0000 0000}";
-            Trader.SendMessageAsync(message).ConfigureAwait(false);
+            var receive = string.Empty;
+            var speciesInfo = string.Empty;
+
+            if (info.Type == PokeTradeType.Specific && Data.Species != 0)
+            {
+                receive = $" {Data.Nickname}";
+                speciesInfo = $"**Pokémon:** {receive}\n";
+            }
+
+            var message = $"{speciesInfo}**Trade Code:** {Code:0000 0000}{batchInfo}\n*Your trade will begin in a moment*";
+
+            string imageUrl = "https://i.imgur.com/rixGxsH.gif";
+            var embed = new EmbedBuilder()
+                .WithTitle("Initializing Bot...")
+                .WithDescription(message)
+                .WithColor(Color.Green)
+                .WithThumbnailUrl(imageUrl)
+                .Build();
+
+            Trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
         }
     }
 
@@ -120,7 +138,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
         string imageUrl = "https://i.imgur.com/KnpoU86.gif";
         var embed = new EmbedBuilder()
             .WithTitle("Uh-Oh...")
-            .WithDescription($"*Sorry, but there was an error*\n**Reason:** {msg}")
+            .WithDescription($"*Sorry, but there was an error*\n*Please try again!*")
             .WithColor(Color.DarkRed)
             .WithThumbnailUrl(imageUrl)
             .Build();
@@ -133,7 +151,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
         string imageUrl = "https://i.imgur.com/9x9wj0t.gif";
-        var message = tradedToUser != 0 ? (IsMysteryEgg ? "*Enjoy your Mystery Egg!*" : $"*Enjoy your {(Species)tradedToUser}!*") : "*Trade finished!*";
+        var message = tradedToUser != 0 ? (IsMysteryEgg ? "*Enjoy your Mystery Egg!*" : $"*Enjoy your {(Species)tradedToUser}!*") : "*Enjoy!!*";
 
 
         var embed = new EmbedBuilder()

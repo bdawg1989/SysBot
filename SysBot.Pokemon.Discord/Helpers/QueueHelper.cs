@@ -319,6 +319,8 @@ public static class QueueHelper<T> where T : PKM, new()
             embedBuilder.AddField("\u200B", additionalText, inline: false);
         }
 
+        // Determine if any EVs are greater than 0
+        bool hasEVs = evs.Any(ev => ev > 0);
         // Constructing the content of the embed based on the trade type
         if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
@@ -338,12 +340,13 @@ public static class QueueHelper<T> where T : PKM, new()
             string teraTypeEmoji = teraTypeEmojis.ContainsKey(teraTypeString) ? teraTypeEmojis[teraTypeString] : "";
             string teraTypeWithEmoji = $"{teraTypeEmoji} {teraTypeString}";
 
+
             leftSideContent +=
                 (showLevel ? $"**Level:** {level}\n" : "") +
                 (showAbility ? $"**Ability:** {abilityName}\n" : "") +
                 (showNature ? $"**Nature**: {natureName}\n" : "") +
                 (showIVs ? $"**IVs**: {ivsDisplay}\n" : "") +
-                (showEVs ? $"**EVs**: {evsDisplay}\n" : "") +
+                (hasEVs ? $"**EVs**: {evsDisplay}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeEmoji}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +
                 (showMetLevel ? $"**Met Level:** {metLevelDisplay}\n" : "") +

@@ -120,31 +120,34 @@ public sealed class SysCord<T> where T : PKM, new()
             }
             else
             {
-                var currentTrade = Hub.Queues.Info.UsersInQueue.FirstOrDefault(x => x.Trade.IsProcessing);
-                if (currentTrade != null)
+                if (Hub.Queues.IsDistributionTradeActive || Hub.Ledy.IsDistributing)
                 {
-                    var tradeDetail = currentTrade.Trade;
-                    if (tradeDetail.Type != PokeTradeType.Random)
+                    customStatus = "🔂 Distributing Pokémon";
+                    statusColor = UserStatus.Online;
+                }
+                else
+                {
+                    var currentTrade = Hub.Queues.Info.UsersInQueue.FirstOrDefault(x => x.Trade.IsProcessing);
+                    if (currentTrade != null)
                     {
-                        var speciesName = GameInfo.GetStrings(1).Species[tradeDetail.TradeData.Species];
-                        customStatus = $"🔄 {speciesName} to {tradeDetail.Trainer.TrainerName}";
-                        statusColor = UserStatus.Online;
+                        var tradeDetail = currentTrade.Trade;
+                        if (tradeDetail.Type != PokeTradeType.Random)
+                        {
+                            var speciesName = GameInfo.GetStrings(1).Species[(int)tradeDetail.TradeData.Species];
+                            customStatus = $"🔄 {speciesName} to {tradeDetail.Trainer.TrainerName}";
+                            statusColor = UserStatus.Online;
+                        }
+                        else
+                        {
+                            customStatus = "⏳ Waiting for trades";
+                            statusColor = UserStatus.Idle;
+                        }
                     }
                     else
                     {
                         customStatus = "⏳ Waiting for trades";
                         statusColor = UserStatus.Idle;
                     }
-                }
-                else if (Hub.BotSync.Barrier != null && Hub.Ledy.Pool.Files.Count > 0)
-                {
-                        customStatus = "🔂 Distributing Pokémon";
-                        statusColor = UserStatus.Online;
-                }
-                else
-                {
-                    customStatus = "Waiting for trades";
-                    statusColor = UserStatus.Idle;
                 }
             }
 

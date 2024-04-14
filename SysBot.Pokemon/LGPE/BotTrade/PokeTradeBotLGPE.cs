@@ -138,10 +138,15 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
             detail.IsProcessing = true;
             string tradetype = $" ({detail.Type})";
             Log($"Starting next {type}{tradetype} Bot Trade. Getting data...");
+            if (detail.Type == PokeTradeType.Random)
+            {
+                Hub.Queues.IsDistributionTradeActive = true;
+            }
             Hub.Config.Stream.StartTrade(this, detail, Hub);
             Hub.Queues.StartTrade(this, detail);
 
             await PerformTrade(sav, detail, type, priority, token).ConfigureAwait(false);
+            Hub.Queues.IsDistributionTradeActive = false;
         }
     }
     private async Task WaitForQueueStep(int waitCounter, CancellationToken token)

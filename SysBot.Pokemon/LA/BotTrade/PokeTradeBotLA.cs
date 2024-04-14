@@ -147,10 +147,15 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
             detail.IsProcessing = true;
             string tradetype = $" ({detail.Type})";
             Log($"Starting next {type}{tradetype} Bot Trade. Getting data...");
+            if (detail.Type == PokeTradeType.Random)
+            {
+                Hub.Queues.IsDistributionTradeActive = true;
+            }
             Hub.Config.Stream.StartTrade(this, detail, Hub);
             Hub.Queues.StartTrade(this, detail);
 
             await PerformTrade(sav, detail, type, priority, token).ConfigureAwait(false);
+            Hub.Queues.IsDistributionTradeActive = false;
         }
     }
 

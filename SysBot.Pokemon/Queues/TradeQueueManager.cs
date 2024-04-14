@@ -7,7 +7,7 @@ namespace SysBot.Pokemon;
 public class TradeQueueManager<T> where T : PKM, new()
 {
     private readonly PokeTradeHub<T> Hub;
-
+    public bool IsDistributionTradeActive { get; set; }
     private readonly PokeTradeQueue<T> Trade = new(PokeTradeType.Specific);
     private readonly PokeTradeQueue<T> Batch = new(PokeTradeType.Batch);
     private readonly PokeTradeQueue<T> Seed = new(PokeTradeType.Seed);

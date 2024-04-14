@@ -1,4 +1,4 @@
-﻿using PKHeX.Core;
+using PKHeX.Core;
 using System.Collections.Generic;
 
 namespace SysBot.Pokemon;
@@ -18,7 +18,7 @@ public class LedyDistributor<T> where T : PKM, new()
     }
 
     private const Species NoMatchSpecies = Species.None;
-
+    public bool IsDistributing => Previous.Count > 0;
     public LedyResponse<T>? GetLedyTrade(T pk, ulong partnerId, Species speciesMatch = NoMatchSpecies)
     {
         if (speciesMatch != NoMatchSpecies && pk.Species != (int)speciesMatch)

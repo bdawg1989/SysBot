@@ -153,10 +153,15 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             string tradetype = $" ({detail.Type})";
             Log($"Starting next {type}{tradetype} Bot Trade. Getting data...");
             await Task.Delay(500, token).ConfigureAwait(false);
+            if (detail.Type == PokeTradeType.Random)
+            {
+                Hub.Queues.IsDistributionTradeActive = true;
+            }
             Hub.Config.Stream.StartTrade(this, detail, Hub);
             Hub.Queues.StartTrade(this, detail);
 
             await PerformTrade(sav, detail, type, priority, token).ConfigureAwait(false);
+            Hub.Queues.IsDistributionTradeActive = false;
         }
     }
 

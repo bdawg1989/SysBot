@@ -25,7 +25,7 @@ public static class SysCordSettings
 public sealed class SysCord<T> where T : PKM, new()
 {
     public static PokeBotRunner<T> Runner { get; private set; } = default!;
-
+    private readonly CancellationTokenSource _statusUpdateCancellationTokenSource = new CancellationTokenSource();
     private readonly DiscordSocketClient _client;
     private readonly DiscordManager Manager;
     public readonly PokeTradeHub<T> Hub;
@@ -105,9 +105,61 @@ public sealed class SysCord<T> where T : PKM, new()
         LogUtil.LogText("Client_Disconnected: Disconnection handling completed.");
     }
 
+    private async Task UpdateBotStatusAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            bool noQueue = !Hub.Queues.Info.GetCanQueue();
+            string customStatus;
+            UserStatus statusColor;
+
+            if (noQueue)
+            {
+                customStatus = "Not accepting trades...";
+                statusColor = UserStatus.DoNotDisturb;
+            }
+            else
+            {
+                var currentTrade = Hub.Queues.Info.UsersInQueue.FirstOrDefault(x => x.Trade.IsProcessing);
+                if (currentTrade != null)
+                {
+                    var tradeDetail = currentTrade.Trade;
+                    if (tradeDetail.Type != PokeTradeType.Random)
+                    {
+                        var speciesName = GameInfo.GetStrings(1).Species[tradeDetail.TradeData.Species];
+                        customStatus = $"🔄 {speciesName} to {tradeDetail.Trainer.TrainerName}";
+                        statusColor = UserStatus.Online;
+                    }
+                    else
+                    {
+                        customStatus = "⏳ Waiting for trades";
+                        statusColor = UserStatus.Idle;
+                    }
+                }
+                else if (Hub.BotSync.Barrier != null && Hub.Ledy.Pool.Files.Count > 0)
+                {
+                        customStatus = "🔂 Distributing Pokémon";
+                        statusColor = UserStatus.Online;
+                }
+                else
+                {
+                    customStatus = "Waiting for trades";
+                    statusColor = UserStatus.Idle;
+                }
+            }
+
+            await _client.SetGameAsync(customStatus, type: ActivityType.CustomStatus).ConfigureAwait(false);
+            await _client.SetStatusAsync(statusColor).ConfigureAwait(false);
+            await Task.Delay(3000, token); // Check and update every 3 seconds
+        }
+    }
+
     public async Task HandleBotStop()
     {
+        _statusUpdateCancellationTokenSource.Cancel();
+
         await AnnounceBotStatus("Offline", EmbedColorOption.Red);
+        LogUtil.LogText("HandleBotStop: Cleanup tasks completed.");
     }
 
     private readonly Dictionary<ulong, ulong> _announcementMessageIds = [];
@@ -237,8 +289,11 @@ public sealed class SysCord<T> where T : PKM, new()
 
         try
         {
-            // Wait infinitely so your bot actually stays connected.
-            await MonitorStatusAsync(token).ConfigureAwait(false);
+            // Start the task to update the bot's status
+            Task updateBotStatusTask = UpdateBotStatusAsync(_statusUpdateCancellationTokenSource.Token);
+
+            // Wait for a cancellation request
+            await Task.Delay(-1, token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -406,48 +461,6 @@ public sealed class SysCord<T> where T : PKM, new()
         return true;
     }
 
-    private async Task MonitorStatusAsync(CancellationToken token)
-    {
-        const int Interval = 20; // seconds
-        // Check datetime for update
-        UserStatus state = UserStatus.Idle;
-        while (!token.IsCancellationRequested)
-        {
-            var time = DateTime.Now;
-            var lastLogged = LogUtil.LastLogged;
-            if (Hub.Config.Discord.BotColorStatusTradeOnly)
-            {
-                var recent = Hub.Bots.ToArray()
-                    .Where(z => z.Config.InitialRoutine.IsTradeBot())
-                    .MaxBy(z => z.LastTime);
-                lastLogged = recent?.LastTime ?? time;
-            }
-            var delta = time - lastLogged;
-            var gap = TimeSpan.FromSeconds(Interval) - delta;
-
-            bool noQueue = !Hub.Queues.Info.GetCanQueue();
-            if (gap <= TimeSpan.Zero)
-            {
-                var idle = noQueue ? UserStatus.DoNotDisturb : UserStatus.Idle;
-                if (idle != state)
-                {
-                    state = idle;
-                    await _client.SetStatusAsync(state).ConfigureAwait(false);
-                }
-                await Task.Delay(2_000, token).ConfigureAwait(false);
-                continue;
-            }
-
-            var active = noQueue ? UserStatus.DoNotDisturb : UserStatus.Online;
-            if (active != state)
-            {
-                state = active;
-                await _client.SetStatusAsync(state).ConfigureAwait(false);
-            }
-            await Task.Delay(gap, token).ConfigureAwait(false);
-        }
-    }
-
     private async Task LoadLoggingAndEcho()
     {
         if (MessageChannelsLoaded)
@@ -463,9 +476,5 @@ public sealed class SysCord<T> where T : PKM, new()
         // Don't let it load more than once in case of Discord hiccups.
         await Log(new LogMessage(LogSeverity.Info, "LoadLoggingAndEcho()", "Logging and Echo channels loaded!")).ConfigureAwait(false);
         MessageChannelsLoaded = true;
-
-        var game = Hub.Config.Discord.BotGameStatus;
-        if (!string.IsNullOrWhiteSpace(game))
-            await _client.SetGameAsync(game).ConfigureAwait(false);
     }
 }

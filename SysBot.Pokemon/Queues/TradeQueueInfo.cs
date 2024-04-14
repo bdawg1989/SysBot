@@ -14,7 +14,7 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
     where T : PKM, new()
 {
     private readonly object _sync = new();
-    private readonly List<TradeEntry<T>> UsersInQueue = [];
+    public List<TradeEntry<T>> UsersInQueue { get; } = new List<TradeEntry<T>>();
     public readonly PokeTradeHub<T> Hub = Hub;
     private readonly TradeCodeStorage _tradeCodeStorage = new();
 

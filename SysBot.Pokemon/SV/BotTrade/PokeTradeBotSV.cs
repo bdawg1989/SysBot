@@ -272,8 +272,8 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
         // Assumes we're freshly in the Portal and the cursor is over Link Trade.
         Log("Selecting Link Trade.");
-        await Click(A, 1_500, token).ConfigureAwait(false);
 
+        await Click(A, 1_500, token).ConfigureAwait(false);
         // Make sure we clear any Link Codes if we're not in Distribution with fixed code, and it wasn't entered last round.
         if (poke.Type != PokeTradeType.Random || !LastTradeDistributionFixed)
         {
@@ -383,9 +383,8 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         }
 
         var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, tradePartner.TrainerName, AbuseSettings, token);
-
-
         if (partnerCheck != PokeTradeResult.Success)
+
         {
             await Click(A, 1_000, token).ConfigureAwait(false); // Ensures we dismiss a popup.
             await ExitTradeToPortal(false, token).ConfigureAwait(false);
@@ -499,24 +498,19 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         await ExitTradeToPortal(false, token).ConfigureAwait(false);
         return PokeTradeResult.Success;
     }
-
     private async Task<PokeTradeResult> PerformBatchTrade(SAV9SV sav, PokeTradeDetail<PK9> poke, CancellationToken token)
     {
-
         int completedTrades = 0;
         while (completedTrades < poke.TotalBatchTrades)
         {
             var toSend = poke.TradeData;
             if (toSend.Species != 0)
                 await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
-
-            // Execute StartTrade functions for each trade in the batch after the first
             if (completedTrades > 0)
             {
                 Hub.Config.Stream.StartTrade(this, poke, Hub);
                 Hub.Queues.StartTrade(this, poke);
             }
-
             // Search for a trade partner for a Link Trade.
             await Click(A, 0_500, token).ConfigureAwait(false);
             await Click(A, 0_500, token).ConfigureAwait(false);
@@ -529,7 +523,6 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             await Click(A, 1_000, token).ConfigureAwait(false);
 
             poke.TradeSearching(this);
-
 
             // Wait for a Trainer...
             var partnerFound = await WaitForTradePartner(token).ConfigureAwait(false);

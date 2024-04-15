@@ -29,6 +29,8 @@ public static class QueueHelper<T> where T : PKM, new()
     private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
     private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
     private static DiscordColor embedColor = DiscordColor.Gold;
+    private static GameVersion gameVersion;
+
     private static SocketUser Trader { get; }
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, bool ignoreAutoOT = false)
@@ -328,14 +330,26 @@ public static class QueueHelper<T> where T : PKM, new()
             string leftSideContent = $"**User:** {user.Mention}\n";
 
             // Add OT, TID, and SID only if they are available
-            if (!string.IsNullOrEmpty(userDetails?.OT))
-                leftSideContent += $"**OT:** {userDetails.OT}\n";
+            // Also removes SID from displaying in SWSH only
+            if (gameVersion == GameVersion.SWSH)
+            {
+                if (!string.IsNullOrEmpty(userDetails?.OT))
+                    leftSideContent += $"**OT:** {userDetails.OT}\n";
 
-            if (userDetails.TID != 0)
-                leftSideContent += $"**TID:** {userDetails.TID:D6}\n";
+                if (userDetails.TID != 0)
+                    leftSideContent += $"**TID:** {userDetails.TID:D6}\n";
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(userDetails?.OT))
+                    leftSideContent += $"**OT:** {userDetails.OT}\n";
 
-            if (userDetails.SID != 0)
-                leftSideContent += $"**SID:** {userDetails.SID:D4}\n";
+                if (userDetails.TID != 0)
+                    leftSideContent += $"**TID:** {userDetails.TID:D6}\n";
+
+                if (userDetails.SID != 0)
+                    leftSideContent += $"**SID:** {userDetails.SID:D4}\n";
+            }
 
             string teraTypeEmoji = teraTypeEmojis.ContainsKey(teraTypeString) ? teraTypeEmojis[teraTypeString] : "";
             string teraTypeWithEmoji = $"{teraTypeEmoji} {teraTypeString}";

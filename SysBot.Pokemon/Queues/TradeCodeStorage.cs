@@ -11,6 +11,13 @@ public class TradeCodeStorage
     public bool AddOrUpdateTradeCode(ulong userID, int tradeCode, string ot, int tid, int sid)
     {
         LoadFromFile();
+        var gameVersion = GameVersion.SWSH;
+
+        if (gameVersion == GameVersion.SWSH)
+        {
+            // Always save SID as 0 for SWSH
+            sid = 0;
+        }
 
         if (_tradeCodeDetails.ContainsKey(userID))
         {

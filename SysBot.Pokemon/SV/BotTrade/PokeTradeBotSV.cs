@@ -223,7 +223,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         }
         else
         {
-            detail.SendNotification(this, $"### **Error Details...**\n**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
+            detail.SendNotification(this, $"### **Error Details...**\n**Reason:** {result}\n**Result:** Canceling");
             detail.TradeCanceled(this, result);
         }
     }

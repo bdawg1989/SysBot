@@ -206,7 +206,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         }
         else
         {
-            detail.SendNotification(this, $"### **Error Details...**\n**Error:** Unknown\n**Result:** Canceling\n**Reason:** {result}");
+            detail.SendNotification(this, $"### **Error Details...**\n**Reason:** {result}\n**Result:** Canceling");
             detail.TradeCanceled(this, result);
         }
     }

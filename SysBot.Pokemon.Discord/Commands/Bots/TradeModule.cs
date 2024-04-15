@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -511,6 +512,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         // Set hidden ability
         pk.RefreshAbility(2);
     }
+
 
     [Command("trade")]
     [Alias("t")]

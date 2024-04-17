@@ -243,7 +243,7 @@ public static class QueueHelper<T> where T : PKM, new()
         bool isSpecialRequest = type == PokeRoutineType.SeedCheck;
 
         // Display elements
-        string ivsDisplay = $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
+        string ivsDisplay = ivs.All(iv => iv == 31) ? "6IV" : $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
         string evsDisplay = $"{evs[0]}/{evs[1]}/{evs[2]}/{evs[3]}/{evs[4]}/{evs[5]}";
         string movesDisplay = string.Join("\n", moveNames);
         string shinyEmoji = pk.IsShiny ? "✨ " : "";

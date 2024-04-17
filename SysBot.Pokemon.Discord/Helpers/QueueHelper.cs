@@ -2,22 +2,22 @@ using Discord;
 using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
+using Newtonsoft.Json;
 using PKHeX.Core;
-using SysBot.Pokemon.Discord.Commands.Bots;
-using System.Collections.Generic;
-using System;
-using System.Drawing;
-using Color = System.Drawing.Color;
-using DiscordColor = Discord.Color;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Linq;
-using System.IO;
-using SysBot.Pokemon.Helpers;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
-using Newtonsoft.Json;
+using SysBot.Pokemon.Discord.Commands.Bots;
+using SysBot.Pokemon.Helpers;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Color = System.Drawing.Color;
+using DiscordColor = Discord.Color;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -244,7 +244,14 @@ public static class QueueHelper<T> where T : PKM, new()
 
         // Display elements
         string ivsDisplay = ivs.All(iv => iv == 31) ? "6IV" : $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
-        string evsDisplay = $"{evs[0]}/{evs[1]}/{evs[2]}/{evs[3]}/{evs[4]}/{evs[5]}";
+        string evsDisplay = string.Join(" / ", new[]{
+               (evs[0] != 0 ? $"{evs[0]} HP" : ""),
+               (evs[1] != 0 ? $"{evs[1]} Atk" : ""),
+               (evs[2] != 0 ? $"{evs[2]} Def" : ""),
+               (evs[3] != 0 ? $"{evs[3]} SpA" : ""),
+               (evs[4] != 0 ? $"{evs[4]} SpD" : ""),
+               (evs[5] != 0 ? $"{evs[5]} Spe" : "")
+               }.Where(s => !string.IsNullOrEmpty(s)));
         string movesDisplay = string.Join("\n", moveNames);
         string shinyEmoji = pk.IsShiny ? "✨ " : "";
         string pokemonDisplayName = pk.IsNicknamed ? pk.Nickname : GameInfo.GetStrings(1).Species[pk.Species];

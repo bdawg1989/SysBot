@@ -532,7 +532,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var lgcode = Info.GetRandomLGTradeCode();
         // Check if the user is already in the queue
         var userID = Context.User.Id;
-        if (Info.IsUserInQueue(userID))
+        var prefixes = new string[] { "!", "/", "-", "+", "$", ".", "=", "&", "|", ",", "~" };
+
+        if (!prefixes.Any(prefix => Context.Message.Content.StartsWith($"{prefix}hiddentrade", StringComparison.OrdinalIgnoreCase) ||
+                                     Context.Message.Content.StartsWith($"{prefix}ht", StringComparison.OrdinalIgnoreCase)) &&
+            Info.IsUserInQueue(Context.User.Id))
         {
             await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
             return;
@@ -693,7 +697,36 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return 0;
     }
 
-        [Command("batchTrade")]
+    [Command("hiddentrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you a Pokémon.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task HiddenTradeAsync([Remainder] string content)
+    {
+        await TradeAsync(content);
+
+        var messages = await Context.Channel.GetMessagesAsync(1).FlattenAsync();
+        var tradeEmbedMessage = messages.FirstOrDefault(m => m.Embeds.Any());
+        if (tradeEmbedMessage != null)
+        {
+            await tradeEmbedMessage.DeleteAsync();
+        }
+        // Perform the trade operation
+        await TradeAsync(content);
+
+        // Create the embed with information about the traded Pokémon
+        var embed = new EmbedBuilder()
+            .WithTitle("Hidden Trade Initiated!")
+            .WithDescription($"They may know the species...")
+            .WithColor(Color.Red)
+            .WithImageUrl("https://i.imgur.com/lwqhXne.gif")
+            .WithFooter("...but they'll never know its stats!");
+
+        // Send the embed as a response to the command
+        await ReplyAsync(embed: embed.Build());
+    }
+
+    [Command("batchTrade")]
         [Alias("bt")]
         [Summary("Makes the bot trade multiple Pokémon from the provided list, up to a maximum of 3 trades.")]
         [RequireQueueRole(nameof(DiscordManager.RolesTrade))]

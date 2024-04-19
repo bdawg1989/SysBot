@@ -278,8 +278,8 @@ public static class QueueHelper<T> where T : PKM, new()
 
         // Adjust image URL based on request type
         embedImageUrl = isMysteryEgg ? "https://i.imgur.com/Cygj1tB.png" :
-                        isDumpRequest ? "https://i.imgur.com/hU62wpH.gif" :
-                        isCloneRequest ? "https://i.imgur.com/2gPTbwa.png" :
+                        isDumpRequest ? "https://i.imgur.com/BECgC9e.png" :
+                        isCloneRequest ? "https://i.imgur.com/wghmzr5.png" :
                         isSpecialRequest ? "https://i.imgur.com/IBur0vM.gif" :
                         FixOT ? "https://i.imgur.com/vCJzJ6g.png" :
                         embedImageUrl; // Keep original if none of the above

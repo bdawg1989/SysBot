@@ -694,6 +694,22 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return 0;
     }
 
+    [Command("hiddentrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you a Pokémon.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task HiddenTradeAsync([Remainder] string content)
+    {
+        await TradeAsync(content);
+
+        var messages = await Context.Channel.GetMessagesAsync(1).FlattenAsync();
+        var tradeEmbedMessage = messages.FirstOrDefault(m => m.Embeds.Any());
+        if (tradeEmbedMessage != null)
+        {
+            await tradeEmbedMessage.DeleteAsync();
+        }
+    }
+
     [Command("batchTrade")]
     [Alias("bt")]
     [Summary("Makes the bot trade multiple Pokémon from the provided list, up to a maximum of 3 trades.")]
@@ -860,8 +876,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
         }
     }
-
-
 
     private async Task ProcessSingleTradeAsync(string tradeContent, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
     {

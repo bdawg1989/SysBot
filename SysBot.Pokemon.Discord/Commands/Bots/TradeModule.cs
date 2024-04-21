@@ -34,7 +34,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     private static readonly char[] separator = [' '];
     private static readonly char[] separatorArray = [' '];
     private static readonly char[] separatorArray0 = [' '];
-    private Download<PKM> att;
 
     [Command("listguilds")]
     [Alias("lg", "servers", "listservers")]
@@ -135,8 +134,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         // Check if the user is already in the queue
         var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
         var code = Info.GetRandomTradeCode(userID);
@@ -161,7 +161,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
         var trainerName = Context.User.Username;
@@ -203,7 +203,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
         var code = Info.GetRandomTradeCode(userID);
@@ -225,7 +225,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
         keyword = keyword.ToLower().Trim();
@@ -251,7 +251,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         if (pkm is not T pk || !la.Valid)
         {
             var reason = result == "Timeout" ? "That set took too long to generate." : "I wasn't able to create something from that.";
-            var imsg = $"Here's my best attempt at creating that Ditto!";
+            var imsg = $"Oops! {reason} Here's my best attempt for that Ditto!";
             await Context.Channel.SendPKMAsync(pkm, imsg).ConfigureAwait(false);
             return;
         }
@@ -267,41 +267,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    [Command("peek")]
-    [Summary("Take and send a screenshot from the specified Switch.")]
-    [RequireOwner]
-    public async Task Peek(string address)
-    {
-        try
-        {
-            var bot = SysCord<T>.Runner.GetBot(address);
-            if (bot == null)
-            {
-                await ReplyAsync($"No bot found with the specified address ({address}).").ConfigureAwait(false);
-                return;
-            }
-
-            var bytes = await bot.Bot.Connection.PixelPeek(CancellationToken.None).ConfigureAwait(false);
-            if (bytes.Length == 1)
-            {
-                await ReplyAsync($"Failed to take a screenshot for bot at {address}. Is the bot connected?").ConfigureAwait(false);
-                return;
-            }
-
-            var ms = new MemoryStream(bytes);
-            var img = "1.jpg";
-            var embed = new EmbedBuilder { ImageUrl = $"attachment://{img}", Color = Color.Red }
-                .WithFooter(new EmbedFooterBuilder { Text = $"Captured image from bot at address {address}." });
-            await Context.Channel.SendFileAsync(ms, img, "", false, embed: embed.Build()).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            // Log or handle the exception appropriately
-            Console.WriteLine($"An error occurred: {ex.Message}");
-            await ReplyAsync("An unexpected error occurred while executing the command.").ConfigureAwait(false);
-        }
-    }
-
     [Command("itemTrade")]
     [Alias("it", "item")]
     [Summary("Makes the bot trade you a Pokémon holding the requested item, or Ditto if stat spread keyword is provided.")]
@@ -311,7 +276,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
         var code = Info.GetRandomTradeCode(userID);
@@ -327,7 +292,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
         Species species = Info.Hub.Config.Trade.TradeConfiguration.ItemTradeSpecies == Species.None ? Species.Diglett : Info.Hub.Config.Trade.TradeConfiguration.ItemTradeSpecies;
@@ -347,7 +312,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         if (pkm is not T pk || !la.Valid)
         {
             var reason = result == "Timeout" ? "That set took too long to generate." : "I wasn't able to create something from that.";
-            var imsg = $"Here's my best attempt at creating that {species}!";
+            var imsg = $"Oops! {reason} Here's my best attempt for that {species}!";
             await Context.Channel.SendPKMAsync(pkm, imsg).ConfigureAwait(false);
             return;
         }
@@ -400,7 +365,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
         content = ReusableActions.StripCodeBlock(content);
@@ -415,7 +380,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (pkm is not T pk)
             {
-                await ReplyAsync($"**Error:** Unable to create an egg from that.").ConfigureAwait(false);
+                await ReplyAsync($"Oops! I wasn't able to create an egg for that.").ConfigureAwait(false);
                 return;
             }
 
@@ -439,105 +404,28 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    [Command("mysteryegg")]
-    [Alias("me")]
-    [Summary("Trades an egg generated from the provided Pokémon name.")]
-    public async Task TradeMysteryEggAsync()
-    {
-        // Check if the user is already in the queue
-        var userID = Context.User.Id;
-        if (Info.IsUserInQueue(userID))
-        {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
-            return;
-        }
-        var code = Info.GetRandomTradeCode(userID);
-        await TradeMysteryEggAsync(code).ConfigureAwait(false);
-    }
-
-    [Command("mysteryegg")]
-    [Alias("me")]
-    [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you the provided Pokémon file without showing the trade embed details.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task TradeMysteryEggAsync([Summary("Trade Code")] int code)
-    {
-        // Check if the user is already in the queue
-        var userID = Context.User.Id;
-        if (Info.IsUserInQueue(userID))
-        {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
-            return;
-        }
-        try
-        {
-            var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
-            var speciesList = BreedableSpeciesGenerator.GetBreedableSpeciesForSV();
-            var randomIndex = new Random().Next(speciesList.Count);
-            ushort speciesId = speciesList[randomIndex];
-            var context = new EntityContext();
-            var eggEncounter = new EncounterEgg(speciesId, 0, 1, 9, GameVersion.SV, context);
-            var pk = eggEncounter.ConvertToPKM(sav);
-            TradeModule<T>.SetPerfectIVsAndShiny(pk);
-
-            if (pk is not T pkT)
-            {
-                await ReplyAsync("**Error:** Unable to create a mystery egg.").ConfigureAwait(false);
-                return;
-            }
-
-            AbstractTrade<T>.EggTrade(pkT, null);
-
-            var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(code, Context.User.Username, pkT, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
-
-            if (Context.Message is IUserMessage userMessage)
-            {
-                await Task.Delay(2000);
-                await userMessage.DeleteAsync().ConfigureAwait(false);
-            }
-        }
-        catch (Exception ex)
-        {
-            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            await ReplyAsync("An error occurred while processing the request.").ConfigureAwait(false);
-        }
-    }
-    private static void SetPerfectIVsAndShiny(PKM pk)
-    {
-        // Set IVs to perfect
-        pk.IVs = [31, 31, 31, 31, 31, 31];
-        // Set as shiny
-        pk.SetShiny();
-        // Set hidden ability
-        pk.RefreshAbility(2);
-    }
-
-
-    [Command("trade")]
-    [Alias("t")]
-    [Summary("Makes the bot trade you the provided Pokémon file.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public Task TradeAsyncAttach([Summary("Trade Code")] int code)
+    public Task HideTradeAsyncAttach([Summary("Trade Code")] int code)
     {
         var sig = Context.User.GetFavor();
-        return TradeAsyncAttach(code, sig, Context.User);
+        return HideTradeAsyncAttach(code, sig, Context.User);
     }
 
-    [Command("trade")]
-    [Alias("t")]
-    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set.")]
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set without showing the trade embed details.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task TradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
+    public async Task HideTradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
         List<Pictocodes>? lgcode = null;
+        // Check if the user is already in the queue
         var userID = Context.User.Id;
-        var prefixes = new string[] { "!", "/", "-", "+", "$", ".", "=", "&", "|", ",", "~" };
-
-        if (!prefixes.Any(prefix => Context.Message.Content.StartsWith($"{prefix}hiddentrade", StringComparison.OrdinalIgnoreCase) ||
-                                     Context.Message.Content.StartsWith($"{prefix}ht", StringComparison.OrdinalIgnoreCase)) &&
-            Info.IsUserInQueue(Context.User.Id))
+        if (Info.IsUserInQueue(userID))
         {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
             return;
         }
 
@@ -548,7 +436,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         int formArgument = ExtractFormArgument(content);
         if (set.InvalidLines.Count != 0)
         {
-            var msg = $"Unable to understand your Showdown Format\n{string.Join("\n", set.InvalidLines)}\nCheck for a typo or improper spacing. Remember to use proper capitalization.";
+            var msg = $"Unable to parse Showdown Set:\n{string.Join("\n", set.InvalidLines)}";
             await ReplyAsync(msg).ConfigureAwait(false);
             await Task.Delay(2000);
             await Context.Message.DeleteAsync();
@@ -559,6 +447,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var pkm = sav.GetLegal(template, out var result);
+
             if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
             {
                 if (pkm is PK9 pk9)
@@ -582,24 +471,23 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     // not applicable for PA8 (Legends: Arceus)
                 }
             }
-            // Check if the Pokémon is from "Legends: Arceus"
-            bool isLegendsArceus = pkm.Version == GameVersion.PLA;
 
             if (pkm is PA8)
             {
-                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
+                pkm.HeldItem = (int)HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
             }
-            else if (isLegendsArceus)
+            else if (pkm.HeldItem == 0 && !pkm.IsEgg)
             {
                 pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
             }
+
             if (pkm is PB7)
             {
                 if (pkm.Species == (int)Species.Mew)
                 {
                     if (pkm.IsShiny)
                     {
-                        await ReplyAsync("Mew **cannot** be shiny in LGPE. POGO Mew does not transfer. Poke Ball Plus Mew is shiny locked.");
+                        await ReplyAsync("Mew can **not** be Shiny in LGPE. PoGo Mew does not transfer and Pokeball Plus Mew is shiny locked.");
                         return;
                     }
                 }
@@ -609,22 +497,22 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
             if (pkm is not T pk || !la.Valid)
             {
-                var reason = result == "Timeout" ? $"That {spec} set took too long for me to generate legally." :
-                             result == "Version Mismatch" ? "**Request Refused:** PKHeX.Core & PKHeX.Core.AutoMod versions do not match. Did you try updating the Directory.Build.props?" :
-                             $"**Request Error:** I wasn't able to create a {spec} from that Showdown Format. Try asking for help in the appropriate channel.";
+                var reason = result == "Timeout" ? $"That {spec} set took too long to generate." :
+                             result == "VersionMismatch" ? "Request refused: PKHeX and Auto-Legality Mod version mismatch." :
+                             $"I wasn't able to create a {spec} from that set.";
 
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle("Trade Creation Failed.")
                     .WithColor(Color.Red)
-                    .AddField("**Request Error:**", $"Failed to create {spec}. Try asking for help in the appropriate channel.")
-                    .AddField("**Error Reason:**", reason);
+                    .AddField("Status", $"Failed to create {spec}.")
+                    .AddField("Reason", reason);
 
                 if (result == "Failed")
                 {
                     var hint = AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm);
-                    if (hint.Contains("**Request Error:** Requested shiny value (ShinyType."))
+                    if (hint.Contains("Requested shiny value (ShinyType."))
                     {
-                        hint = $"{spec} **cannot** be shiny. Please try again or try asking for help in the appropriate channel.";
+                        hint = $"{spec} **cannot** be shiny. Please try again.";
                     }
                     embedBuilder.AddField("Hint", hint);
                 }
@@ -641,13 +529,193 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             }
             pk.ResetPartyStats();
 
+            if (pkm is PB7)
+            {
+                lgcode = TradeModule<T>.GenerateRandomPictocodes(3);
+            }
+
+            var sig = Context.User.GetFavor();
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT, isHiddenTrade: true).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
+            var msg = $"Oops! An unexpected problem happened with this Showdown Set:\n```{string.Join("\n", set.GetSetLines())}```";
+
+            await Task.Delay(2000);
+            await Context.Message.DeleteAsync();
+        }
+        _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
+    }
+
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set without showing the trade embed details.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public Task HideTradeAsync([Summary("Showdown Set")][Remainder] string content)
+    {
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
+        return TradeAsync(code, content);
+    }
+
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you the attached file without showing the trade embed details.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    private async Task HideTradeAsyncAttach()
+    {
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
+        var sig = Context.User.GetFavor();
+
+        await HideTradeAsyncAttach(code, sig, Context.User).ConfigureAwait(false);
+
+        await Task.Delay(2000);
+
+        if (Context.Message is IUserMessage userMessage)
+        {
+            await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
+    }
+
+    [Command("trade")]
+    [Alias("t")]
+    [Summary("Makes the bot trade you the provided Pokémon file.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public Task TradeAsyncAttach([Summary("Trade Code")] int code)
+    {
+        var sig = Context.User.GetFavor();
+        return TradeAsyncAttach(code, sig, Context.User);
+    }
+
+    [Command("trade")]
+    [Alias("t")]
+    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task TradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
+    {
+        List<Pictocodes>? lgcode = null;
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            return;
+        }
+
+        content = ReusableActions.StripCodeBlock(content);
+        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
+        var set = new ShowdownSet(content);
+        var template = AutoLegalityWrapper.GetTemplate(set);
+        int formArgument = ExtractFormArgument(content);
+        if (set.InvalidLines.Count != 0)
+        {
+            var msg = $"Unable to parse Showdown Set:\n{string.Join("\n", set.InvalidLines)}";
+            await ReplyAsync(msg).ConfigureAwait(false);
+            await Task.Delay(2000);
+            await Context.Message.DeleteAsync();
+            return;
+        }
+
+        try
+        {
+            var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
+            var pkm = sav.GetLegal(template, out var result);
+
+            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
+            {
+                if (pkm is PK9 pk9)
+                {
+                    pk9.SetRecordFlagsAll();
+                }
+                else if (pkm is PK8 pk8)
+                {
+                    pk8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB8 pb8)
+                {
+                    pb8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB7 pb7)
+                {
+                    // not applicable for PB7 (LGPE)
+                }
+                else if (pkm is PA8 pa8)
+                {
+                    // not applicable for PA8 (Legends: Arceus)
+                }
+            }
+
+            if (pkm is PA8)
+            {
+                pkm.HeldItem = (int)HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
+            }
+            else if (pkm.HeldItem == 0 && !pkm.IsEgg)
+            {
+                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
+            }
+
+            if (pkm is PB7)
+            {
+                if (pkm.Species == (int)Species.Mew)
+                {
+                    if (pkm.IsShiny)
+                    {
+                        await ReplyAsync("Mew can **not** be Shiny in LGPE. PoGo Mew does not transfer and Pokeball Plus Mew is shiny locked.");
+                        return;
+                    }
+                }
+            }
+            var la = new LegalityAnalysis(pkm);
+            var spec = GameInfo.Strings.Species[template.Species];
+            pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
+            if (pkm is not T pk || !la.Valid)
+            {
+                var reason = result == "Timeout" ? $"That {spec} set took too long to generate." :
+                             result == "VersionMismatch" ? "Request refused: PKHeX and Auto-Legality Mod version mismatch." :
+                             $"I wasn't able to create a {spec} from that set.";
+
+                var embedBuilder = new EmbedBuilder()
+                    .WithTitle("Trade Creation Failed.")
+                    .WithColor(Color.Red)
+                    .AddField("Status", $"Failed to create {spec}.")
+                    .AddField("Reason", reason);
+
+                if (result == "Failed")
+                {
+                    var hint = AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm);
+                    if (hint.Contains("Requested shiny value (ShinyType."))
+                    {
+                        hint = $"{spec} **cannot** be shiny. Please try again.";
+                    }
+                    embedBuilder.AddField("Hint", hint);
+                }
+
+                string userMention = Context.User.Mention;
+                string messageContent = $"{userMention}, here's the report for your request:";
+
+                var message = await Context.Channel.SendMessageAsync(text: messageContent, embed: embedBuilder.Build()).ConfigureAwait(false);
+                await Task.Delay(10_000);
+                await message.DeleteAsync().ConfigureAwait(false);
+                await Context.Message.DeleteAsync().ConfigureAwait(false);
+
+                return;
+            }
+            pk.ResetPartyStats();
+
+            if (pkm is PB7)
+            {
+                lgcode = TradeModule<T>.GenerateRandomPictocodes(3);
+            }
+
             var sig = Context.User.GetFavor();
             await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            var msg = $"**Showdown Format Error:**\n```{string.Join("\n", set.GetSetLines())}```";
+            var msg = $"Oops! An unexpected problem happened with this Showdown Set:\n```{string.Join("\n", set.GetSetLines())}```";
 
             await Task.Delay(2000);
             await Context.Message.DeleteAsync();
@@ -696,276 +764,355 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return 0;
     }
 
-    [Command("hiddentrade")]
-    [Alias("ht")]
-    [Summary("Makes the bot trade you a Pokémon.")]
+    [Command("batchTrade")]
+    [Alias("bt")]
+    [Summary("Makes the bot trade multiple Pokémon from the provided list, up to a maximum of 3 trades.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task HiddenTradeAsync([Remainder] string content)
+    public async Task BatchTradeAsync([Summary("List of Showdown Sets separated by '---'")][Remainder] string content)
     {
-        await TradeAsync(content);
-
-        var messages = await Context.Channel.GetMessagesAsync(1).FlattenAsync();
-        var tradeEmbedMessage = messages.FirstOrDefault(m => m.Embeds.Any());
-        if (tradeEmbedMessage != null)
+        // First, check if batch trades are allowed
+        if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
         {
-            await tradeEmbedMessage.DeleteAsync();
+            await ReplyAsync("Batch trades are currently disabled.").ConfigureAwait(false);
+            return;
         }
-        // Perform the trade operation
-        await TradeAsync(content);
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            return;
+        }
 
-        // Create the embed with information about the traded Pokémon
-        var embed = new EmbedBuilder()
-            .WithTitle("Hidden Trade Initiated!")
-            .WithDescription($"They may know the species...")
-            .WithColor(Color.Red)
-            .WithFooter("...but they'll never know its stats!");
+        var trades = TradeModule<T>.ParseBatchTradeContent(content);
+        var maxTradesAllowed = SysCord<T>.Runner.Config.Trade.TradeConfiguration.MaxPkmsPerTrade;
 
-        // Send the embed as a response to the command
-        await ReplyAsync(embed: embed.Build());
+        // Check if batch mode is allowed and if the number of trades exceeds the limit
+        if (maxTradesAllowed < 1 || trades.Count > maxTradesAllowed)
+        {
+            await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of trades in your batch.").ConfigureAwait(false);
+
+            await Task.Delay(5000);
+            await Context.Message.DeleteAsync();
+            return;
+        }
+        // Check if the number of trades exceeds the limit
+        if (trades.Count > maxTradesAllowed)
+        {
+            await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of trades in your batch.").ConfigureAwait(false);
+
+            await Task.Delay(2000);
+            await Context.Message.DeleteAsync();
+            return;
+        }
+        var batchTradeCode = Info.GetRandomTradeCode(userID);
+        int batchTradeNumber = 1;
+        _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
+
+        foreach (var trade in trades)
+        {
+            await ProcessSingleTradeAsync(trade, batchTradeCode, true, batchTradeNumber, trades.Count); // Pass the total number of trades here
+            batchTradeNumber++;
+        }
     }
 
-    [Command("batchTrade")]
-        [Alias("bt")]
-        [Summary("Makes the bot trade multiple Pokémon from the provided list, up to a maximum of 3 trades.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-        public async Task BatchTradeAsync([Summary("List of Showdown Sets separated by '---'")][Remainder] string content)
+    private static List<string> ParseBatchTradeContent(string content)
+    {
+        var delimiters = new[] { "---", "—-" }; // Includes both three hyphens and an em dash followed by a hyphen
+        var trades = content.Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(trade => trade.Trim())
+                            .ToList();
+        return trades;
+    }
+
+    [Command("batchtradezip")]
+    [Alias("btz")]
+    [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task BatchTradeZipAsync()
+    {
+        // First, check if batch trades are allowed
+        if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
         {
-            // First, check if batch trades are allowed
-            if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
+            await ReplyAsync("Batch trades are currently disabled.").ConfigureAwait(false);
+            return;
+        }
+
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            return;
+        }
+
+        var attachment = Context.Message.Attachments.FirstOrDefault();
+        if (attachment == default)
+        {
+            await ReplyAsync("No attachment provided!").ConfigureAwait(false);
+            return;
+        }
+
+        if (!attachment.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            await ReplyAsync("Invalid file format. Please provide a .zip file.").ConfigureAwait(false);
+            return;
+        }
+
+        var zipBytes = await new HttpClient().GetByteArrayAsync(attachment.Url);
+        using var zipStream = new MemoryStream(zipBytes);
+        using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+
+        var entries = archive.Entries.ToList();
+        var maxTradesAllowed = 6; // for full team in the zip created
+
+        // Check if batch mode is allowed and if the number of trades exceeds the limit
+        if (maxTradesAllowed < 1 || entries.Count > maxTradesAllowed)
+        {
+            await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of Pokémon in your .zip file.").ConfigureAwait(false);
+
+            await Task.Delay(5000);
+            await Context.Message.DeleteAsync();
+            return;
+        }
+
+        var batchTradeCode = Info.GetRandomTradeCode(userID);
+        int batchTradeNumber = 1;
+        _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
+
+        foreach (var entry in entries)
+        {
+            using var entryStream = entry.Open();
+            var pkBytes = await TradeModule<T>.ReadAllBytesAsync(entryStream).ConfigureAwait(false);
+            var pk = EntityFormat.GetFromBytes(pkBytes);
+
+            if (pk is T)
             {
-                await ReplyAsync("Batch trades are currently disabled.").ConfigureAwait(false);
-                return;
-            }
-            // Check if the user is already in the queue
-            var userID = Context.User.Id;
-            if (Info.IsUserInQueue(userID))
-            {
-                await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
-                return;
-            }
-
-            var trades = TradeModule<T>.ParseBatchTradeContent(content);
-            var maxTradesAllowed = SysCord<T>.Runner.Config.Trade.TradeConfiguration.MaxPkmsPerTrade;
-
-            // Check if batch mode is allowed and if the number of trades exceeds the limit
-            if (maxTradesAllowed < 1 || trades.Count > maxTradesAllowed)
-            {
-                await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of trades in your batch.").ConfigureAwait(false);
-
-                await Task.Delay(5000);
-                await Context.Message.DeleteAsync();
-                return;
-            }
-            // Check if the number of trades exceeds the limit
-            if (trades.Count > maxTradesAllowed)
-            {
-                await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of trades in your batch.").ConfigureAwait(false);
-
-                await Task.Delay(2000);
-                await Context.Message.DeleteAsync();
-                return;
-            }
-
-            var batchTradeCode = Info.GetRandomTradeCode(userID);
-            int batchTradeNumber = 1;
-            _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
-
-            foreach (var trade in trades)
-            {
-                await ProcessSingleTradeAsync(trade, batchTradeCode, true, batchTradeNumber, trades.Count); // Pass the total number of trades here
+                await ProcessSingleTradeAsync((T)pk, batchTradeCode, true, batchTradeNumber, entries.Count);
                 batchTradeNumber++;
             }
         }
+    }
 
-        private static List<string> ParseBatchTradeContent(string content)
-        {
-            var delimiters = new[] { "---", "—-" }; // Includes both three hyphens and an em dash followed by a hyphen
-            var trades = content.Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
-                                .Select(trade => trade.Trim())
-                                .ToList();
-            return trades;
-        }
+    private static async Task<byte[]> ReadAllBytesAsync(Stream stream)
+    {
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
+        return memoryStream.ToArray();
+    }
 
-        [Command("batchtradezip")]
-        [Alias("btz")]
-        [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-        public async Task BatchTradeZipAsync()
+    private async Task ProcessSingleTradeAsync(T pk, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
+    {
+        try
         {
-            // First, check if batch trades are allowed
-            if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
+            var la = new LegalityAnalysis(pk);
+            var spec = GameInfo.Strings.Species[pk.Species];
+
+            if (!la.Valid)
             {
-                await ReplyAsync("Batch trades are currently disabled.").ConfigureAwait(false);
+                await ReplyAsync($"The {spec} in the provided file is not legal.").ConfigureAwait(false);
                 return;
             }
 
-            // Check if the user is already in the queue
+            pk.ResetPartyStats();
+
             var userID = Context.User.Id;
-            if (Info.IsUserInQueue(userID))
+            var code = Info.GetRandomTradeCode(userID);
+            var lgcode = Info.GetRandomLGTradeCode();
+
+            // Add the trade to the queue
+            var sig = Context.User.GetFavor();
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
+        }
+    }
+
+    private async Task ProcessSingleTradeAsync(string tradeContent, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
+    {
+        // Strip any code block formatting and parse the Showdown set
+        tradeContent = ReusableActions.StripCodeBlock(tradeContent);
+        var set = new ShowdownSet(tradeContent);
+        var ignoreAutoOT = tradeContent.Contains("OT:") || tradeContent.Contains("TID:") || tradeContent.Contains("SID:");
+        // Get the template for the Pokémon
+        var template = AutoLegalityWrapper.GetTemplate(set);
+
+        // Handle invalid lines (if any)
+        if (set.InvalidLines.Count != 0)
+        {
+            var msg = $"Unable to parse Showdown Set:\n{string.Join("\n", set.InvalidLines)}";
+            await ReplyAsync(msg).ConfigureAwait(false);
+            return;
+        }
+
+        try
+        {
+            // Get the trainer information and generate the Pokémon
+            var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
+            var pkm = sav.GetLegal(template, out var result);
+            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
             {
-                await ReplyAsync("You're already in a queue. Wait until it's processed before attempting to join another.").ConfigureAwait(false);
-                return;
+                if (pkm is ITechRecord tr)
+                    tr.SetRecordFlagsAll();
             }
+            // Perform legality analysis
+            var la = new LegalityAnalysis(pkm);
+            var spec = GameInfo.Strings.Species[template.Species];
+            pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
 
-            var attachment = Context.Message.Attachments.FirstOrDefault();
-            if (attachment == default)
+            if (pkm is not T pk || !la.Valid)
             {
-                await ReplyAsync("You can't trade nothing. It looks like you forgot your PKM file or Showdown Set.").ConfigureAwait(false);
-                return;
-            }
-
-            if (!attachment.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-            {
-                await ReplyAsync("Invalid file format. Please provide a .zip file.").ConfigureAwait(false);
-                return;
-            }
-
-            var zipBytes = await new HttpClient().GetByteArrayAsync(attachment.Url);
-            using var zipStream = new MemoryStream(zipBytes);
-            using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
-
-            var entries = archive.Entries.ToList();
-            var maxTradesAllowed = 6; // for full team in the zip created
-
-            // Check if batch mode is allowed and if the number of trades exceeds the limit
-            if (maxTradesAllowed < 1 || entries.Count > maxTradesAllowed)
-            {
-                await ReplyAsync($"You can only process up to {maxTradesAllowed} trades at a time. Please reduce the number of Pokémon in your .zip file.").ConfigureAwait(false);
-
-                await Task.Delay(5000);
-                await Context.Message.DeleteAsync();
-                return;
-            }
-
-            var batchTradeCode = Info.GetRandomTradeCode(userID);
-            int batchTradeNumber = 1;
-            _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
-
-            foreach (var entry in entries)
-            {
-                using var entryStream = entry.Open();
-                var pkBytes = await TradeModule<T>.ReadAllBytesAsync(entryStream).ConfigureAwait(false);
-                var pk = EntityFormat.GetFromBytes(pkBytes);
-
-                if (pk is T)
+                var reason = result switch
                 {
-                    await ProcessSingleTradeAsync((T)pk, batchTradeCode, true, batchTradeNumber, entries.Count);
-                    batchTradeNumber++;
-                }
+                    "Timeout" => $"That {spec} set took too long to generate.",
+                    "VersionMismatch" => "Request refused: PKHeX and Auto-Legality Mod version mismatch.",
+                    _ => $"I wasn't able to create a {spec} from that set."
+                };
+
+                var imsg = $"Oops! {reason}";
+                if (result == "Failed")
+                    imsg += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
+
+                await ReplyAsync(imsg).ConfigureAwait(false);
+                return;
+            }
+
+            pk.ResetPartyStats();
+
+            // Use a predefined or random trade code
+            var userID = Context.User.Id;
+            var code = Info.GetRandomTradeCode(userID);
+            var lgcode = Info.GetRandomLGTradeCode();
+
+            // Add the trade to the queue
+            var sig = Context.User.GetFavor();
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
+        }
+    }
+
+    [Command("listevents")]
+    [Alias("le")]
+    [Summary("Lists available event files, filtered by a specific letter or substring, and sends the list via DM.")]
+    public async Task ListEventsAsync([Remainder] string args = "")
+    {
+        const int itemsPerPage = 20; // Number of items per page
+        var eventsFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.EventsFolder;
+        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+
+        // Check if the events folder path is not set or empty
+        if (string.IsNullOrEmpty(eventsFolderPath))
+        {
+            await ReplyAsync("This bot does not have this feature set up.");
+            return;
+        }
+
+        // Parsing the arguments to separate filter and page number
+        string filter = "";
+        int page = 1;
+        var parts = args.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length > 0)
+        {
+            // Check if the last part is a number (page number)
+            if (int.TryParse(parts.Last(), out int parsedPage))
+            {
+                page = parsedPage;
+                filter = string.Join(" ", parts.Take(parts.Length - 1));
+            }
+            else
+            {
+                filter = string.Join(" ", parts);
             }
         }
 
-        private static async Task<byte[]> ReadAllBytesAsync(Stream stream)
+        var allEventFiles = Directory.GetFiles(eventsFolderPath)
+                                     .Select(Path.GetFileNameWithoutExtension)
+                                     .OrderBy(file => file)
+                                     .ToList();
+
+        var filteredEventFiles = allEventFiles
+                                 .Where(file => string.IsNullOrWhiteSpace(filter) || file.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                                 .ToList();
+
+        IUserMessage replyMessage;
+
+        // Check if there are no files matching the filter
+        if (!filteredEventFiles.Any())
         {
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
-            return memoryStream.ToArray();
+            replyMessage = await ReplyAsync($"No events found matching the filter '{filter}'.");
         }
-
-        private async Task ProcessSingleTradeAsync(T pk, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
+        else
         {
-            try
-            {
-                var la = new LegalityAnalysis(pk);
-                var spec = GameInfo.Strings.Species[pk.Species];
+            var pageCount = (int)Math.Ceiling(filteredEventFiles.Count / (double)itemsPerPage);
+            page = Math.Clamp(page, 1, pageCount); // Ensure page number is within valid range
 
-                if (!la.Valid)
+            var pageItems = filteredEventFiles.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
+
+            var embed = new EmbedBuilder()
+                .WithTitle($"Available Events - Filter: '{filter}'")
+                .WithDescription($"Page {page} of {pageCount}")
+                .WithColor(Color.Blue);
+
+            foreach (var item in pageItems)
+            {
+                var index = allEventFiles.IndexOf(item) + 1; // Get the index from the original list
+                embed.AddField($"{index}. {item}", $"Use `{botPrefix}er {index}` to request this event.");
+            }
+
+            if (Context.User is IUser user)
+            {
+                try
                 {
-                    await ReplyAsync($"The {spec} in the provided file is not legal.").ConfigureAwait(false);
-                    return;
+                    var dmChannel = await user.CreateDMChannelAsync();
+                    await dmChannel.SendMessageAsync(embed: embed.Build());
+                    replyMessage = await ReplyAsync($"{Context.User.Mention}, I've sent you a DM with the list of events.");
                 }
-
-                pk.ResetPartyStats();
-
-                var userID = Context.User.Id;
-                var code = Info.GetRandomTradeCode(userID);
-                var lgcode = Info.GetRandomLGTradeCode();
-
-                // Add the trade to the queue
-                var sig = Context.User.GetFavor();
-                await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            }
-        }
-
-        private async Task ProcessSingleTradeAsync(string tradeContent, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
-        {
-            // Strip any code block formatting and parse the Showdown set
-            tradeContent = ReusableActions.StripCodeBlock(tradeContent);
-            var set = new ShowdownSet(tradeContent);
-            var ignoreAutoOT = tradeContent.Contains("OT:") || tradeContent.Contains("TID:") || tradeContent.Contains("SID:");
-
-            // Get the template for the Pokémon
-            var template = AutoLegalityWrapper.GetTemplate(set);
-
-            // Handle invalid lines (if any)
-            if (set.InvalidLines.Count != 0)
-            {
-                var msg = $"Unable to parse Showdown Set:\n{string.Join("\n", set.InvalidLines)}";
-                await ReplyAsync(msg).ConfigureAwait(false);
-                return;
-            }
-
-            try
-            {
-                // Get the trainer information and generate the Pokémon
-                var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
-                var pkm = sav.GetLegal(template, out var result);
-                if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
+                catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
                 {
-                    if (pkm is ITechRecord tr)
-                        tr.SetRecordFlagsAll();
+                    // This exception is thrown when the bot cannot send DMs to the user
+                    replyMessage = await ReplyAsync($"{Context.User.Mention}, I'm unable to send you a DM. Please check your **Server Privacy Settings**.");
                 }
-                // Perform legality analysis
-                var la = new LegalityAnalysis(pkm);
-                var spec = GameInfo.Strings.Species[template.Species];
-                pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
-
-                if (pkm is not T pk || !la.Valid)
-                {
-                    var reason = result switch
-                    {
-                        "Timeout" => $"That {spec} set took too long to generate.",
-                        "Version Mismatch" => "**Request Error:** PKHeX.Core and PKHeX.Core.AutoMod versions do not match. Did you check the Directory.Build.props?",
-                        _ => $"**Request Error:** Your **{spec}** is illegal. Try asking for help in the appropriate channel."
-                    };
-
-                    var imsg = $"**Error:** {reason}";
-                    if (result == "Failed")
-                        imsg += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
-
-                    await ReplyAsync(imsg).ConfigureAwait(false);
-                    return;
-                }
-
-                pk.ResetPartyStats();
-
-                // Use a predefined or random trade code
-                var userID = Context.User.Id;
-                var code = Info.GetRandomTradeCode(userID);
-                var lgcode = Info.GetRandomLGTradeCode();
-
-                // Add the trade to the queue
-                var sig = Context.User.GetFavor();
-                await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            else
             {
-                LogUtil.LogSafe(ex, nameof(TradeModule<T>));
+                replyMessage = await ReplyAsync("**Error**: Unable to send a DM. Please check your **Server Privacy Settings**.");
             }
         }
 
-        [Command("listevents")]
-        [Alias("le")]
-        [Summary("Lists available event files, filtered by a specific letter or substring, then sends the list via DM.")]
-        public async Task ListEventsAsync([Remainder] string args = "")
+        await Task.Delay(10_000);
+        if (Context.Message is IUserMessage userMessage)
         {
-            const int itemsPerPage = 20; // Number of items per page
+            await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
+        await replyMessage.DeleteAsync().ConfigureAwait(false);
+    }
+
+    [Command("eventrequest")]
+    [Alias("er")]
+    [Summary("Downloads event attachments from the specified EventsFolder and adds to trade queue.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task EventRequestAsync(int index)
+    {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            return;
+        }
+        try
+        {
             var eventsFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.EventsFolder;
-            var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+            var eventFiles = Directory.GetFiles(eventsFolderPath)
+                                      .Select(Path.GetFileName)
+                                      .OrderBy(x => x)
+                                      .ToList();
 
             // Check if the events folder path is not set or empty
             if (string.IsNullOrEmpty(eventsFolderPath))
@@ -974,164 +1121,164 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            // Parsing the arguments to separate filter and page number
-            string filter = "";
-            int page = 1;
-            var parts = args.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length > 0)
+            if (index < 1 || index > eventFiles.Count)
             {
-                // Check if the last part is a number (page number)
-                if (int.TryParse(parts.Last(), out int parsedPage))
-                {
-                    page = parsedPage;
-                    filter = string.Join(" ", parts.Take(parts.Length - 1));
-                }
-                else
-                {
-                    filter = string.Join(" ", parts);
-                }
+                await ReplyAsync("Invalid event index. Please use a valid event number from the `.le` command.").ConfigureAwait(false);
+                return;
             }
 
-            var allEventFiles = Directory.GetFiles(eventsFolderPath)
-                                         .Select(Path.GetFileNameWithoutExtension)
-                                         .OrderBy(file => file)
-                                         .ToList();
+            var selectedFile = eventFiles[index - 1]; // Adjust for zero-based indexing
+            var fileData = await File.ReadAllBytesAsync(Path.Combine(eventsFolderPath, selectedFile));
 
-            var filteredEventFiles = allEventFiles
-                                     .Where(file => string.IsNullOrWhiteSpace(filter) || file.Contains(filter, StringComparison.OrdinalIgnoreCase))
-                                     .ToList();
-
-            IUserMessage replyMessage;
-
-            // Check if there are no files matching the filter
-            if (!filteredEventFiles.Any())
+            var download = new Download<PKM>
             {
-                replyMessage = await ReplyAsync($"No events found matching the filter '{filter}'.");
-            }
-            else
+                Data = EntityFormat.GetFromBytes(fileData),
+                Success = true
+            };
+
+            var pk = GetRequest(download);
+            if (pk == null)
             {
-                var pageCount = (int)Math.Ceiling(filteredEventFiles.Count / (double)itemsPerPage);
-                page = Math.Clamp(page, 1, pageCount); // Ensure page number is within valid range
-
-                var pageItems = filteredEventFiles.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
-
-                var embed = new EmbedBuilder()
-                    .WithTitle($"Available Events - Filter: '{filter}'")
-                    .WithDescription($"Page {page} of {pageCount}")
-                    .WithColor(Color.Blue);
-
-                foreach (var item in pageItems)
-                {
-                    var index = allEventFiles.IndexOf(item) + 1; // Get the index from the original list
-                    embed.AddField($"{index}. {item}", $"Use `{botPrefix}er {index}` to request this event.");
-                }
-
-                if (Context.User is IUser user)
-                {
-                    try
-                    {
-                        var dmChannel = await user.CreateDMChannelAsync();
-                        await dmChannel.SendMessageAsync(embed: embed.Build());
-                        replyMessage = await ReplyAsync($"{Context.User.Mention}, I've sent you a DM with a list of events.");
-                    }
-                    catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
-                    {
-                        // This exception is thrown when the bot cannot send DMs to the user
-                        replyMessage = await ReplyAsync($"{Context.User.Mention}, I'm unable to send you a DM. Please check your **Server Privacy Settings**.");
-                    }
-                }
-                else
-                {
-                    replyMessage = await ReplyAsync("**Error**: Unable to send a DM. Please check your **Server Privacy Settings**.");
-                }
+                await ReplyAsync("Failed to convert event file to the required PKM type.").ConfigureAwait(false);
+                return;
             }
 
-            await Task.Delay(10_000);
+            var code = Info.GetRandomTradeCode(userID);
+            var lgcode = Info.GetRandomLGTradeCode();
+            var sig = Context.User.GetFavor();
+            await ReplyAsync($"Event request added to queue.").ConfigureAwait(false);
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"An error occurred: {ex.Message}").ConfigureAwait(false);
+        }
+        finally
+        {
             if (Context.Message is IUserMessage userMessage)
             {
                 await userMessage.DeleteAsync().ConfigureAwait(false);
             }
-            await replyMessage.DeleteAsync().ConfigureAwait(false);
         }
+    }
 
-        [Command("eventrequest")]
-        [Alias("er")]
-        [Summary("Downloads event attachments from the specified EventsFolder and adds it to the Trade Queue.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-        public async Task EventRequestAsync(int index)
+    [Command("battlereadylist")]
+    [Alias("brl")]
+    [Summary("Lists available battle-ready files, filtered by a specific letter or substring, and sends the list via DM.")]
+    public async Task BattleReadyListAsync([Remainder] string args = "")
+    {
+        const int itemsPerPage = 20; // Number of items per page
+        var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.BattleReadyPKMFolder;
+        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+
+        // Check if the battleready folder path is not set or empty
+        if (string.IsNullOrEmpty(battleReadyFolderPath))
         {
-            // Check if the user is already in the queue
-            var userID = Context.User.Id;
-            if (Info.IsUserInQueue(userID))
-        {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("This bot does not have this feature set up.");
             return;
         }
-            try
+
+        // Parsing the arguments to separate filter and page number
+        string filter = "";
+        int page = 1;
+        var parts = args.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length > 0)
+        {
+            // Check if the last part is a number (page number)
+            if (int.TryParse(parts.Last(), out int parsedPage))
             {
-                var eventsFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.EventsFolder;
-                var eventFiles = Directory.GetFiles(eventsFolderPath)
-                                          .Select(Path.GetFileName)
-                                          .OrderBy(x => x)
-                                          .ToList();
-
-                // Check if the events folder path is not set or empty
-                if (string.IsNullOrEmpty(eventsFolderPath))
-                {
-                    await ReplyAsync("This bot does not have this feature set up.");
-                    return;
-                }
-
-                if (index < 1 || index > eventFiles.Count)
-                {
-                    await ReplyAsync("Invalid event index. Please use a valid event number from the `le` command.").ConfigureAwait(false);
-                    return;
-                }
-
-                var selectedFile = eventFiles[index - 1]; // Adjust for zero-based indexing
-                var fileData = await File.ReadAllBytesAsync(Path.Combine(eventsFolderPath, selectedFile));
-
-                var download = new Download<PKM>
-                {
-                    Data = EntityFormat.GetFromBytes(fileData),
-                    Success = true
-                };
-
-                var pk = GetRequest(download);
-                if (pk == null)
-                {
-                    await ReplyAsync("Failed to convert event file to the required PKM type.").ConfigureAwait(false);
-                    return;
-                }
-
-                var code = Info.GetRandomTradeCode(userID);
-                var lgcode = Info.GetRandomLGTradeCode();
-                var sig = Context.User.GetFavor();
-                await ReplyAsync($"Event request added to queue.").ConfigureAwait(false);
-                await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
+                page = parsedPage;
+                filter = string.Join(" ", parts.Take(parts.Length - 1));
             }
-            catch (Exception ex)
+            else
             {
-                await ReplyAsync($"**Error:** {ex.Message}").ConfigureAwait(false);
-            }
-            finally
-            {
-                if (Context.Message is IUserMessage userMessage)
-                {
-                    await userMessage.DeleteAsync().ConfigureAwait(false);
-                }
+                filter = string.Join(" ", parts);
             }
         }
 
-        [Command("battlereadylist")]
-        [Alias("brl")]
-        [Summary("Lists available battle-ready files, filtered by a specific letter or substring, then sends the list via DM.")]
-        public async Task BattleReadyListAsync([Remainder] string args = "")
+        var allBattleReadyFiles = Directory.GetFiles(battleReadyFolderPath)
+                                           .Select(Path.GetFileNameWithoutExtension)
+                                           .OrderBy(file => file)
+                                           .ToList();
+
+        var filteredBattleReadyFiles = allBattleReadyFiles
+                                       .Where(file => string.IsNullOrWhiteSpace(filter) || file.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                                       .ToList();
+
+        IUserMessage replyMessage;
+
+        // Check if there are no files matching the filter
+        if (!filteredBattleReadyFiles.Any())
         {
-            const int itemsPerPage = 20; // Number of items per page
+            replyMessage = await ReplyAsync($"No battle-ready files found matching the filter '{filter}'.");
+        }
+        else
+        {
+            var pageCount = (int)Math.Ceiling(filteredBattleReadyFiles.Count / (double)itemsPerPage);
+            page = Math.Clamp(page, 1, pageCount); // Ensure page number is within valid range
+
+            var pageItems = filteredBattleReadyFiles.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
+
+            var embed = new EmbedBuilder()
+                .WithTitle($"Available Battle-Ready Files - Filter: '{filter}'")
+                .WithDescription($"Page {page} of {pageCount}")
+                .WithColor(Color.Blue);
+
+            foreach (var item in pageItems)
+            {
+                var index = allBattleReadyFiles.IndexOf(item) + 1; // Get the index from the original list
+                embed.AddField($"{index}. {item}", $"Use `{botPrefix}brr {index}` to request this battle-ready file.");
+            }
+
+            if (Context.User is IUser user)
+            {
+                try
+                {
+                    var dmChannel = await user.CreateDMChannelAsync();
+                    await dmChannel.SendMessageAsync(embed: embed.Build());
+                    replyMessage = await ReplyAsync($"{Context.User.Mention}, I've sent you a DM with the list of battle-ready files.");
+                }
+                catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
+                {
+                    // This exception is thrown when the bot cannot send DMs to the user
+                    replyMessage = await ReplyAsync($"{Context.User.Mention}, I'm unable to send you a DM. Please check your **Server Privacy Settings**.");
+                }
+            }
+            else
+            {
+                replyMessage = await ReplyAsync("**Error**: Unable to send a DM. Please check your **Server Privacy Settings**.");
+            }
+        }
+
+        await Task.Delay(10_000);
+        if (Context.Message is IUserMessage userMessage)
+        {
+            await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
+        await replyMessage.DeleteAsync().ConfigureAwait(false);
+    }
+
+    [Command("battlereadyrequest")]
+    [Alias("brr", "br")]
+    [Summary("Downloads battle-ready attachments from the specified folder and adds to trade queue.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task BattleReadyRequestAsync(int index)
+    {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You already have an existing trade in the queue. Please wait until it is processed.").ConfigureAwait(false);
+            return;
+        }
+        try
+        {
             var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.BattleReadyPKMFolder;
-            var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+            var battleReadyFiles = Directory.GetFiles(battleReadyFolderPath)
+                                            .Select(Path.GetFileName)
+                                            .OrderBy(x => x)
+                                            .ToList();
 
             // Check if the battleready folder path is not set or empty
             if (string.IsNullOrEmpty(battleReadyFolderPath))
@@ -1140,301 +1287,212 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            // Parsing the arguments to separate filter and page number
-            string filter = "";
-            int page = 1;
-            var parts = args.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length > 0)
+            if (index < 1 || index > battleReadyFiles.Count)
             {
-                // Check if the last part is a number (page number)
-                if (int.TryParse(parts.Last(), out int parsedPage))
-                {
-                    page = parsedPage;
-                    filter = string.Join(" ", parts.Take(parts.Length - 1));
-                }
-                else
-                {
-                    filter = string.Join(" ", parts);
-                }
+                await ReplyAsync("Invalid battle-ready file index. Please use a valid file number from the `.blr` command.").ConfigureAwait(false);
+                return;
             }
 
-            var allBattleReadyFiles = Directory.GetFiles(battleReadyFolderPath)
-                                               .Select(Path.GetFileNameWithoutExtension)
-                                               .OrderBy(file => file)
-                                               .ToList();
+            var selectedFile = battleReadyFiles[index - 1];
+            var fileData = await File.ReadAllBytesAsync(Path.Combine(battleReadyFolderPath, selectedFile));
 
-            var filteredBattleReadyFiles = allBattleReadyFiles
-                                           .Where(file => string.IsNullOrWhiteSpace(filter) || file.Contains(filter, StringComparison.OrdinalIgnoreCase))
-                                           .ToList();
-
-            IUserMessage replyMessage;
-
-            // Check if there are no files matching the filter
-            if (!filteredBattleReadyFiles.Any())
+            var download = new Download<PKM>
             {
-                replyMessage = await ReplyAsync($"No battle-ready files found matching the filter '{filter}'.");
-            }
-            else
+                Data = EntityFormat.GetFromBytes(fileData),
+                Success = true
+            };
+
+            var pk = GetRequest(download);
+            if (pk == null)
             {
-                var pageCount = (int)Math.Ceiling(filteredBattleReadyFiles.Count / (double)itemsPerPage);
-                page = Math.Clamp(page, 1, pageCount); // Ensure page number is within valid range
-
-                var pageItems = filteredBattleReadyFiles.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
-
-                var embed = new EmbedBuilder()
-                    .WithTitle($"Available Battle-Ready Files - Filter: '{filter}'")
-                    .WithDescription($"Page {page} of {pageCount}")
-                    .WithColor(Color.Blue);
-
-                foreach (var item in pageItems)
-                {
-                    var index = allBattleReadyFiles.IndexOf(item) + 1; // Get the index from the original list
-                    embed.AddField($"{index}. {item}", $"Use `{botPrefix}brr {index}` to request this battle-ready file.");
-                }
-
-                if (Context.User is IUser user)
-                {
-                    try
-                    {
-                        var dmChannel = await user.CreateDMChannelAsync();
-                        await dmChannel.SendMessageAsync(embed: embed.Build());
-                        replyMessage = await ReplyAsync($"{Context.User.Mention}, I've sent you a DM with the list of battle-ready files.");
-                    }
-                    catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
-                    {
-                        // This exception is thrown when the bot cannot send DMs to the user
-                        replyMessage = await ReplyAsync($"{Context.User.Mention}, I'm unable to send you a DM. Please check your **Server Privacy Settings**.");
-                    }
-                }
-                else
-                {
-                    replyMessage = await ReplyAsync("**Error**: Unable to send a DM. Please check your **Server Privacy Settings**.");
-                }
+                await ReplyAsync("Failed to convert battle-ready file to the required PKM type.").ConfigureAwait(false);
+                return;
             }
 
-            await Task.Delay(10_000);
+            var code = Info.GetRandomTradeCode(userID);
+            var lgcode = Info.GetRandomLGTradeCode();
+            var sig = Context.User.GetFavor();
+            await ReplyAsync($"Battle-ready request added to queue.").ConfigureAwait(false);
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"An error occurred: {ex.Message}").ConfigureAwait(false);
+        }
+        finally
+        {
             if (Context.Message is IUserMessage userMessage)
             {
                 await userMessage.DeleteAsync().ConfigureAwait(false);
             }
-            await replyMessage.DeleteAsync().ConfigureAwait(false);
         }
+    }
 
-        [Command("battlereadyrequest")]
-        [Alias("brr", "br")]
-        [Summary("Downloads battle-ready attachments from the specified folder and adds to trade queue.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-        public async Task BattleReadyRequestAsync(int index)
+    [Command("tradeUser")]
+    [Alias("tu", "tradeOther")]
+    [Summary("Makes the bot trade the mentioned user the attached file.")]
+    [RequireSudo]
+    public async Task TradeAsyncAttachUser([Summary("Trade Code")] int code, [Remainder] string _)
+    {
+        if (Context.Message.MentionedUsers.Count > 1)
         {
-            // Check if the user is already in the queue
-            var userID = Context.User.Id;
-            if (Info.IsUserInQueue(userID))
-        {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("Too many mentions. Queue one user at a time.").ConfigureAwait(false);
             return;
         }
-            try
-            {
-                var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.BattleReadyPKMFolder;
-                var battleReadyFiles = Directory.GetFiles(battleReadyFolderPath)
-                                                .Select(Path.GetFileName)
-                                                .OrderBy(x => x)
-                                                .ToList();
 
-                // Check if the battleready folder path is not set or empty
-                if (string.IsNullOrEmpty(battleReadyFolderPath))
-                {
-                    await ReplyAsync("This bot does not have this feature set up.");
-                    return;
-                }
-
-                if (index < 1 || index > battleReadyFiles.Count)
-                {
-                    await ReplyAsync("Invalid battle-ready file index. Please use a valid file number from the `blr` command.").ConfigureAwait(false);
-                    return;
-                }
-
-                var selectedFile = battleReadyFiles[index - 1];
-                var fileData = await File.ReadAllBytesAsync(Path.Combine(battleReadyFolderPath, selectedFile));
-
-                var download = new Download<PKM>
-                {
-                    Data = EntityFormat.GetFromBytes(fileData),
-                    Success = true
-                };
-
-                var pk = GetRequest(download);
-                if (pk == null)
-                {
-                    await ReplyAsync("Failed to convert battle-ready file to the required PKM type.").ConfigureAwait(false);
-                    return;
-                }
-
-                var code = Info.GetRandomTradeCode(userID);
-                var lgcode = Info.GetRandomLGTradeCode();
-                var sig = Context.User.GetFavor();
-                await ReplyAsync($"Battle-Ready request added to queue.").ConfigureAwait(false);
-                await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync($"**Error:** {ex.Message}").ConfigureAwait(false);
-            }
-            finally
-            {
-                if (Context.Message is IUserMessage userMessage)
-                {
-                    await userMessage.DeleteAsync().ConfigureAwait(false);
-                }
-            }
-        }
-
-        [Command("tradeUser")]
-        [Alias("tu", "tradeOther")]
-        [Summary("Makes the bot trade the mentioned user the attached file.")]
-        [RequireSudo]
-        public async Task TradeAsyncAttachUser([Summary("Trade Code")] int code, [Remainder] string _)
+        if (Context.Message.MentionedUsers.Count == 0)
         {
-            if (Context.Message.MentionedUsers.Count > 1)
-            {
-                await ReplyAsync("Too many mentions. Queue one user at a time.").ConfigureAwait(false);
-                return;
-            }
-
-            if (Context.Message.MentionedUsers.Count == 0)
-            {
-                await ReplyAsync("A user must be mentioned in order to do this.").ConfigureAwait(false);
-                return;
-            }
-
-            var usr = Context.Message.MentionedUsers.ElementAt(0);
-            var sig = usr.GetFavor();
-            await TradeAsyncAttach(code, sig, usr).ConfigureAwait(false);
+            await ReplyAsync("A user must be mentioned in order to do this.").ConfigureAwait(false);
+            return;
         }
 
-        [Command("tradeUser")]
-        [Alias("tu", "tradeOther")]
-        [Summary("Makes the bot trade the mentioned user the attached file.")]
-        [RequireSudo]
-        public Task TradeAsyncAttachUser([Remainder] string _)
+        var usr = Context.Message.MentionedUsers.ElementAt(0);
+        var sig = usr.GetFavor();
+        await TradeAsyncAttach(code, sig, usr).ConfigureAwait(false);
+    }
+
+    [Command("tradeUser")]
+    [Alias("tu", "tradeOther")]
+    [Summary("Makes the bot trade the mentioned user the attached file.")]
+    [RequireSudo]
+    public Task TradeAsyncAttachUser([Remainder] string _)
+    {
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
+        return TradeAsyncAttachUser(code, _);
+    }
+
+    private async Task TradeAsyncAttach(int code, RequestSignificance sig, SocketUser usr)
+    {
+        var attachment = Context.Message.Attachments.FirstOrDefault();
+        if (attachment == default)
         {
-            var userID = Context.User.Id;
-            var code = Info.GetRandomTradeCode(userID);
-            return TradeAsyncAttachUser(code, _);
+            await ReplyAsync("No attachment provided!").ConfigureAwait(false);
+            return;
         }
 
-        private async Task TradeAsyncAttach(int code, RequestSignificance sig, SocketUser usr)
+        var att = await NetUtil.DownloadPKMAsync(attachment).ConfigureAwait(false);
+        var pk = GetRequest(att);
+        if (pk == null)
         {
-            var attachment = Context.Message.Attachments.FirstOrDefault();
-            if (attachment == default)
-            {
-                await ReplyAsync("You can't trade thin air. You're forgetting your PKM file or Showdown Format.").ConfigureAwait(false);
-                return;
-            }
-
-            var att = await NetUtil.DownloadPKMAsync(attachment).ConfigureAwait(false);
-            var pk = GetRequest(att);
-            if (pk == null)
-            {
-                await ReplyAsync("**Error:** Attachment provided is not compatible with this module!").ConfigureAwait(false);
-                return;
-            }
-
-            await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr).ConfigureAwait(false);
+            await ReplyAsync("Attachment provided is not compatible with this module!").ConfigureAwait(false);
+            return;
         }
 
-        private static T? GetRequest(Download<PKM> dl)
+        await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr).ConfigureAwait(false);
+    }
+
+    private async Task HideTradeAsyncAttach(int code, RequestSignificance sig, SocketUser usr)
+    {
+        var attachment = Context.Message.Attachments.FirstOrDefault();
+        if (attachment == default)
         {
-            if (!dl.Success)
-                return null;
-            return dl.Data switch
-            {
-                null => null,
-                T pk => pk,
-                _ => EntityConverter.ConvertToType(dl.Data, typeof(T), out _) as T,
-            };
+            await ReplyAsync("No attachment provided!").ConfigureAwait(false);
+            return;
         }
 
-        private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
+        var att = await NetUtil.DownloadPKMAsync(attachment).ConfigureAwait(false);
+        var pk = GetRequest(att);
+        if (pk == null)
         {
-            if (lgcode == null)
-            {
-                lgcode = GenerateRandomPictocodes(3);
-            }
-            if (!pk.CanBeTraded())
-            {
-                var reply = await ReplyAsync("The PKM file or Showdown Format you provided is illegal. Try asking for help in the appropriate channel.").ConfigureAwait(false);
-                await Task.Delay(6000); // Delay for 6 seconds
-                await reply.DeleteAsync().ConfigureAwait(false);
-                return;
-            }
-            var homeLegalityCfg = Info.Hub.Config.Trade.HomeLegalitySettings;
-            var la = new LegalityAnalysis(pk);
-
-            // handle past gen file requests
-            // thanks manu https://github.com/Manu098vm/SysBot.NET/commit/d8c4b65b94f0300096704390cce998940413cc0d
-            if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
-            {
-                var clone = (T)pk.Clone();
-
-                clone.HandlingTrainerName = pk.OriginalTrainerName;
-                clone.HandlingTrainerGender = pk.OriginalTrainerGender;
-
-                if (clone is PK8 or PA8 or PB8 or PK9)
-                    ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
-
-                clone.CurrentHandler = 1;
-
-                la = new LegalityAnalysis(clone);
-
-                if (la.Valid) pk = clone;
-            }
-
-            if (!la.Valid)
-            {
-                string responseMessage = pk.IsEgg ? "Invalid Showdown Format for this Egg. Try asking for help in the appropriate channel." :
-                    $"{typeof(T).Name} attachment is illegal. I cannot trade it for you.";
-                if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
-                {
-                    // Allow the owner to prevent trading entities that require a HOME Tracker even if the file has one already.
-                    await ReplyAsync($"{typeof(T).Name} attachment is not native, and cannot be traded!").ConfigureAwait(false);
-                    return;
-                }
-                if (homeLegalityCfg.DisallowTracked && pk is IHomeTrack { HasTracker: true })
-                {
-                    // Allow the owner to prevent trading entities that already have a HOME Tracker.
-                    await ReplyAsync($"{typeof(T).Name} attachment is tracked by HOME, and cannot be traded!").ConfigureAwait(false);
-                    return;
-                }
-                var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
-                await Task.Delay(6000);
-                await reply.DeleteAsync().ConfigureAwait(false);
-                return;
-            }
-
-            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
+            await ReplyAsync("Attachment provided is not compatible with this module!").ConfigureAwait(false);
+            return;
         }
-        private List<Pictocodes> GenerateRandomPictocodes(int count)
+
+        await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr, isHiddenTrade: true).ConfigureAwait(false);
+    }
+
+    private static T? GetRequest(Download<PKM> dl)
+    {
+        if (!dl.Success)
+            return null;
+        return dl.Data switch
         {
-            Random rnd = new Random();
-            List<Pictocodes> randomPictocodes = new List<Pictocodes>();
-            Array pictocodeValues = Enum.GetValues(typeof(Pictocodes));
+            null => null,
+            T pk => pk,
+            _ => EntityConverter.ConvertToType(dl.Data, typeof(T), out _) as T,
+        };
+    }
 
-            for (int i = 0; i < count; i++)
+    private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool isHiddenTrade = false)
+    {
+        lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
+        if (!pk.CanBeTraded())
+        {
+            var reply = await ReplyAsync("Provided Pokémon content is blocked from trading!").ConfigureAwait(false);
+            await Task.Delay(6000); // Delay for 6 seconds
+            await reply.DeleteAsync().ConfigureAwait(false);
+            return;
+        }
+        var homeLegalityCfg = Info.Hub.Config.Trade.HomeLegalitySettings;
+        var la = new LegalityAnalysis(pk);
+        if (!la.Valid)
+        {
+            string responseMessage;
+            if (pk.IsEgg)
             {
-                Pictocodes randomPictocode = (Pictocodes)pictocodeValues.GetValue(rnd.Next(pictocodeValues.Length));
-                randomPictocodes.Add(randomPictocode);
+                string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
+                responseMessage = $"Invalid Showdown Set for the {speciesName} egg. Please review your information and try again.";
             }
+            else
+            {
+                responseMessage = $"{typeof(T).Name} attachment is not legal, and cannot be traded!";
+            }
+            var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
+            await Task.Delay(6000);
+            await reply.DeleteAsync().ConfigureAwait(false);
+            return;
+        }
+        if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
+        {
+            // Allow the owner to prevent trading entities that require a HOME Tracker even if the file has one already.
+            await ReplyAsync($"{typeof(T).Name} attachment is not native, and cannot be traded!").ConfigureAwait(false);
+            return;
+        }
+        if (homeLegalityCfg.DisallowTracked && pk is IHomeTrack { HasTracker: true })
+        {
+            // Allow the owner to prevent trading entities that already have a HOME Tracker.
+            await ReplyAsync($"{typeof(T).Name} attachment is tracked by HOME, and cannot be traded!").ConfigureAwait(false);
+            return;
+        }
+        // handle past gen file requests
+        // thanks manu https://github.com/Manu098vm/SysBot.NET/commit/d8c4b65b94f0300096704390cce998940413cc0d
+        if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
+        {
+            var clone = (T)pk.Clone();
 
-            return randomPictocodes;
+            clone.HandlingTrainerName = pk.OriginalTrainerName;
+            clone.HandlingTrainerGender = pk.OriginalTrainerGender;
 
+            if (clone is PK8 or PA8 or PB8 or PK9)
+                ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
+
+            clone.CurrentHandler = 1;
+
+            la = new LegalityAnalysis(clone);
+
+            if (la.Valid) pk = clone;
         }
 
-        // USUM/LGPE/POGO/BDSP/SWSH/PLA -> SV                                //
-        // https://drive.google.com/file/d/1f66rA6sGSfweG_9nGl17DSaCXearyf6g //
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT, isHiddenTrade).ConfigureAwait(false);
+    }
 
-        [Command("homereadylist")]
+    private static List<Pictocodes> GenerateRandomPictocodes(int count)
+    {
+        Random rnd = new();
+        List<Pictocodes> randomPictocodes = [];
+        Array pictocodeValues = Enum.GetValues(typeof(Pictocodes));
+
+        for (int i = 0; i < count; i++)
+        {
+            Pictocodes randomPictocode = (Pictocodes)pictocodeValues.GetValue(rnd.Next(pictocodeValues.Length));
+            randomPictocodes.Add(randomPictocode);
+        }
+
+        return randomPictocodes;
+    }
+
+[Command("homereadylist")]
         [Alias("hrl")]
         [Summary("Lists available HOME-ready files, filtered by a specific letter or substring, then sends the list to the channel.")]
         public async Task HOMEListAsync([Remainder] string args = "")

@@ -719,7 +719,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             .WithTitle("Hidden Trade Initiated!")
             .WithDescription($"They may know the species...")
             .WithColor(Color.Red)
-            .WithImageUrl("https://i.imgur.com/lwqhXne.gif")
             .WithFooter("...but they'll never know its stats!");
 
         // Send the embed as a response to the command

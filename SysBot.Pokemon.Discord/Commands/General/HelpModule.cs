@@ -161,7 +161,7 @@ namespace SysBot.Pokemon.Discord
             {
                 var dmChannel = await Context.User.CreateDMChannelAsync();
                 await dmChannel.SendMessageAsync(embed: embedBuilder.Build());
-                await ReplyAsync($"{Context.User.Mention}, I've sent you a DM with the help information for the command **{command}**!");
+                await ReplyAsync($"Help has arrived!");
             }
             catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
             {

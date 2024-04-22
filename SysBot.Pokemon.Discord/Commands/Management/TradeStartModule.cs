@@ -90,6 +90,23 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             {
                 speciesName = GameInfo.Strings.Species[detail.TradeData.Species];
             }
+            string ballName = "";
+            if (detail.TradeData != null)
+            {
+                var strings = GameInfo.GetStrings(1);
+                ballName = strings.balllist[detail.TradeData.Ball];
+
+                if (ballName.Contains("(LA)"))
+                {
+                    ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
+                }
+                else
+                {
+                    ballName = ballName.Replace(" ", "").ToLower();
+                }
+            }
+            string ballImgUrl = $"https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/AltBallImg/28x28/{ballName}.png";
+
             string tradeTitle, embedImageUrl;
             if (detail.IsMysteryEgg)
             {
@@ -135,8 +152,10 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 .WithAuthor(new EmbedAuthorBuilder()
                     .WithName($"Up Next: {user.Username}")
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
-                .WithDescription($"**Receiving:** {tradeTitle}\n**Total Bot Trades:** {detail.ID}")
-                .WithFooter($"Typical processing time at this stage is about 1-2 minutes.\n");
+                .WithDescription($"**Receiving**: {tradeTitle}\n**Total Bot Trades**: {detail.ID}")
+                .WithFooter(new EmbedFooterBuilder()
+                    .WithText($"Typical processing time at this stage is about 1-2 minutes")
+                    .WithIconUrl(ballImgUrl));
 
             var embed = embedBuilder.Build();
             await c.SendMessageAsync(embed: embed);

@@ -66,7 +66,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 }
             }
 
-            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, isBatchTrade ? PokeTradeType.Batch : type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
+            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, isBatchTrade ? PokeTradeType.Batch : type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT, isHiddenTrade).ConfigureAwait(false);
 
         }
         catch (HttpException ex)
@@ -80,7 +80,7 @@ public static class QueueHelper<T> where T : PKM, new()
         return AddToQueueAsync(context, code, trainer, sig, trade, routine, type, context.User, ignoreAutoOT: ignoreAutoOT);
     }
 
-    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false)
+    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false, bool isHiddenTrade = false)
     {
         var user = trader;
         var userID = user.Id;
@@ -398,333 +398,340 @@ public static class QueueHelper<T> where T : PKM, new()
             embedBuilder.WithThumbnailUrl(heldItemUrl);
         }
 
-        // Building and sending the embed message
-        var embed = embedBuilder.Build();
-        if (embed == null)
+        if (!isHiddenTrade)
         {
-            Console.WriteLine("**Error:** Embed is null.");
-            await context.Channel.SendMessageAsync("An error occurred while preparing the trade details.");
-            return new TradeQueueResult(false);
-        }
-
-        // Handling file operations for batch trades and sending messages
-        if (isLocalFile)
-        {
-            await context.Channel.SendFileAsync(embedImageUrl, embed: embed);
-            if (isBatchTrade)
+            // Building and sending the embed message
+            var embed = embedBuilder.Build();
+            if (embed == null)
             {
-                userBatchTradeMaxDetailId[userID] = Math.Max(userBatchTradeMaxDetailId.GetValueOrDefault(userID), detail.ID);
-                await ScheduleFileDeletion(embedImageUrl, 0, detail.ID);
-                if (detail.ID == userBatchTradeMaxDetailId[userID] && batchTradeNumber == totalBatchTrades)
+                Console.WriteLine("Error: Embed is null.");
+                await context.Channel.SendMessageAsync("An error occurred while preparing the trade details.");
+                return new TradeQueueResult(false);
+            }
+
+            // Handling file operations for batch trades and sending messages
+            if (isLocalFile)
+            {
+                await context.Channel.SendFileAsync(embedImageUrl, embed: embed);
+                if (isBatchTrade)
                 {
-                    DeleteBatchTradeFiles(detail.ID);
+                    userBatchTradeMaxDetailId[userID] = Math.Max(userBatchTradeMaxDetailId.GetValueOrDefault(userID), detail.ID);
+                    await ScheduleFileDeletion(embedImageUrl, 0, detail.ID);
+                    if (detail.ID == userBatchTradeMaxDetailId[userID] && batchTradeNumber == totalBatchTrades)
+                    {
+                        DeleteBatchTradeFiles(detail.ID);
+                    }
+                }
+                else
+                {
+                    await ScheduleFileDeletion(embedImageUrl, 0);
                 }
             }
             else
             {
-                await ScheduleFileDeletion(embedImageUrl, 0);
+                await context.Channel.SendMessageAsync(embed: embed);
             }
         }
         else
         {
-            await context.Channel.SendMessageAsync(embed: embed);
+            var message = $"**User:** {trader.Mention}\n**Queue:** Hidden Link Trade. \n**Current Position:** {position.Position}. \n**Receiving:** {speciesName}.\n**Estimated Wait Time:** {baseEta:F1} min(s).";
+            await context.Channel.SendMessageAsync(message);
         }
 
         return new TradeQueueResult(true);
     }
-    private static int GenerateUniqueTradeID()
-    {
-        long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        int randomValue = new Random().Next(1000);
-        int uniqueTradeID = (int)(timestamp % int.MaxValue) * 1000 + randomValue;
-        return uniqueTradeID;
-    }
-
-
-    private static string GetTeraTypeString(PK9 pk9)
-    {
-        if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar)
+        private static int GenerateUniqueTradeID()
         {
-            return "Stellar";
-        }
-        else if ((int)pk9.TeraType == 99) // Terapagos
-        {
-            return "Stellar";
-        }
-        // Fallback to default TeraType string representation if not Stellar
-        else
-        {
-            return pk9.TeraType.ToString();
-        }
-    }
-
-
-    private static string GetImageFolderPath()
-    {
-        // Get the base directory where the executable is located
-        string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-
-        // Define the path for the images subfolder
-        string imagesFolder = Path.Combine(baseDirectory, "Images");
-
-        // Check if the folder exists, if not, create it
-        if (!Directory.Exists(imagesFolder))
-        {
-            Directory.CreateDirectory(imagesFolder);
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            int randomValue = new Random().Next(1000);
+            int uniqueTradeID = (int)(timestamp % int.MaxValue) * 1000 + randomValue;
+            return uniqueTradeID;
         }
 
-        return imagesFolder;
-    }
 
-    private static string SaveImageLocally(System.Drawing.Image image)
-    {
-        // Get the path to the images folder
-        string imagesFolderPath = GetImageFolderPath();
-
-        // Create a unique filename for the image
-        string filePath = Path.Combine(imagesFolderPath, $"image_{Guid.NewGuid()}.png");
-
-        // Save the image to the specified path
-        image.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
-
-        return filePath;
-    }
-
-    private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk)
-    {
-        string embedImageUrl;
-        string speciesImageUrl;
-
-        if (pk.IsEgg)
+        private static string GetTeraTypeString(PK9 pk9)
         {
-            string eggImageUrl = "https://i.imgur.com/m1oHHvY.png";
-            speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true);
-            System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
-            embedImageUrl = SaveImageLocally(combinedImage);
-        }
-        else
-        {
-            bool canGmax = pk is PK8 pk8 && pk8.CanGigantamax;
-            speciesImageUrl = AbstractTrade<T>.PokeImg(pk, canGmax, false);
-            embedImageUrl = speciesImageUrl;
-        }
-
-        // Determine ball image URL
-        var strings = GameInfo.GetStrings(1);
-        string ballName = strings.balllist[pk.Ball];
-
-        // Check for "(LA)" in the ball name
-        if (ballName.Contains("(LA)"))
-        {
-            ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
-        }
-        else
-        {
-            ballName = ballName.Replace(" ", "").ToLower();
-        }
-
-        string ballImgUrl = $"https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/28x28/{ballName}.png";
-
-        // Check if embedImageUrl is a local file or a web URL
-        if (Uri.TryCreate(embedImageUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
-        {
-            // Load local image directly
-            using (var localImage = System.Drawing.Image.FromFile(uri.LocalPath))
-            using (var ballImage = await LoadImageFromUrl(ballImgUrl))
+            if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar)
             {
-                if (ballImage != null)
+                return "Stellar";
+            }
+            else if ((int)pk9.TeraType == 99) // Terapagos
+            {
+                return "Stellar";
+            }
+            // Fallback to default TeraType string representation if not Stellar
+            else
+            {
+                return pk9.TeraType.ToString();
+            }
+        }
+
+
+        private static string GetImageFolderPath()
+        {
+            // Get the base directory where the executable is located
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+            // Define the path for the images subfolder
+            string imagesFolder = Path.Combine(baseDirectory, "Images");
+
+            // Check if the folder exists, if not, create it
+            if (!Directory.Exists(imagesFolder))
+            {
+                Directory.CreateDirectory(imagesFolder);
+            }
+
+            return imagesFolder;
+        }
+
+        private static string SaveImageLocally(System.Drawing.Image image)
+        {
+            // Get the path to the images folder
+            string imagesFolderPath = GetImageFolderPath();
+
+            // Create a unique filename for the image
+            string filePath = Path.Combine(imagesFolderPath, $"image_{Guid.NewGuid()}.png");
+
+            // Save the image to the specified path
+            image.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+
+            return filePath;
+        }
+
+        private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk)
+        {
+            string embedImageUrl;
+            string speciesImageUrl;
+
+            if (pk.IsEgg)
+            {
+                string eggImageUrl = "https://i.imgur.com/m1oHHvY.png";
+                speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true);
+                System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
+                embedImageUrl = SaveImageLocally(combinedImage);
+            }
+            else
+            {
+                bool canGmax = pk is PK8 pk8 && pk8.CanGigantamax;
+                speciesImageUrl = AbstractTrade<T>.PokeImg(pk, canGmax, false);
+                embedImageUrl = speciesImageUrl;
+            }
+
+            // Determine ball image URL
+            var strings = GameInfo.GetStrings(1);
+            string ballName = strings.balllist[pk.Ball];
+
+            // Check for "(LA)" in the ball name
+            if (ballName.Contains("(LA)"))
+            {
+                ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
+            }
+            else
+            {
+                ballName = ballName.Replace(" ", "").ToLower();
+            }
+
+            string ballImgUrl = $"https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/AltBallImg/28x28/{ballName}.png";
+
+            // Check if embedImageUrl is a local file or a web URL
+            if (Uri.TryCreate(embedImageUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
+            {
+                // Load local image directly
+                using (var localImage = System.Drawing.Image.FromFile(uri.LocalPath))
+                using (var ballImage = await LoadImageFromUrl(ballImgUrl))
                 {
-                    using (var graphics = Graphics.FromImage(localImage))
+                    if (ballImage != null)
                     {
-                        var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
+                        using (var graphics = Graphics.FromImage(localImage))
+                        {
+                            var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
+                            graphics.DrawImage(ballImage, ballPosition);
+                        }
+                        embedImageUrl = SaveImageLocally(localImage);
+                    }
+                }
+            }
+            else
+            {
+                // Load web image and overlay ball
+                (System.Drawing.Image finalCombinedImage, bool ballImageLoaded) = await OverlayBallOnSpecies(speciesImageUrl, ballImgUrl);
+                embedImageUrl = SaveImageLocally(finalCombinedImage);
+
+                if (!ballImageLoaded)
+                {
+                    Console.WriteLine($"Ball image could not be loaded: {ballImgUrl}");
+                    // await context.Channel.SendMessageAsync($"Ball image could not be loaded: {ballImgUrl}");
+                }
+            }
+
+            (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
+            return (embedImageUrl, new DiscordColor(R, G, B));
+        }
+
+        private static async Task<(System.Drawing.Image, bool)> OverlayBallOnSpecies(string speciesImageUrl, string ballImageUrl)
+        {
+            using (var speciesImage = await LoadImageFromUrl(speciesImageUrl))
+            {
+                if (speciesImage == null)
+                {
+                    Console.WriteLine("Species image could not be loaded.");
+                    return (null, false);
+                }
+
+                var ballImage = await LoadImageFromUrl(ballImageUrl);
+                if (ballImage == null)
+                {
+                    Console.WriteLine($"Ball image could not be loaded: {ballImageUrl}");
+                    return ((System.Drawing.Image)speciesImage.Clone(), false); // Return false indicating failure
+                }
+
+                using (ballImage)
+                {
+                    using (var graphics = Graphics.FromImage(speciesImage))
+                    {
+                        var ballPosition = new Point(speciesImage.Width - ballImage.Width, speciesImage.Height - ballImage.Height);
                         graphics.DrawImage(ballImage, ballPosition);
                     }
-                    embedImageUrl = SaveImageLocally(localImage);
+
+                    return ((System.Drawing.Image)speciesImage.Clone(), true); // Return true indicating success
                 }
             }
         }
-        else
+        private static async Task<System.Drawing.Image> OverlaySpeciesOnEgg(string eggImageUrl, string speciesImageUrl)
         {
-            // Load web image and overlay ball
-            (System.Drawing.Image finalCombinedImage, bool ballImageLoaded) = await OverlayBallOnSpecies(speciesImageUrl, ballImgUrl);
-            embedImageUrl = SaveImageLocally(finalCombinedImage);
+            // Load both images
+            System.Drawing.Image eggImage = await LoadImageFromUrl(eggImageUrl);
+            System.Drawing.Image speciesImage = await LoadImageFromUrl(speciesImageUrl);
 
-            if (!ballImageLoaded)
+            // Calculate the ratio to scale the species image to fit within the egg image size
+            double scaleRatio = Math.Min((double)eggImage.Width / speciesImage.Width, (double)eggImage.Height / speciesImage.Height);
+
+            // Create a new size for the species image, ensuring it does not exceed the egg dimensions
+            Size newSize = new Size((int)(speciesImage.Width * scaleRatio), (int)(speciesImage.Height * scaleRatio));
+
+            // Resize species image
+            System.Drawing.Image resizedSpeciesImage = new Bitmap(speciesImage, newSize);
+
+            // Create a graphics object for the egg image
+            using (Graphics g = Graphics.FromImage(eggImage))
             {
-                Console.WriteLine($"Ball image could not be loaded: {ballImgUrl}");
-                // await context.Channel.SendMessageAsync($"Ball image could not be loaded: {ballImgUrl}");
+                // Calculate the position to center the species image on the egg image
+                int speciesX = (eggImage.Width - resizedSpeciesImage.Width) / 2;
+                int speciesY = (eggImage.Height - resizedSpeciesImage.Height) / 2;
+
+                // Draw the resized and centered species image over the egg image
+                g.DrawImage(resizedSpeciesImage, speciesX, speciesY, resizedSpeciesImage.Width, resizedSpeciesImage.Height);
             }
+
+            // Dispose of the species image and the resized species image if they're no longer needed
+            speciesImage.Dispose();
+            resizedSpeciesImage.Dispose();
+
+            // Calculate scale factor for resizing while maintaining aspect ratio
+            double scale = Math.Min(128.0 / eggImage.Width, 128.0 / eggImage.Height);
+
+            // Calculate new dimensions
+            int newWidth = (int)(eggImage.Width * scale);
+            int newHeight = (int)(eggImage.Height * scale);
+
+            // Create a new 128x128 bitmap
+            Bitmap finalImage = new Bitmap(128, 128);
+
+            // Draw the resized egg image onto the new bitmap, centered
+            using (Graphics g = Graphics.FromImage(finalImage))
+            {
+                // Calculate centering position
+                int x = (128 - newWidth) / 2;
+                int y = (128 - newHeight) / 2;
+
+                // Draw the image
+                g.DrawImage(eggImage, x, y, newWidth, newHeight);
+            }
+
+            // Dispose of the original egg image if it's no longer needed
+            eggImage.Dispose();
+
+            // The finalImage now contains the overlay, is resized, and maintains aspect ratio
+            return finalImage;
         }
 
-        (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
-        return (embedImageUrl, new DiscordColor(R, G, B));
-    }
-
-    private static async Task<(System.Drawing.Image, bool)> OverlayBallOnSpecies(string speciesImageUrl, string ballImageUrl)
-    {
-        using (var speciesImage = await LoadImageFromUrl(speciesImageUrl))
+        private static async Task<System.Drawing.Image> LoadImageFromUrl(string url)
         {
-            if (speciesImage == null)
+            using (HttpClient client = new HttpClient())
             {
-                Console.WriteLine("Species image could not be loaded.");
-                return (null, false);
-            }
-
-            var ballImage = await LoadImageFromUrl(ballImageUrl);
-            if (ballImage == null)
-            {
-                Console.WriteLine($"Ball image could not be loaded: {ballImageUrl}");
-                return ((System.Drawing.Image)speciesImage.Clone(), false); // Return false indicating failure
-            }
-
-            using (ballImage)
-            {
-                using (var graphics = Graphics.FromImage(speciesImage))
+                HttpResponseMessage response = await client.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
                 {
-                    var ballPosition = new Point(speciesImage.Width - ballImage.Width, speciesImage.Height - ballImage.Height);
-                    graphics.DrawImage(ballImage, ballPosition);
+                    Console.WriteLine($"Failed to load image from {url}. Status code: {response.StatusCode}");
+                    return null;
                 }
 
-                return ((System.Drawing.Image)speciesImage.Clone(), true); // Return true indicating success
+                Stream stream = await response.Content.ReadAsStreamAsync();
+                if (stream == null || stream.Length == 0)
+                {
+                    Console.WriteLine($"No data or empty stream received from {url}");
+                    return null;
+                }
+
+                try
+                {
+                    return System.Drawing.Image.FromStream(stream);
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine($"Failed to create image from stream. URL: {url}, Exception: {ex}");
+                    return null;
+                }
             }
         }
-    }
-    private static async Task<System.Drawing.Image> OverlaySpeciesOnEgg(string eggImageUrl, string speciesImageUrl)
-    {
-        // Load both images
-        System.Drawing.Image eggImage = await LoadImageFromUrl(eggImageUrl);
-        System.Drawing.Image speciesImage = await LoadImageFromUrl(speciesImageUrl);
 
-        // Calculate the ratio to scale the species image to fit within the egg image size
-        double scaleRatio = Math.Min((double)eggImage.Width / speciesImage.Width, (double)eggImage.Height / speciesImage.Height);
-
-        // Create a new size for the species image, ensuring it does not exceed the egg dimensions
-        Size newSize = new Size((int)(speciesImage.Width * scaleRatio), (int)(speciesImage.Height * scaleRatio));
-
-        // Resize species image
-        System.Drawing.Image resizedSpeciesImage = new Bitmap(speciesImage, newSize);
-
-        // Create a graphics object for the egg image
-        using (Graphics g = Graphics.FromImage(eggImage))
+        private static async Task ScheduleFileDeletion(string filePath, int delayInMilliseconds, int batchTradeId = -1)
         {
-            // Calculate the position to center the species image on the egg image
-            int speciesX = (eggImage.Width - resizedSpeciesImage.Width) / 2;
-            int speciesY = (eggImage.Height - resizedSpeciesImage.Height) / 2;
-
-            // Draw the resized and centered species image over the egg image
-            g.DrawImage(resizedSpeciesImage, speciesX, speciesY, resizedSpeciesImage.Width, resizedSpeciesImage.Height);
-        }
-
-        // Dispose of the species image and the resized species image if they're no longer needed
-        speciesImage.Dispose();
-        resizedSpeciesImage.Dispose();
-
-        // Calculate scale factor for resizing while maintaining aspect ratio
-        double scale = Math.Min(128.0 / eggImage.Width, 128.0 / eggImage.Height);
-
-        // Calculate new dimensions
-        int newWidth = (int)(eggImage.Width * scale);
-        int newHeight = (int)(eggImage.Height * scale);
-
-        // Create a new 128x128 bitmap
-        Bitmap finalImage = new Bitmap(128, 128);
-
-        // Draw the resized egg image onto the new bitmap, centered
-        using (Graphics g = Graphics.FromImage(finalImage))
-        {
-            // Calculate centering position
-            int x = (128 - newWidth) / 2;
-            int y = (128 - newHeight) / 2;
-
-            // Draw the image
-            g.DrawImage(eggImage, x, y, newWidth, newHeight);
-        }
-
-        // Dispose of the original egg image if it's no longer needed
-        eggImage.Dispose();
-
-        // The finalImage now contains the overlay, is resized, and maintains aspect ratio
-        return finalImage;
-    }
-
-    private static async Task<System.Drawing.Image> LoadImageFromUrl(string url)
-    {
-        using (HttpClient client = new HttpClient())
-        {
-            HttpResponseMessage response = await client.GetAsync(url);
-            if (!response.IsSuccessStatusCode)
+            if (batchTradeId != -1)
             {
-                Console.WriteLine($"Failed to load image from {url}. Status code: {response.StatusCode}");
-                return null;
+                // If this is part of a batch trade, add the file path to the dictionary
+                if (!batchTradeFiles.ContainsKey(batchTradeId))
+                {
+                    batchTradeFiles[batchTradeId] = new List<string>();
+                }
+
+                batchTradeFiles[batchTradeId].Add(filePath);
             }
-
-            Stream stream = await response.Content.ReadAsStreamAsync();
-            if (stream == null || stream.Length == 0)
+            else
             {
-                Console.WriteLine($"No data or empty stream received from {url}");
-                return null;
-            }
-
-            try
-            {
-                return System.Drawing.Image.FromStream(stream);
-            }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine($"Failed to create image from stream. URL: {url}, Exception: {ex}");
-                return null;
-            }
-        }
-    }
-
-    private static async Task ScheduleFileDeletion(string filePath, int delayInMilliseconds, int batchTradeId = -1)
-    {
-        if (batchTradeId != -1)
-        {
-            // If this is part of a batch trade, add the file path to the dictionary
-            if (!batchTradeFiles.ContainsKey(batchTradeId))
-            {
-                batchTradeFiles[batchTradeId] = new List<string>();
-            }
-
-            batchTradeFiles[batchTradeId].Add(filePath);
-        }
-        else
-        {
-            // If this is not part of a batch trade, delete the file after the delay
-            await Task.Delay(delayInMilliseconds);
-            DeleteFile(filePath);
-        }
-    }
-
-    private static void DeleteFile(string filePath)
-    {
-        if (File.Exists(filePath))
-        {
-            try
-            {
-                File.Delete(filePath);
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"Error deleting file: {ex.Message}");
-            }
-        }
-    }
-
-    // Call this method after the last trade in a batch is completed
-    private static void DeleteBatchTradeFiles(int batchTradeId)
-    {
-        if (batchTradeFiles.TryGetValue(batchTradeId, out var files))
-        {
-            foreach (var filePath in files)
-            {
+                // If this is not part of a batch trade, delete the file after the delay
+                await Task.Delay(delayInMilliseconds);
                 DeleteFile(filePath);
             }
-            batchTradeFiles.Remove(batchTradeId);
         }
-    }
 
+        private static void DeleteFile(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    File.Delete(filePath);
+                }
+                catch (IOException ex)
+                {
+                    Console.WriteLine($"Error deleting file: {ex.Message}");
+                }
+            }
+        }
+
+        // Call this method after the last trade in a batch is completed
+        private static void DeleteBatchTradeFiles(int batchTradeId)
+        {
+            if (batchTradeFiles.TryGetValue(batchTradeId, out var files))
+            {
+                foreach (var filePath in files)
+                {
+                    DeleteFile(filePath);
+                }
+                batchTradeFiles.Remove(batchTradeId);
+            }
+        } 
     public enum AlcremieDecoration
     {
         Strawberry = 0,

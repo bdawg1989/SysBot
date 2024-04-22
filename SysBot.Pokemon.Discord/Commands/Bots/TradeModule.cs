@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Reflection.Metadata;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -556,7 +557,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         var userID = Context.User.Id;
         var code = Info.GetRandomTradeCode(userID);
-        return TradeAsync(code, content);
+        return HideTradeAsync(code, content);
     }
 
     [Command("hidetrade")]
@@ -1492,249 +1493,250 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return randomPictocodes;
     }
 
-[Command("homereadylist")]
-        [Alias("hrl")]
-        [Summary("Lists available HOME-ready files, filtered by a specific letter or substring, then sends the list to the channel.")]
-        public async Task HOMEListAsync([Remainder] string args = "")
+
+    [Command("homereadylist")]
+    [Alias("hrl")]
+    [Summary("Lists available HOME-ready files, filtered by a specific letter or substring, then sends the list to the channel.")]
+    public async Task HOMEListAsync([Remainder] string args = "")
+    {
+        const int itemsPerPage = 10; // Number of items per page
+        var homeReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.HOMEReadyPKMFolder;
+        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+
+        // Check if the homeready folder path is not set or empty
+        if (string.IsNullOrEmpty(homeReadyFolderPath))
         {
-            const int itemsPerPage = 10; // Number of items per page
+            await ReplyAsync("This bot does not have this feature set up.");
+            return;
+        }
+
+        // Parsing the arguments to separate filter and page number
+        string filter = "";
+        int page = 1; // Declare and initialize the page variable
+        var parts = args.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length > 0)
+        {
+            // Check if the last part is a number (page number)
+            if (int.TryParse(parts.Last(), out int parsedPage))
+            {
+                page = parsedPage;
+                filter = string.Join(" ", parts.Take(parts.Length - 1));
+            }
+            else
+            {
+                filter = string.Join(" ", parts);
+            }
+        }
+
+        var allHOMEReadyFiles = Directory.GetFiles(homeReadyFolderPath)
+                                           .Select(Path.GetFileName)
+                                           .OrderBy(file => file)
+                                           .ToList();
+
+        var filteredHOMEReadyFiles = allHOMEReadyFiles
+                                       .Where(file => string.IsNullOrWhiteSpace(filter) || file.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                                       .ToList();
+
+        IUserMessage replyMessage;
+
+        // Check if there are no files matching the filter
+        if (!filteredHOMEReadyFiles.Any())
+        {
+            replyMessage = await ReplyAsync($"No HOME-ready files found matching the filter '{filter}'.");
+        }
+        else
+        {
+            var pageCount = (int)Math.Ceiling(filteredHOMEReadyFiles.Count / (double)itemsPerPage);
+            page = Math.Clamp(page, 1, pageCount); // Ensure page number is within valid range
+
+            var pageItems = filteredHOMEReadyFiles.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
+
+            var embed = new EmbedBuilder()
+                .WithTitle($"Available HOME-Ready Files - Filter: '{filter}'")
+                .WithDescription($"Page {page} of {pageCount}")
+                .WithColor(Color.Blue);
+
+            foreach (var item in pageItems)
+
+            {
+                var index = allHOMEReadyFiles.IndexOf(item) + 1; // Get the index from the original list
+                embed.AddField($"{index}. {item}", $"Use `{botPrefix}hrr {index}` to trade this legal HOME-ready file.\nUse `{botPrefix}hrd {index}` to download this legal HOME-ready file.");
+            }
+
+            // Send confirmation message in the same channel
+            replyMessage = await ReplyAsync($"Use `{botPrefix}hrl <page>` to change the page you are viewing.\n**Current Support:** USUM/LGPE/POGO/BDSP/SWSH/PLA -> SV.");
+            var message = await ReplyAsync(embed: embed.Build());
+
+            // Delay for 10 seconds
+            await Task.Delay(20_000);
+
+            // Delete the message
+            await message.DeleteAsync();
+
+        }
+    }
+
+    [Command("homereadyrequest")]
+    [Alias("hrr")]
+    [Summary("Downloads HOME-ready attachments from the specified folder and adds it to the trade queue.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task HOMEReadyRequestAsync(int index)
+    {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            return;
+        }
+        try
+        {
             var homeReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.HOMEReadyPKMFolder;
             var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+            var homeReadyFiles = Directory.GetFiles(homeReadyFolderPath)
+                                            .Select(Path.GetFileName)
+                                            .OrderBy(x => x)
+                                            .ToList();
 
-            // Check if the homeready folder path is not set or empty
+            // Check if the HOME-ready folder path is not set or empty
             if (string.IsNullOrEmpty(homeReadyFolderPath))
             {
                 await ReplyAsync("This bot does not have this feature set up.");
                 return;
             }
 
-            // Parsing the arguments to separate filter and page number
-            string filter = "";
-            int page = 1; // Declare and initialize the page variable
-            var parts = args.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length > 0)
+            if (index < 1 || index > homeReadyFiles.Count)
             {
-                // Check if the last part is a number (page number)
-                if (int.TryParse(parts.Last(), out int parsedPage))
-                {
-                    page = parsedPage;
-                    filter = string.Join(" ", parts.Take(parts.Length - 1));
-                }
-                else
-                {
-                    filter = string.Join(" ", parts);
-                }
+                await ReplyAsync("Your selection was invalid. Please use a valid file number.").ConfigureAwait(false);
+                return;
             }
 
-            var allHOMEReadyFiles = Directory.GetFiles(homeReadyFolderPath)
-                                               .Select(Path.GetFileName)
-                                               .OrderBy(file => file)
-                                               .ToList();
+            var selectedFile = homeReadyFiles[index - 1];
+            var fileData = await File.ReadAllBytesAsync(Path.Combine(homeReadyFolderPath, selectedFile));
 
-            var filteredHOMEReadyFiles = allHOMEReadyFiles
-                                           .Where(file => string.IsNullOrWhiteSpace(filter) || file.Contains(filter, StringComparison.OrdinalIgnoreCase))
-                                           .ToList();
-
-            IUserMessage replyMessage;
-
-            // Check if there are no files matching the filter
-            if (!filteredHOMEReadyFiles.Any())
+            var download = new Download<PKM>
             {
-                replyMessage = await ReplyAsync($"No HOME-ready files found matching the filter '{filter}'.");
+                Data = EntityFormat.GetFromBytes(fileData),
+                Success = true
+            };
+
+            var pk = GetRequest(download);
+            if (pk == null)
+            {
+                await ReplyAsync("Failed to convert the legal HOME-ready file to the required PKM type.").ConfigureAwait(false);
+                return;
             }
-            else
+
+            var code = Info.GetRandomTradeCode(userID);
+            var lgcode = Info.GetRandomLGTradeCode();
+            var sig = Context.User.GetFavor();
+            var tradeMessage = await Context.Channel.SendMessageAsync($"HOME-Ready request added to queue.");
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
+
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"**Error:** {ex.Message}").ConfigureAwait(false);
+        }
+        finally
+        {
+            if (Context.Message is IUserMessage userMessage)
             {
-                var pageCount = (int)Math.Ceiling(filteredHOMEReadyFiles.Count / (double)itemsPerPage);
-                page = Math.Clamp(page, 1, pageCount); // Ensure page number is within valid range
-
-                var pageItems = filteredHOMEReadyFiles.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
-
-                var embed = new EmbedBuilder()
-                    .WithTitle($"Available HOME-Ready Files - Filter: '{filter}'")
-                    .WithDescription($"Page {page} of {pageCount}")
-                    .WithColor(Color.Blue);
-
-                foreach (var item in pageItems)
-
-                {
-                    var index = allHOMEReadyFiles.IndexOf(item) + 1; // Get the index from the original list
-                    embed.AddField($"{index}. {item}", $"Use `{botPrefix}hrr {index}` to trade this legal HOME-ready file.\nUse `{botPrefix}hrd {index}` to download this legal HOME-ready file.");
-                }
-
-                // Send confirmation message in the same channel
-                replyMessage = await ReplyAsync($"Use `{botPrefix}hrl <page>` to change the page you are viewing.\n**Current Support:** USUM/LGPE/POGO/BDSP/SWSH/PLA -> SV.");
-                var message = await ReplyAsync(embed: embed.Build());
-
-                // Delay for 10 seconds
-                await Task.Delay(20_000);
-
-                // Delete the message
-                await message.DeleteAsync();
-
+                await userMessage.DeleteAsync().ConfigureAwait(false);
             }
         }
 
-        [Command("homereadyrequest")]
-        [Alias("hrr")]
-        [Summary("Downloads HOME-ready attachments from the specified folder and adds it to the trade queue.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-        public async Task HOMEReadyRequestAsync(int index)
+    }
+
+    [Command("homereadydownload")]
+    [Alias("hrd")]
+    [Summary("Allows the user to download the selected legal HOME-ready file from the homeready folder.")]
+    private async Task HomeReadyDownloadAsync(int index)
+    {
+        var homeReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.HOMEReadyPKMFolder;
+
+        // Check if the homeready folder exists
+        if (!Directory.Exists(homeReadyFolderPath))
         {
-            // Check if the user is already in the queue
-            var userID = Context.User.Id;
-            if (Info.IsUserInQueue(userID))
-        {
-            await ReplyAsync("You're already in a queue. Finish with your current queue before attempting to join another.").ConfigureAwait(false);
+            await ReplyAsync("The homeready folder does not exist.");
             return;
         }
-            try
-            {
-                var homeReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.HOMEReadyPKMFolder;
-                var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
-                var homeReadyFiles = Directory.GetFiles(homeReadyFolderPath)
-                                                .Select(Path.GetFileName)
-                                                .OrderBy(x => x)
-                                                .ToList();
 
-                // Check if the HOME-ready folder path is not set or empty
-                if (string.IsNullOrEmpty(homeReadyFolderPath))
-                {
-                    await ReplyAsync("This bot does not have this feature set up.");
-                    return;
-                }
+        var files = Directory.GetFiles(homeReadyFolderPath);
 
-                if (index < 1 || index > homeReadyFiles.Count)
-                {
-                    await ReplyAsync("Your selection was invalid. Please use a valid file number.").ConfigureAwait(false);
-                    return;
-                }
-
-                var selectedFile = homeReadyFiles[index - 1];
-                var fileData = await File.ReadAllBytesAsync(Path.Combine(homeReadyFolderPath, selectedFile));
-
-                var download = new Download<PKM>
-                {
-                    Data = EntityFormat.GetFromBytes(fileData),
-                    Success = true
-                };
-
-                var pk = GetRequest(download);
-                if (pk == null)
-                {
-                    await ReplyAsync("Failed to convert the legal HOME-ready file to the required PKM type.").ConfigureAwait(false);
-                    return;
-                }
-
-                var code = Info.GetRandomTradeCode(userID);
-                var lgcode = Info.GetRandomLGTradeCode();
-                var sig = Context.User.GetFavor();
-                var tradeMessage = await Context.Channel.SendMessageAsync($"HOME-Ready request added to queue.");
-                await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
-
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync($"**Error:** {ex.Message}").ConfigureAwait(false);
-            }
-            finally
-            {
-                if (Context.Message is IUserMessage userMessage)
-                {
-                    await userMessage.DeleteAsync().ConfigureAwait(false);
-                }
-            }
-
-        }
-
-        [Command("homereadydownload")]
-        [Alias("hrd")]
-        [Summary("Allows the user to download the selected legal HOME-ready file from the homeready folder.")]
-        private async Task HomeReadyDownloadAsync(int index)
+        if (index < 1 || index > files.Length)
         {
-            var homeReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.HOMEReadyPKMFolder;
-
-            // Check if the homeready folder exists
-            if (!Directory.Exists(homeReadyFolderPath))
-            {
-                await ReplyAsync("The homeready folder does not exist.");
-                return;
-            }
-
-            var files = Directory.GetFiles(homeReadyFolderPath);
-
-            if (index < 1 || index > files.Length)
-            {
-                await ReplyAsync("Your selection was invalid. Please use a valid file number.");
-                return;
-            }
-
-            var selectedFile = files[index - 1]; // Adjust for zero-based indexing
-
-            try
-            {
-                var fileStream = File.OpenRead(selectedFile);
-                await Context.Channel.SendFileAsync(fileStream, Path.GetFileName(selectedFile), "Sure thing! Here's the file!");
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync($"**Failed to send file:** {ex.Message}");
-            }
+            await ReplyAsync("Your selection was invalid. Please use a valid file number.");
+            return;
         }
 
-        [Command("homeready")]
-        [Alias("hr")]
-        [Summary("Displays instructions on how to use the HOME-Ready module.")]
-        public async Task HomeReadyInstructionsAsync()
+        var selectedFile = files[index - 1]; // Adjust for zero-based indexing
+
+        try
         {
-            var embed0 = new EmbedBuilder()
-                .WithTitle("-------HOME-READY MODULE INSTRUCTIONS-------");
-
-            embed0.WithImageUrl("https://i.imgur.com/avEzFTC.png");
-            var message0 = await ReplyAsync(embed: embed0.Build());
-
-
-            var embed1 = new EmbedBuilder()
-                .AddField("GET LIST: `hrl <Pokemon>`",
-                          "- This will search for any Pokemon in the entire module.\n" +
-                          "**Example:** `hrl Mewtwo`\n");
-
-            embed1.WithImageUrl("https://i.imgur.com/avEzFTC.png");
-            var message1 = await ReplyAsync(embed: embed1.Build());
-
-
-            var embed2 = new EmbedBuilder()
-                .AddField("CHANGE PAGES: `hrl <page>`",
-                          "- This will change the page you're viewing, with or without additional variables.\n" +
-                          "**Example:** `hrl 5 Charmander`\n");
-
-            embed2.WithImageUrl("https://i.imgur.com/avEzFTC.png");
-            var message2 = await ReplyAsync(embed: embed2.Build());
-
-            var embed3 = new EmbedBuilder()
-                .AddField("TRADING FILES: `hrr <number>`",
-                          "- This will trade you the Pokemon through the bot via the designated number.\n" +
-                          "**Example:** `hrr 682`\n");
-
-            embed3.WithImageUrl("https://i.imgur.com/avEzFTC.png");
-            var message3 = await ReplyAsync(embed: embed3.Build());
-
-            var embed4 = new EmbedBuilder()
-                .AddField("DOWNLOADING FILES: `hrd <number>`",
-                          "- This will give you the file of the Pokemon to download.\n" +
-                          "**Example:** `hrd 682`\n");
-
-            embed4.WithImageUrl("https://i.imgur.com/avEzFTC.png");
-            var message4 = await ReplyAsync(embed: embed4.Build());
-
-            // Delay for 120 seconds
-            await Task.Delay(120_000);
-
-            // Delete the messages
-            await message0.DeleteAsync();
-            await message1.DeleteAsync();
-            await message2.DeleteAsync();
-            await message3.DeleteAsync();
-            await message4.DeleteAsync();
+            var fileStream = File.OpenRead(selectedFile);
+            await Context.Channel.SendFileAsync(fileStream, Path.GetFileName(selectedFile), "Sure thing! Here's the file!");
         }
-    } 
+        catch (Exception ex)
+        {
+            await ReplyAsync($"**Failed to send file:** {ex.Message}");
+        }
+    }
+
+    [Command("homeready")]
+    [Alias("hr")]
+    [Summary("Displays instructions on how to use the HOME-Ready module.")]
+    public async Task HomeReadyInstructionsAsync()
+    {
+        var embed0 = new EmbedBuilder()
+            .WithTitle("-------HOME-READY MODULE INSTRUCTIONS-------");
+
+        embed0.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message0 = await ReplyAsync(embed: embed0.Build());
+
+
+        var embed1 = new EmbedBuilder()
+            .AddField("GET LIST: `hrl <Pokemon>`",
+                      "- This will search for any Pokemon in the entire module.\n" +
+                      "**Example:** `hrl Mewtwo`\n");
+
+        embed1.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message1 = await ReplyAsync(embed: embed1.Build());
+
+
+        var embed2 = new EmbedBuilder()
+            .AddField("CHANGE PAGES: `hrl <page>`",
+                      "- This will change the page you're viewing, with or without additional variables.\n" +
+                      "**Example:** `hrl 5 Charmander`\n");
+
+        embed2.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message2 = await ReplyAsync(embed: embed2.Build());
+
+        var embed3 = new EmbedBuilder()
+            .AddField("TRADING FILES: `hrr <number>`",
+                      "- This will trade you the Pokemon through the bot via the designated number.\n" +
+                      "**Example:** `hrr 682`\n");
+
+        embed3.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message3 = await ReplyAsync(embed: embed3.Build());
+
+        var embed4 = new EmbedBuilder()
+            .AddField("DOWNLOADING FILES: `hrd <number>`",
+                      "- This will give you the file of the Pokemon to download.\n" +
+                      "**Example:** `hrd 682`\n");
+
+        embed4.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        var message4 = await ReplyAsync(embed: embed4.Build());
+
+        // Delay for 120 seconds
+        await Task.Delay(120_000);
+
+        // Delete the messages
+        await message0.DeleteAsync();
+        await message1.DeleteAsync();
+        await message2.DeleteAsync();
+        await message3.DeleteAsync();
+        await message4.DeleteAsync();
+    }
+}

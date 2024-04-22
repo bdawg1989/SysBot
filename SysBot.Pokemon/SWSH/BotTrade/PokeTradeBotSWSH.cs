@@ -502,7 +502,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         {
             if (hub.Config.Discord.ReturnPKMs)
             {
-                var imageUrlShow = "https://i.imgur.com/msRhdRH.gif";
+                var imageUrlShow = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-tradefinished.gif";
                 var embedShow = new EmbedBuilder()
                     .WithTitle("Enjoy!")
                     .WithDescription("*Here's what you showed me!*")
@@ -524,7 +524,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
             var report = la.Report();
             Log(report);
 
-            var imageUrl = "https://i.imgur.com/7L4EEiw.gif";
+            var imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
             var embedIllegal = new EmbedBuilder()
                 .WithTitle("Legality Error!")
                 .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
@@ -1083,7 +1083,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         if (!la.Valid)
         {
             var trader = Trader;
-            string imageUrl = "https://i.imgur.com/7L4EEiw.gif";
+            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
             var embedCloneError = new EmbedBuilder()
                 .WithTitle("Legality Error!")
                 .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
@@ -1097,7 +1097,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         }
 
         var trader1 = Trader;
-        string imageLegal = "https://i.imgur.com/SLSm2Fy.gif";
+        string imageLegal = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
         var embedLegalized = new EmbedBuilder()
             .WithTitle($"{(!laInit.Valid ? "Legalized!" : "Fixed Nickname/OT for")} {(Species)clone.Species}!")
             .WithColor(Discord.Color.Green)
@@ -1135,7 +1135,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         if (changed)
         {
             var trader = Trader;
-            string imageUrlSwitch = "https://i.imgur.com/7L4EEiw.gif";
+            string imageUrlSwitch = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-uhoherror.gif";
             var embedSwitched = new EmbedBuilder()
                 .WithTitle($"Error...")
                 .WithDescription("**Reason:** Pokémon was not switched\n**Result:** Exiting trade")

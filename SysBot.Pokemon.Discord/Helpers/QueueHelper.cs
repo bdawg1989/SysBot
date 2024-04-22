@@ -43,7 +43,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
         try
         {
-            string imageUrl = "https://i.imgur.com/4Fuw4Un.gif";
+            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-tradecode.gif";
             EmbedBuilder embedBuilder = new EmbedBuilder()
                 .WithTitle("Here's your Trade Code!")
                 .WithDescription($"# **{code:0000 0000}**\n*I'll notify you when your trade starts*")
@@ -277,11 +277,11 @@ public static class QueueHelper<T> where T : PKM, new()
         (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk);
 
         // Adjust image URL based on request type
-        embedImageUrl = isMysteryEgg ? "https://i.imgur.com/Cygj1tB.png" :
-                        isDumpRequest ? "https://i.imgur.com/BECgC9e.png" :
-                        isCloneRequest ? "https://i.imgur.com/wghmzr5.png" :
-                        isSpecialRequest ? "https://i.imgur.com/IBur0vM.gif" :
-                        FixOT ? "https://i.imgur.com/vCJzJ6g.png" :
+        embedImageUrl = isMysteryEgg ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg2.png" :
+                        isDumpRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dump.png" :
+                        isCloneRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/clone.png" :
+                        isSpecialRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialrequest.gif" :
+                        FixOT ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/fixot.png" :
                         embedImageUrl; // Keep original if none of the above
 
         // Prepare held item image URL if available
@@ -391,7 +391,7 @@ public static class QueueHelper<T> where T : PKM, new()
         // Adding thumbnails for clone and special requests, or held items
         if (isCloneRequest || isSpecialRequest)
         {
-            embedBuilder.WithThumbnailUrl("https://i.imgur.com/BFMLMK2.png");
+            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/profoak.png");
         }
         else if (!string.IsNullOrEmpty(heldItemUrl))
         {
@@ -505,7 +505,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
             if (pk.IsEgg)
             {
-                string eggImageUrl = "https://i.imgur.com/m1oHHvY.png";
+                string eggImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/egg.png";
                 speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true);
                 System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
                 embedImageUrl = SaveImageLocally(combinedImage);

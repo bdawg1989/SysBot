@@ -111,7 +111,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             if (detail.IsMysteryEgg)
             {
                 tradeTitle = "✨ Mystery Egg";
-                embedImageUrl = "https://i.imgur.com/Cygj1tB.png";
+                embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg2.png";
             }
             else
             {
@@ -119,19 +119,19 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 {
                     case PokeTradeType.Clone:
                         tradeTitle = "Cloned Pokémon";
-                        embedImageUrl = "https://i.imgur.com/2gPTbwa.png";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/clone.png";
                         break;
                     case PokeTradeType.Dump:
                         tradeTitle = "Pokémon Dump";
-                        embedImageUrl = "https://i.imgur.com/hU62wpH.gif";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dump.png";
                         break;
                     case PokeTradeType.FixOT:
                         tradeTitle = "Cloned Pokémon (Fixing OT Info)";
-                        embedImageUrl = "https://i.imgur.com/vCJzJ6g.png";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/fixot.png";
                         break;
                     case PokeTradeType.Seed:
                         tradeTitle = "Cloned Pokémon (Special Request)";
-                        embedImageUrl = "https://i.imgur.com/IBur0vM.gif";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialrequest.gif";
                         break;
                     default:
                         tradeTitle = $"{speciesName}";

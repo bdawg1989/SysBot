@@ -1692,7 +1692,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var embed0 = new EmbedBuilder()
             .WithTitle("-------HOME-READY MODULE INSTRUCTIONS-------");
 
-        embed0.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        embed0.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message0 = await ReplyAsync(embed: embed0.Build());
 
 
@@ -1701,7 +1701,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                       "- This will search for any Pokemon in the entire module.\n" +
                       "**Example:** `hrl Mewtwo`\n");
 
-        embed1.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        embed1.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message1 = await ReplyAsync(embed: embed1.Build());
 
 
@@ -1710,7 +1710,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                       "- This will change the page you're viewing, with or without additional variables.\n" +
                       "**Example:** `hrl 5 Charmander`\n");
 
-        embed2.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        embed2.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message2 = await ReplyAsync(embed: embed2.Build());
 
         var embed3 = new EmbedBuilder()
@@ -1718,7 +1718,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                       "- This will trade you the Pokemon through the bot via the designated number.\n" +
                       "**Example:** `hrr 682`\n");
 
-        embed3.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        embed3.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message3 = await ReplyAsync(embed: embed3.Build());
 
         var embed4 = new EmbedBuilder()
@@ -1726,7 +1726,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                       "- This will give you the file of the Pokemon to download.\n" +
                       "**Example:** `hrd 682`\n");
 
-        embed4.WithImageUrl("https://i.imgur.com/avEzFTC.png");
+        embed4.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message4 = await ReplyAsync(embed: embed4.Build());
 
         // Delay for 120 seconds

@@ -1119,7 +1119,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             var report = la.Report();
             Log(report);
 
-            string imageUrl = "https://i.imgur.com/7L4EEiw.gif";
+            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
             var embedInvalid = new EmbedBuilder()
                 .WithTitle("Legality Error!")
                 .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
@@ -1135,7 +1135,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         if (Hub.Config.Legality.ResetHOMETracker)
             clone.Tracker = 0;
 
-        string imageUrlCloned = "https://i.imgur.com/SLSm2Fy.gif";
+        string imageUrlCloned = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
         var embed = new EmbedBuilder()
             .WithTitle($"Cloned {GameInfo.GetStrings(1).Species[clone.Species]}!")
             .WithDescription("**01)** Press B to cancel\n**02) Trade me a Pokémon you don't want\n**03)** Enjoy!")
@@ -1252,7 +1252,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         var trader = Trader;
         if (Hub.Config.Discord.ReturnPKMs)
         {
-            var imageUrlShow = "https://i.imgur.com/msRhdRH.gif";
+            var imageUrlShow = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-tradefinished.gif";
             var embed = new EmbedBuilder()
                 .WithTitle("Enjoy!")
                 .WithDescription($"*Here's what you showed me!*")
@@ -1268,7 +1268,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         var laInit = new LegalityAnalysis(offered);
         if (!adOT && laInit.Valid)
         {
-            var imageUrlAd = "https://i.imgur.com/jOmmGSw.gif";
+            var imageUrlAd = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
             var embed = new EmbedBuilder()
                 .WithTitle("Cannot Continue...")
                 .WithDescription($"**Issue:** No ad detected\n**Reason:** Pokémon is legal\n*Exiting trade*")
@@ -1327,7 +1327,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         var la = new LegalityAnalysis(clone);
         if (!la.Valid)
         {
-            string imageUrlCloned = "https://i.imgur.com/7L4EEiw.gif";
+            string imageUrlCloned = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
             var embedCloned = new EmbedBuilder()
                 .WithTitle($"Illegal Pokémon!")
                 .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
@@ -1337,7 +1337,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             return (clone, PokeTradeResult.IllegalTrade);
         }
 
-        string imageUrl = "https://i.imgur.com/SLSm2Fy.gif";
+        string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
         var embedLegalized = new EmbedBuilder()
             .WithTitle($"{(!laInit.Valid ? "Legalized!" : "Fixed Nickname/OT for")} {(Species)clone.Species}!")
             .WithColor(Discord.Color.Green)
@@ -1370,7 +1370,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
         if (changed)
         {
-            string imageUrlSwitch = "https://i.imgur.com/7L4EEiw.gif";
+            string imageUrlSwitch = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-uhoherror.gif";
             var embedSwitched = new EmbedBuilder()
                 .WithTitle($"Error...")
                 .WithDescription("**Reason:** Pokémon was not switched\n**Result:** Exiting trade")

@@ -54,7 +54,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
                 message += "\n*Please stay in the trade until all batch trades are completed*";
             }
 
-            string imageUrl = "https://i.imgur.com/rixGxsH.gif";
+            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-initializingbot.gif";
             var embed = new EmbedBuilder()
                 .WithTitle("Initializing Bot...")
                 .WithDescription(message)
@@ -84,7 +84,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
 
             var message = $"{speciesInfo}**Trade Code:** {Code:0000 0000}{batchInfo}\n*Your trade will begin in a moment*";
 
-            string imageUrl = "https://i.imgur.com/rixGxsH.gif";
+            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-initializingbot.gif";
             var embed = new EmbedBuilder()
                 .WithTitle("Initializing Bot...")
                 .WithDescription(message)
@@ -120,7 +120,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
             }
         }
 
-        string imageUrl = "https://i.imgur.com/WBJ05TJ.gif";
+        string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-nowsearching.gif";
         var embed = new EmbedBuilder()
             .WithTitle("Now Searching...")
             .WithDescription(message)
@@ -135,7 +135,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
     public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {
         OnFinish?.Invoke(routine);
-        string imageUrl = "https://i.imgur.com/KnpoU86.gif";
+        string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-uhoherror.gif";
         var embed = new EmbedBuilder()
             .WithTitle("Uh-Oh...")
             .WithDescription($"*Sorry, but there was an error*\n*Please try again!*")
@@ -150,7 +150,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
     {
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
-        string imageUrl = "https://i.imgur.com/9x9wj0t.gif";
+        string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-tradefinished.gif";
         var message = tradedToUser != 0 ? (IsMysteryEgg ? "*Enjoy your Mystery Egg!*" : $"*Enjoy your {(Species)tradedToUser}!*") : "*Enjoy!!*";
 
 

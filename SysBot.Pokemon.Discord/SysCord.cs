@@ -178,8 +178,8 @@ public sealed class SysCord<T> where T : PKM, new()
         var fullStatusMessage = $"# {botName} is {status}!";
 
         var thumbnailUrl = status == "Online"
-            ? "https://i.imgur.com/gOEp9BV.png"
-            : "https://i.imgur.com/krI9XlI.png";
+            ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/botgo.png"
+            : "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/botstop.png";
 
         var embed = new EmbedBuilder()
             .WithTitle($"{botName} Status")

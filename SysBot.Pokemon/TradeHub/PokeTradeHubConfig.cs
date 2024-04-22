@@ -68,14 +68,6 @@ public sealed class PokeTradeHubConfig : BaseConfig
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public DiscordSettings Discord { get; set; } = new();
 
-    [Category(Integration)]
-    [TypeConverter(typeof(ExpandableObjectConverter))]
-    public TwitchSettings Twitch { get; set; } = new();
-
-    [Category(Integration)]
-    [TypeConverter(typeof(ExpandableObjectConverter))]
-    public YouTubeSettings YouTube { get; set; } = new();
-
     [Category(Integration), Description("Configure generation of assets for streaming.")]
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public StreamSettings Stream { get; set; } = new();
@@ -87,15 +79,6 @@ public sealed class PokeTradeHubConfig : BaseConfig
     [Browsable(false)]
     [Category(Integration)]
     [TypeConverter(typeof(ExpandableObjectConverter))]
-    public QQSettings QQ { get; set; } = new();
-
-    [Browsable(false)]
-    [Category(Integration)]
-    [TypeConverter(typeof(ExpandableObjectConverter))]
     public BilibiliSettings Bilibili { get; set; } = new();
 
-    [Browsable(false)]
-    [Category(Integration)]
-    [TypeConverter(typeof(ExpandableObjectConverter))]
-    public DodoSettings Dodo { get; set; } = new();
 }

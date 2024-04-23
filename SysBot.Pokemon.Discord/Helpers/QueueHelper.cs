@@ -80,6 +80,33 @@ public static class QueueHelper<T> where T : PKM, new()
         return AddToQueueAsync(context, code, trainer, sig, trade, routine, type, context.User, ignoreAutoOT: ignoreAutoOT);
     }
 
+    private static string GetLanguageText(int languageValue)
+    {
+        switch (languageValue)
+        {
+            case 1:
+                return "Japanese";
+            case 2:
+                return "English";
+            case 3:
+                return "French";
+            case 4:
+                return "Italian";
+            case 5:
+                return "German";
+            case 7:
+                return "Spanish";
+            case 8:
+                return "Korean";
+            case 9:
+                return "ChineseS";
+            case 10:
+                return "ChineseT";
+            default:
+                return "Unknown";
+        }
+    }
+
     private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isHiddenTrade, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false)
     {
         var user = trader;
@@ -114,6 +141,8 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showMetLevel = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowMetLevel;
         bool showFatefulEncounter = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowFatefulEncounter;
         bool showWasEgg = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowWasEgg;
+        bool showMetDate = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowMetDate;
+        bool showLanguage = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowLanguage;
         var tradeCodeStorage = new TradeCodeStorage();
         int totalTradeCount = tradeCodeStorage.GetTradeCount(trader.Id);
         var tradeDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
@@ -252,7 +281,10 @@ public static class QueueHelper<T> where T : PKM, new()
                (evs[4] != 0 ? $"{evs[4]} SpD" : ""),
                (evs[5] != 0 ? $"{evs[5]} Spe" : "")
                }.Where(s => !string.IsNullOrEmpty(s)));
+        string MetDate = $"{pk.MetDate}";
         string movesDisplay = string.Join("\n", moveNames);
+        int languageName = pk.Language;
+        string languageText = GetLanguageText(languageName);
         string shinyEmoji = pk.IsShiny ? "✨ " : "";
         string pokemonDisplayName = pk.IsNicknamed ? pk.Nickname : GameInfo.GetStrings(1).Species[pk.Species];
 
@@ -364,19 +396,24 @@ public static class QueueHelper<T> where T : PKM, new()
 
             leftSideContent +=
                 (showLevel ? $"**Level:** {level}\n" : "") +
+                (showMetLevel ? $"**Met Level:** {metLevelDisplay}\n" : "") +
+                (showMetDate ? $"**Met Date:** {MetDate}\n" : "") +
                 (showAbility ? $"**Ability:** {abilityName}\n" : "") +
                 (showNature ? $"**Nature**: {natureName}\n" : "") +
+                (showLanguage ? $"**Language:** {languageText}\n" : "") +
                 (showIVs ? $"**IVs**: {ivsDisplay}\n" : "") +
                 (hasEVs ? $"**EVs**: {evsDisplay}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeEmoji}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +
-                (showMetLevel ? $"**Met Level:** {metLevelDisplay}\n" : "") +
                 (showFatefulEncounter ? $"**Event/Gift:** {fatefulEncounterDisplay}\n" : "") +
-                (showWasEgg ? $"**From Egg:** {wasEggDisplay}\n" : "");
+                (showWasEgg && wasEggDisplay ? "**Encounter:** Egg\n" : "");
 
 
             leftSideContent = leftSideContent.TrimEnd('\n');
-            embedBuilder.AddField($"{speciesAndForm}", leftSideContent, inline: true);
+            if (!string.IsNullOrEmpty(leftSideContent))
+            {
+                embedBuilder.AddField($"{speciesAndForm}", leftSideContent, inline: true);
+            }
             embedBuilder.AddField("\u200B", "\u200B", inline: true); // Spacer
             embedBuilder.AddField("**__MOVES__**", movesDisplay, inline: true);
         }

@@ -26,8 +26,6 @@ public sealed class SysCord<T> where T : PKM, new()
 {
     public static PokeBotRunner<T> Runner { get; private set; } = default!;
 
-    private readonly CancellationTokenSource _statusUpdateCancellationTokenSource = new CancellationTokenSource();
-
     private readonly DiscordSocketClient _client;
     private readonly DiscordManager Manager;
     public readonly PokeTradeHub<T> Hub;
@@ -107,60 +105,9 @@ public sealed class SysCord<T> where T : PKM, new()
         LogUtil.LogText("Client_Disconnected: Disconnection handling completed.");
     }
 
-    private async Task UpdateBotStatusAsync(CancellationToken token)
-    {
-        while (!token.IsCancellationRequested)
-        {
-            bool noQueue = !Hub.Queues.Info.GetCanQueue();
-            string customStatus;
-            UserStatus statusColor;
-
-            if (noQueue)
-            {
-                customStatus = "Not accepting trades...";
-                statusColor = UserStatus.DoNotDisturb;
-            }
-            else
-            {
-                var currentTrade = Hub.Queues.Info.UsersInQueue.FirstOrDefault(x => x.Trade.IsProcessing);
-                if (currentTrade != null)
-                {
-                    var tradeDetail = currentTrade.Trade;
-                    if (tradeDetail.Type != PokeTradeType.Random)
-                    {
-                        var speciesName = GameInfo.GetStrings(1).Species[tradeDetail.TradeData.Species];
-                        customStatus = $"🔄 {speciesName} to {tradeDetail.Trainer.TrainerName}";
-                        statusColor = UserStatus.Online;
-                    }
-                    else
-                    {
-                        customStatus = "⏳ Waiting for trades";
-                        statusColor = UserStatus.Idle;
-                    }
-                }
-                else if (Hub.BotSync.Barrier != null && Hub.Ledy.Pool.Files.Count > 0)
-                {
-                    customStatus = "🔂 Distributing Pokémon";
-                    statusColor = UserStatus.Online;
-                }
-                else
-                {
-                    customStatus = "Waiting for trades";
-                    statusColor = UserStatus.Idle;
-                }
-            }
-
-            await _client.SetGameAsync(customStatus, type: ActivityType.CustomStatus).ConfigureAwait(false);
-            await _client.SetStatusAsync(statusColor).ConfigureAwait(false);
-            await Task.Delay(3000, token); // Check and update every 3 seconds
-        }
-    }
-
     public async Task HandleBotStop()
     {
-        _statusUpdateCancellationTokenSource.Cancel();
         await AnnounceBotStatus("Offline", EmbedColorOption.Red);
-        LogUtil.LogText("HandleBotStop: Cleanup tasks completed.");
     }
 
     private readonly Dictionary<ulong, ulong> _announcementMessageIds = [];
@@ -291,11 +238,8 @@ public sealed class SysCord<T> where T : PKM, new()
 
         try
         {
-            // Start the task to update the bot's status
-            Task updateBotStatusTask = UpdateBotStatusAsync(_statusUpdateCancellationTokenSource.Token);
-
-            // Wait for a cancellation request
-            await Task.Delay(-1, token).ConfigureAwait(false);
+            // Wait infinitely so your bot actually stays connected.
+            await MonitorStatusAsync(token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -415,22 +359,11 @@ public sealed class SysCord<T> where T : PKM, new()
 
             var responses = new List<string>
     {
-        "You're welcome! ❤️",
-        "No problem at all!",
-        "Anytime, glad to help!",
-        "It's my pleasure! ❤️",
-        "Not a problem! You're welcome!",
-        "Always here to help!",
-        "Glad I could assist!",
-        "Happy to serve!",
-        "Of course! You're welcome!",
-        "Sure thing!",
-        "You got it!",
+
         "No problemo.",
         "It's been an honor serving you.",
         "I deserve all of the credit.",
         "You're welcome, my friendly yet weak human.",
-        "That's what I'm here for!"
     };
 
             var random = new Random();
@@ -447,55 +380,102 @@ public sealed class SysCord<T> where T : PKM, new()
     }
 
     private async Task<bool> TryHandleCommandAsync(SocketUserMessage msg, int pos)
+    {
+        // Create a Command Context.
+        var context = new SocketCommandContext(_client, msg);
+
+        // Check Permission
+        var mgr = Manager;
+        if (!mgr.CanUseCommandUser(msg.Author.Id))
         {
-            // Create a Command Context.
-            var context = new SocketCommandContext(_client, msg);
-
-            // Check Permission
-            var mgr = Manager;
-            if (!mgr.CanUseCommandUser(msg.Author.Id))
-            {
-                await msg.Channel.SendMessageAsync("You are not permitted to use this command.").ConfigureAwait(false);
-                return true;
-            }
-            if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
-            {
-                if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
-                    await msg.Channel.SendMessageAsync("You can't use that command here.").ConfigureAwait(false);
-                return true;
-            }
-
-            // Execute the command. (result does not indicate a return value, 
-            // rather an object stating if the command executed successfully).
-            var guild = msg.Channel is SocketGuildChannel g ? g.Guild.Name : "Unknown Guild";
-            await Log(new LogMessage(LogSeverity.Info, "Command", $"Executing command from {guild}#{msg.Channel.Name}:@{msg.Author.Username}. Content: {msg}")).ConfigureAwait(false);
-            var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
-
-            if (result.Error == CommandError.UnknownCommand)
-                return false;
-
-            // Uncomment the following lines if you want the bot
-            // to send a message if it failed.
-            // This does not catch errors from commands with 'RunMode.Async',
-            // subscribe a handler for '_commands.CommandExecuted' to see those.
-            if (!result.IsSuccess)
-                await msg.Channel.SendMessageAsync(result.ErrorReason).ConfigureAwait(false);
+            await msg.Channel.SendMessageAsync("You are not permitted to use this command.").ConfigureAwait(false);
             return true;
         }
-        private async Task LoadLoggingAndEcho()
+        if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
         {
-            if (MessageChannelsLoaded)
-                return;
+            if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
+                await msg.Channel.SendMessageAsync("You can't use that command here.").ConfigureAwait(false);
+            return true;
+        }
 
-            // Restore Echoes
-            EchoModule.RestoreChannels(_client, Hub.Config.Discord);
+        // Execute the command. (result does not indicate a return value, 
+        // rather an object stating if the command executed successfully).
+        var guild = msg.Channel is SocketGuildChannel g ? g.Guild.Name : "Unknown Guild";
+        await Log(new LogMessage(LogSeverity.Info, "Command", $"Executing command from {guild}#{msg.Channel.Name}:@{msg.Author.Username}. Content: {msg}")).ConfigureAwait(false);
+        var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
 
-            // Restore Logging
-            LogModule.RestoreLogging(_client, Hub.Config.Discord);
-            TradeStartModule<T>.RestoreTradeStarting(_client);
+        if (result.Error == CommandError.UnknownCommand)
+            return false;
 
-            // Don't let it load more than once in case of Discord hiccups.
-            await Log(new LogMessage(LogSeverity.Info, "LoadLoggingAndEcho()", "Logging and Echo channels loaded!")).ConfigureAwait(false);
-            MessageChannelsLoaded = true;
+        // Uncomment the following lines if you want the bot
+        // to send a message if it failed.
+        // This does not catch errors from commands with 'RunMode.Async',
+        // subscribe a handler for '_commands.CommandExecuted' to see those.
+        if (!result.IsSuccess)
+            await msg.Channel.SendMessageAsync(result.ErrorReason).ConfigureAwait(false);
+        return true;
+    }
+
+    private async Task MonitorStatusAsync(CancellationToken token)
+    {
+        const int Interval = 20; // seconds
+                                 // Check datetime for update
+        UserStatus state = UserStatus.Idle;
+        while (!token.IsCancellationRequested)
+        {
+            var time = DateTime.Now;
+            var lastLogged = LogUtil.LastLogged;
+            if (Hub.Config.Discord.BotColorStatusTradeOnly)
+            {
+                var recent = Hub.Bots.ToArray()
+                    .Where(z => z.Config.InitialRoutine.IsTradeBot())
+                    .MaxBy(z => z.LastTime);
+                lastLogged = recent?.LastTime ?? time;
+            }
+            var delta = time - lastLogged;
+            var gap = TimeSpan.FromSeconds(Interval) - delta;
+
+            bool noQueue = !Hub.Queues.Info.GetCanQueue();
+            if (gap <= TimeSpan.Zero)
+            {
+                var idle = noQueue ? UserStatus.DoNotDisturb : UserStatus.Idle;
+                if (idle != state)
+                {
+                    state = idle;
+                    await _client.SetStatusAsync(state).ConfigureAwait(false);
+                }
+                await Task.Delay(2_000, token).ConfigureAwait(false);
+                continue;
+            }
+
+            var active = noQueue ? UserStatus.DoNotDisturb : UserStatus.Online;
+            if (active != state)
+            {
+                state = active;
+                await _client.SetStatusAsync(state).ConfigureAwait(false);
+            }
+            await Task.Delay(gap, token).ConfigureAwait(false);
         }
     }
+
+    private async Task LoadLoggingAndEcho()
+    {
+        if (MessageChannelsLoaded)
+            return;
+
+        // Restore Echoes
+        EchoModule.RestoreChannels(_client, Hub.Config.Discord);
+
+        // Restore Logging
+        LogModule.RestoreLogging(_client, Hub.Config.Discord);
+        TradeStartModule<T>.RestoreTradeStarting(_client);
+
+        // Don't let it load more than once in case of Discord hiccups.
+        await Log(new LogMessage(LogSeverity.Info, "LoadLoggingAndEcho()", "Logging and Echo channels loaded!")).ConfigureAwait(false);
+        MessageChannelsLoaded = true;
+
+        var game = Hub.Config.Discord.BotGameStatus;
+        if (!string.IsNullOrWhiteSpace(game))
+            await _client.SetGameAsync(game).ConfigureAwait(false);
+    }
+}

@@ -115,7 +115,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             if (detail.IsMysteryEgg)
             {
                 tradeTitle = "✨ Mystery Egg";
-                embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg2.png";
+                embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg1.png";
             }
             else
             {

@@ -2,7 +2,6 @@ using Discord;
 using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
-using Newtonsoft.Json;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
@@ -10,7 +9,6 @@ using SysBot.Pokemon.Discord.Commands.Bots;
 using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -26,12 +24,11 @@ public static class QueueHelper<T> where T : PKM, new()
     private const uint MaxTradeCode = 9999_9999;
 
     // A dictionary to hold batch trade file paths and their deletion status
-    private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
+private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
     private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
+
     private static DiscordColor embedColor = DiscordColor.Gold;
     private static GameVersion gameVersion;
-
-    private static SocketUser Trader { get; }
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false)
     {
@@ -109,6 +106,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
     private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isHiddenTrade, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false)
     {
+
         var user = trader;
         var userID = user.Id;
         var name = user.Username;
@@ -133,7 +131,7 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showIVs = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowIVs;
         bool showEVs = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowEVs;
         bool showAlphaMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji;
-        bool showMightiesMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiesMarkEmoji;
+        bool showMightiestMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiestMarkEmoji;
         bool showMysteryGift = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji;
         bool showOT = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowOT;
         bool showTID = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTID;
@@ -244,7 +242,7 @@ public static class QueueHelper<T> where T : PKM, new()
         natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == (int)pk.Nature)?.Text ?? "";
         speciesName = GameInfo.GetStrings(1).Species[pk.Species];
         string alphaMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkAlpha && showAlphaMark ? "<:alpha_mark:1218977873805967533> " : string.Empty;
-        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest && showMightiesMark ? "<:MightiestMark:1218977612580261908> " : string.Empty;
+        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest && showMightiestMark ? "<:MightiestMark:1218977612580261908> " : string.Empty;
         string alphaSymbol = pk is IAlpha alpha && alpha.IsAlpha ? "<:alpha:1218977646269038672> " : string.Empty;
         string shinySymbol = pk.ShinyXor == 0 ? "◼ " : pk.IsShiny ? "★ " : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
@@ -309,7 +307,7 @@ public static class QueueHelper<T> where T : PKM, new()
         (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk);
 
         // Adjust image URL based on request type
-        embedImageUrl = isMysteryEgg ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg2.png" :
+        embedImageUrl = isMysteryEgg ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg1.png" :
                         isDumpRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dump.png" :
                         isCloneRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/clone.png" :
                         isSpecialRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialrequest.gif" :
@@ -542,7 +540,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
             if (pk.IsEgg)
             {
-                string eggImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/egg.png";
+                string eggImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/egg2.png";
                 speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true);
                 System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
                 embedImageUrl = SaveImageLocally(combinedImage);

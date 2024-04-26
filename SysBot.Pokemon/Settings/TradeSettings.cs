@@ -16,23 +16,24 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     private const string Miscellaneous = nameof(Miscellaneous);
     private const string RequestFolders = nameof(RequestFolders);
     private const string EmbedSettings = nameof(EmbedSettings);
+    public override string ToString() => "Trade Configuration Settings";
 
-    [Category(TradeConfig), Description("Settings related to Trade Configuration."), Browsable(true)]
+    [Category(TradeConfig), Description("Settings related to Trade Configuration."), DisplayName("Trade Configuration"), Browsable(true)]
     public TradeSettingsCategory TradeConfiguration { get; set; } = new();
 
-    [Category(VGCPastesConfig), Description("Settings related to VGCPastes Configuration."), Browsable(true)]
+    [Category(VGCPastesConfig), Description("Settings related to VGCPastes Configuration."), DisplayName("VGC Pastes Configuration"), Browsable(true)]
     public VGCPastesCategory VGCPastesConfiguration { get; set; } = new();
 
-    [Category(EmbedSettings), Description("Settings related to the Trade Embed in Discord."), Browsable(true)]
+    [Category(EmbedSettings), Description("Settings related to the Trade Embed in Discord."), DisplayName("Trade Embed Settings"), Browsable(true)]
     public TradeEmbedSettingsCategory TradeEmbedSettings { get; set; } = new();
 
-    [Category(HOMELegality), Description("Settings related to HOME Legality."), Browsable(true)]
+    [Category(HOMELegality), Description("Settings related to HOME Legality."), DisplayName("HOME Legality Settings"), Browsable(true)]
     public HOMELegalitySettingsCategory HomeLegalitySettings { get; set; } = new();
 
-    [Category(RequestFolders), Description("Settings related to Request Folders."), Browsable(true)]
+    [Category(RequestFolders), Description("Settings related to Request Folders."), DisplayName("Request Folder Settings"), Browsable(true)]
     public RequestFolderSettingsCategory RequestFolderSettings { get; set; } = new();
 
-    [Category(CountStats), Description("Settings related to Trade Count Statistics."), Browsable(true)]
+    [Category(CountStats), Description("Settings related to Trade Count Statistics."), DisplayName("Trade Count Statistics Settings"), Browsable(true)]
     public CountStatsSettingsCategory CountStatsSettings { get; set; } = new();
 
 
@@ -41,43 +42,43 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     {
         public override string ToString() => "Trade Configuration Settings";
 
-        [Category(TradeConfig), Description("Minimum Link Code.")]
+        [Category(TradeConfig), Description("Minimum Link Code."), DisplayName("Minimum Trade Link Code")]
         public int MinTradeCode { get; set; } = 0;
 
-        [Category(TradeConfig), Description("Maximum Link Code.")]
+        [Category(TradeConfig), Description("Maximum Link Code."), DisplayName("Maximum Trade Link Code")]
         public int MaxTradeCode { get; set; } = 9999_9999;
 
-        [Category(TradeConfig), Description("If set to True, Discord Users trade code will be stored and used repeatedly without changing.")]
+        [Category(TradeConfig), Description("If set to True, Discord Users trade code will be stored and used repeatedly without changing."), DisplayName("Store and Reuse Trade Codes")]
         public bool StoreTradeCodes { get; set; } = false;
 
-        [Category(TradeConfig), Description("Time to wait for a trade partner in seconds.")]
+        [Category(TradeConfig), Description("Time to wait for a trade partner in seconds."), DisplayName("Trade Partner Wait Time (seconds)")]
         public int TradeWaitTime { get; set; } = 30;
 
-        [Category(TradeConfig), Description("Max amount of time in seconds pressing A to wait for a trade to process.")]
+        [Category(TradeConfig), Description("Max amount of time in seconds pressing A to wait for a trade to process."), DisplayName("Maximum Trade Confirmation Time (seconds)")]
         public int MaxTradeConfirmTime { get; set; } = 25;
 
-        [Category(TradeConfig), Description("Select default species for \"ItemTrade\", if configured.")]
+        [Category(TradeConfig), Description("Select default species for \"ItemTrade\", if configured."), DisplayName("Default Species for Item Trades")]
         public Species ItemTradeSpecies { get; set; } = Species.None;
 
-        [Category(TradeConfig), Description("Default held item to send if none is specified.")]
+        [Category(TradeConfig), Description("Default held item to send if none is specified."), DisplayName("Default Held Item for Trades")]
         public HeldItem DefaultHeldItem { get; set; } = HeldItem.None;
 
-        [Category(TradeConfig), Description("If set to True, each valid Pokemon will come with all suggested Relearnable Moves without the need for a batch command.")]
+        [Category(TradeConfig), Description("If set to True, each valid Pokemon will come with all suggested Relearnable Moves without the need for a batch command."), DisplayName("Suggest Relearnable Moves by Default")]
         public bool SuggestRelearnMoves { get; set; } = true;
 
-        [Category(TradeConfig), Description("Toggle to allow or disallow batch trades.")]
+        [Category(TradeConfig), Description("Toggle to allow or disallow batch trades."), DisplayName("Allow Batch Trades")]
         public bool AllowBatchTrades { get; set; } = true;
 
-        [Category(TradeConfig), Description("Maximum pokemons of single trade. Batch mode will be closed if this configuration is less than 1")]
+        [Category(TradeConfig), Description("Maximum Pokémon of a single trade. Batch mode will be closed if this configuration is less than 1"), DisplayName("Maximum Pokémon per Trade")]
         public int MaxPkmsPerTrade { get; set; } = 1;
 
-        [Category(TradeConfig), Description("Dump Trade: Dumping routine will stop after a maximum number of dumps from a single user.")]
+        [Category(TradeConfig), Description("Dump Trade: Dumping routine will stop after a maximum number of dumps from a single user."), DisplayName("Maximum Dumps per Trade")]
         public int MaxDumpsPerTrade { get; set; } = 20;
 
-        [Category(TradeConfig), Description("Dump Trade: Dumping routine will stop after spending x seconds in trade.")]
+        [Category(TradeConfig), Description("Dump Trade: Dumping routine will stop after spending x seconds in trade."), DisplayName("Maximum Dump Trade Time (seconds)")]
         public int MaxDumpTradeTime { get; set; } = 180;
 
-        [Category(TradeConfig), Description("Dump Trade: If enabled, Dumping routine will output legality check information to the user.")]
+        [Category(TradeConfig), Description("Dump Trade: If enabled, Dumping routine will output legality check information to the user."), DisplayName("Dump Trade Legality Check")]
         public bool DumpTradeLegalityCheck { get; set; } = true;
 
         [Category(TradeConfig), Description("LGPE Setting.")]
@@ -107,67 +108,67 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     {
         public override string ToString() => "Trade Embed Configuration Settings";
 
-        [Category(EmbedSettings), Description("Will show Move Type Icons next to moves in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Move Type Icons next to moves in trade embed (Discord only). Requires user to upload the emojis to their server."), DisplayName("Show Move Type Emojis")]
         public bool MoveTypeEmojis { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Gender Icons in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Gender Icons in trade embed (Discord only)."), DisplayName("Show Gender Icons")]
         public bool GenderEmojis { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Mystery Gift Emoji in trade embed if in Cherish Ball (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Mystery Gift Emoji in trade embed if in Cherish Ball (Discord only)."), DisplayName("Show Mystery Gift Icons")]
         public bool MysteryGiftEmoji { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Alpha Mark Emoji in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("The emoji information for displaying the Alpha Mark."), DisplayName("Alpha Mark Emoji")]
         public bool AlphaMarkEmoji { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Mightiest Mark Emoji in trade embed (Discord only).")]
-        public bool MightiesMarkEmoji { get; set; } = true;
+        [Category(EmbedSettings), Description("The emoji information for displaying the Mightiest Mark."), DisplayName("Mightiest Mark Emoji")]
+        public bool MightiestMarkEmoji { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Scale in trade embed (SV & Discord only).")]
+        [Category(EmbedSettings), Description("Will show Scale in trade embed (SV & Discord only). Requires user to upload the emojis to their server."), DisplayName("Show Scale")]
         public bool ShowScale { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Tera Type in trade embed (SV & Discord only).")]
+        [Category(EmbedSettings), Description("Will show Tera Type in trade embed (SV & Discord only)."), DisplayName("Show Tera Type")]
         public bool ShowTeraType { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Tera Type Emojis in the trade embed (SV & Discord only).")]
+        [Category(EmbedSettings), Description("Will show Tera Type Emojis in the trade embed (SV & Discord only)."), DisplayName("Show Tera Type Emojis")]
         public bool ShowTeraTypeEmoji { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Level in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Level in trade embed (Discord only)."), DisplayName("Show Level")]
         public bool ShowLevel { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Ability in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Ability in trade embed (Discord only)."), DisplayName("Show Ability")]
         public bool ShowAbility { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Nature in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Nature in trade embed (Discord only)."), DisplayName("Show Nature")]
         public bool ShowNature { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show IVs in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show IVs in trade embed (Discord only)."), DisplayName("Show IVs")]
         public bool ShowIVs { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show EVs in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show EVs in trade embed (Discord only)."), DisplayName("Show EVs")]
         public bool ShowEVs { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show OT in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show OT in trade embed (Discord only)."), DisplayName("Show OT")]
         public bool ShowOT { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show TID in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show TID in trade embed (Discord only)."), DisplayName("Show TID")]
         public bool ShowTID { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show SID in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show SID in trade embed (Discord only)."), DisplayName("Show SID")]
         public bool ShowSID { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only)."), DisplayName("Show Met Level")]
         public bool ShowMetLevel { get; set; } = false;
 
-        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only)."), DisplayName("Show Fateful Encounter")]
         public bool ShowFatefulEncounter { get; set; } = false;
 
-        [Category(EmbedSettings), Description("Will show Met Level in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show if Pokémon came from an egg in trade embed (Discord only)."), DisplayName("Show WasEgg")]
         public bool ShowWasEgg { get; set; } = false;
 
-        [Category(EmbedSettings), Description("Will show Met Date in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show MetDate in trade embed (Discord only)."), DisplayName("Show Met Date")]
         public bool ShowMetDate { get; set; } = false;
 
-        [Category(EmbedSettings), Description("Will show Met Date in trade embed (Discord only).")]
+        [Category(EmbedSettings), Description("Will show Met Date in trade embed (Discord only)."), DisplayName("Show Language")]
         public bool ShowLanguage { get; set; } = false;
     }
 
@@ -177,10 +178,10 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     {
         public override string ToString() => "VGCPastes Configuration Settings";
 
-        [Category(VGCPastesConfig), Description("Allow users to request and generate teams using the VGCPastes Spreadsheet.")]
+        [Category(VGCPastesConfig), Description("Allow users to request and generate teams using the VGCPastes Spreadsheet."), DisplayName("Allow VGC Paste Requests")]
         public bool AllowRequests { get; set; } = true;
 
-        [Category(VGCPastesConfig), Description("GID of Spreadsheet tab you would like to pull from.  Hint: https://docs.google.com/spreadsheets/d/ID/gid=1837599752")]
+        [Category(VGCPastesConfig), Description("GID of Spreadsheet tab you would like to pull from. Hint: https://docs.google.com/spreadsheets/d/ID/gid=1837599752"), DisplayName("GID of Spreadsheet Tab")]
         public int GID { get; set; } = 1837599752; // Reg F Tab
 
     }
@@ -190,10 +191,10 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     {
         public override string ToString() => "HOME Legality Settings";
 
-        [Category(HOMELegality), Description("Prevents trading Pokémon that require a HOME Tracker, even if the file has one already.")]
+        [Category(HOMELegality), Description("Prevents trading Pokémon that require a HOME Tracker, even if the file has one already."), DisplayName("Disallow Non-Native Pokémon")]
         public bool DisallowNonNatives { get; set; } = false;
 
-        [Category(HOMELegality), Description("Prevents trading Pokémon that already have a HOME Tracker.")]
+        [Category(HOMELegality), Description("Prevents trading Pokémon that already have a HOME Tracker."), DisplayName("Disallow Home Tracked Pokémon")]
         public bool DisallowTracked { get; set; } = false;
     }
 
@@ -202,18 +203,18 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     {
         public override string ToString() => "Request Folders Settings";
 
-        [Category("RequestFolders"), Description("Path to your Events Folder. Create a new folder called 'events' and copy the path here.")]
+        [Category("RequestFolders"), Description("Path to your Events Folder. Create a new folder called 'events' and copy the path here."), DisplayName("Events Folder Path")]
         public string EventsFolder { get; set; } = string.Empty;
 
-        [Category("RequestFolders"), Description("Path to your BattleReady Folder. Create a new folder called 'battleready' and copy the path here.")]
+        [Category("RequestFolders"), Description("Path to your BattleReady Folder. Create a new folder called 'battleready' and copy the path here."), DisplayName("Battle-Ready Folder Path")]
         public string BattleReadyPKMFolder { get; set; } = string.Empty;
 
-        [Category("RequestFolders"), Description("Path to your HOME-eady Folder. Create a new folder called 'homeready' and copy the path here.")]
+        [Category("RequestFolders"), Description("Path to your HOME-eady Folder. Create a new folder called 'homeready' and copy the path here."), DisplayName("HOME-Ready Folder Path")]
         public string HOMEReadyPKMFolder { get; set; } = string.Empty;
 
     }
 
-    [Category(Miscellaneous), Description("Miscellaneous Settings")]
+    [Category(Miscellaneous), Description("Miscellaneous Settings"), DisplayName("Miscellaneous")]
     public bool ScreenOff { get; set; } = false;
 
 

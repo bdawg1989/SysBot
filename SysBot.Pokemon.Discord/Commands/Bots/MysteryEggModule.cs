@@ -67,7 +67,7 @@ namespace SysBot.Pokemon.Discord
 
                 if (pkm is not T pk)
                 {
-                    await ReplyAsync($"Oops! I wasn't able to create a mystery egg for that.").ConfigureAwait(false);
+                    await ReplyAsync($"I wasn't able to create a mystery egg.").ConfigureAwait(false);
                     return;
                 }
 
@@ -176,7 +176,7 @@ namespace SysBot.Pokemon.Discord
             {
                 string responseMessage;
                 string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
-                responseMessage = $"Invalid Showdown Set for the {speciesName} egg. Please review your information and try again.";
+                responseMessage = $"Couldn't generate anything. Use the command again!";
 
                 var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
                 await Task.Delay(6000);

@@ -144,9 +144,9 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
         var tradeCodeStorage = new TradeCodeStorage();
         int totalTradeCount = tradeCodeStorage.GetTradeCount(trader.Id);
         var tradeDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
-        string otText = tradeDetails?.OT != null ? $"OT: {tradeDetails.OT}" : "";
-        string tidText = tradeDetails?.TID != 0 ? $"TID: {tradeDetails.TID}" : "";
-        string sidText = tradeDetails?.SID != 0 ? $"SID: {tradeDetails.SID}" : "";
+        string otText = tradeDetails?.OT ?? "";
+        string tidText = tradeDetails?.TID != null ? $"TID: {tradeDetails.TID}" : "";
+        string sidText = tradeDetails?.SID != null ? $"SID: {tradeDetails.SID}" : "";
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);

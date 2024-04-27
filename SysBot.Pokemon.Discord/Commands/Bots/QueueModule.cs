@@ -214,9 +214,9 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("addTradeCode")]
     [Alias("atc")]
     [Summary("Sets the trade code for the user.")]
-    public async Task SetTradeCodeAsync(int tradeCode, string ot = null, int tid = 0, int sid = 0)
+    public async Task SetTradeCodeAsync(int tradeCode, string? ot = null, int tid = 0, int sid = 0)
     {
-        var user = Context.User as SocketUser;
+        var user = Context.User as SocketGuildUser; // Change to SocketGuildUser
         var userID = user.Id;
         var userMention = user.Mention;
         var botMention = Context.Client.CurrentUser.Mention;
@@ -239,7 +239,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return tradeCode <= 99999999 && tradeCode >= 00000000;
     }
 
-    private async Task SetTradeCode(ulong userID, int tradeCode, string ot, int tid, int sid)
+    private async Task SetTradeCode(ulong userID, int tradeCode, string? ot, int tid, int sid)
     {
         var tradeCodeStorage = new TradeCodeStorage();
         bool success = tradeCodeStorage.AddOrUpdateTradeCode(userID, tradeCode, ot, tid, sid);

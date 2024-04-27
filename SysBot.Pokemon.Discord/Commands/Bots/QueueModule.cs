@@ -170,48 +170,22 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     private static string ClearTrade(ulong userID)
     {
-        var userEntries = Info.GetIsUserQueued(entry => entry.UserID == userID);
-
-        if (userEntries.Count == 0)
-            return "Sorry, you are not currently in the queue.";
-
-        bool removedAll = true;
-        bool currentlyProcessing = false;
-        bool removedPending = false;
-
-        foreach (var entry in userEntries)
-        {
-            if (entry.Trade.IsProcessing)
-            {
-                currentlyProcessing = true;
-                if (!Info.Hub.Config.Queues.CanDequeueIfProcessing)
-                {
-                    removedAll = false;
-                    entry.Trade.IsCanceled = true; // Set the trade as canceled
-                    continue;
-                }
-            }
-            else
-            {
-                entry.Trade.IsCanceled = true; // Set the trade as canceled
-                Info.Remove(entry);
-                removedPending = true;
-            }
-        }
-
-        if (!removedAll && currentlyProcessing && !removedPending)
-            return "Looks like you have trades currently being processed! Did not remove those from the queue.";
-
-        if (currentlyProcessing && removedPending)
-            return "Looks like you have trades currently being processed! Removed other pending trades from the queue.";
-
-        if (removedPending)
-            return "Removed your pending trades from the queue.";
-
-        return "Sorry, you are not currently in the queue.";
+        var result = Info.ClearTrade(userID);
+        return GetClearTradeMessage(result);
     }
 
-    [Command("addTradeCode")]
+    private static string GetClearTradeMessage(QueueResultRemove result)
+    {
+        return result switch
+        {
+            QueueResultRemove.CurrentlyProcessing => "Looks like you're currently being processed! Did not remove from all queues.",
+            QueueResultRemove.CurrentlyProcessingRemoved => "Looks like you're currently being processed!",
+            QueueResultRemove.Removed => "Removed you from the queue.",
+            _ => "Sorry, you are not currently in the queue.",
+        };
+     } 
+
+            [Command("addTradeCode")]
     [Alias("atc")]
     [Summary("Sets the trade code for the user.")]
     public async Task SetTradeCodeAsync(int tradeCode, string? ot = null, int tid = 0, int sid = 0)

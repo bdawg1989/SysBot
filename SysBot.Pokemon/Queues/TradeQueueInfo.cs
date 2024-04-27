@@ -116,38 +116,47 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
         if (details.Count == 0)
             return QueueResultRemove.NotInQueue;
 
-        bool removedAll = true;
-        bool currentlyProcessing = false;
-        bool removedPending = false;
+        int removedCount = ClearTrade(details, Hub);
 
+        if (removedCount == details.Count)
+        {
+            return QueueResultRemove.Removed;
+        }
+
+        bool canRemoveWhileProcessing = Hub.Config.Queues.CanDequeueIfProcessing;
         foreach (var detail in details)
         {
-            if (detail.Trade.IsProcessing)
+            if (detail.Trade.IsProcessing && !canRemoveWhileProcessing)
+                continue;
+            Remove(detail);
+        }
+
+        return canRemoveWhileProcessing
+            ? QueueResultRemove.CurrentlyProcessingRemoved
+            : QueueResultRemove.CurrentlyProcessing;
+    }
+
+    public int ClearTrade(IEnumerable<TradeEntry<T>> details, PokeTradeHub<T> hub)
+    {
+        int removedCount = 0;
+        lock (_sync)
+        {
+            var queues = hub.Queues.AllQueues;
+            foreach (var detail in details)
             {
-                currentlyProcessing = true;
-                if (!Hub.Config.Queues.CanDequeueIfProcessing)
-                {
-                    removedAll = false;
+                if (detail.Trade.IsProcessing && !Hub.Config.Queues.CanDequeueIfProcessing)
                     continue;
+                foreach (var queue in queues)
+                {
+                    int removed = queue.Remove(detail.Trade);
+                    if (removed != 0)
+                        UsersInQueue.Remove(detail);
+                    removedCount += removed;
                 }
-            }
-            else
-            {
-                if (Remove(detail))
-                    removedPending = true;
             }
         }
 
-        if (!removedAll && currentlyProcessing && !removedPending)
-            return QueueResultRemove.CurrentlyProcessing;
-
-        if (currentlyProcessing && removedPending)
-            return QueueResultRemove.CurrentlyProcessingRemoved;
-
-        if (removedPending)
-            return QueueResultRemove.Removed;
-
-        return QueueResultRemove.NotInQueue;
+        return removedCount;
     }
 
     public IEnumerable<string> GetUserList(string fmt)

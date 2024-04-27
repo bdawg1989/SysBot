@@ -716,7 +716,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         catch (Exception ex)
         {
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            var msg = $"Oops! An unexpected problem happened with this Showdown Set:\n```{string.Join("\n", set.GetSetLines())}```";
+            var msg = $"An unexpected problem happened with this Showdown Set:\n```{string.Join("\n", set.GetSetLines())}```";
 
             await Task.Delay(2000);
             await Context.Message.DeleteAsync();

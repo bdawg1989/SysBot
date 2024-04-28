@@ -225,7 +225,7 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
         uint sidDisplay = pk.TrainerSID7;
         byte metLevelDisplay = pk.MetLevel;
         Boolean fatefulEncounterDisplay = pk.FatefulEncounter;
-        Boolean wasEggDisplay = pk.WasEgg;
+        Boolean wasEggDisplay = pk.WasEgg; 
 
         // Pokémon appearance and type details
         string teraTypeString = "", scaleText = "", abilityName, natureName, speciesName, formName, speciesAndForm, heldItemName, ballName, formDecoration = "";
@@ -363,6 +363,7 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
         // Constructing the content of the embed based on the trade type
         if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
+
             // Preparing content for normal trades
             string leftSideContent = $"**User:** {user.Mention}\n";
 
@@ -403,7 +404,7 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
                 (hasEVs ? $"**EVs**: {evsDisplay}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showTeraType ? $"**Tera Type:** {teraTypeEmoji}\n" : "") +
                 (pk.Version is GameVersion.SL or GameVersion.VL && showScale ? $"**Scale:** {scaleText} ({scaleNumber})\n" : "") +
-                (showFatefulEncounter ? $"**Event/Gift:** {fatefulEncounterDisplay}\n" : "") +
+                (showFatefulEncounter ? $"**Encounter:** {fatefulEncounterDisplay}\n" : "") +
                 (showWasEgg && wasEggDisplay ? "**Encounter:** Egg\n" : "");
 
 
@@ -418,8 +419,8 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
         else
         {
             // Preparing content for special types of trades
-            string specialDescription = $"**Trainer:** {user.Mention}\n" +
-                                        (isMysteryEgg ? "Mystery Egg" : isSpecialRequest ? "Special Request" : isCloneRequest ? "Clone Request" : FixOT ? "FixOT Request" : "Dump Request");
+            string specialDescription = $"**User:** {user.Mention}\n" +
+                                        (isMysteryEgg ? "Shiny 6IV Mystery Egg Coming Right Up!" : isSpecialRequest ? "Special Request Module Initiated..." : isCloneRequest ? "Cloning has Begun..." : FixOT ? "Fixing OT!" : "Dumping Pokemon Files...");
             embedBuilder.AddField("\u200B", specialDescription, inline: false);
         }
 

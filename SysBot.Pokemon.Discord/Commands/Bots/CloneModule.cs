@@ -26,15 +26,8 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var lgcode = Info.GetRandomLGTradeCode();
 
         await QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone, Context.User, false, 1, 1, false, false, lgcode);
-
-        var confirmationMessage = await ReplyAsync("Processing your clone request...").ConfigureAwait(false);
-
-        await Task.Delay(2000).ConfigureAwait(false);
-        if (Context.Message is IUserMessage userMessage)
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-        if (confirmationMessage != null)
-            await confirmationMessage.DeleteAsync().ConfigureAwait(false);
     }
+
     [Command("clone")]
     [Alias("c")]
     [Summary("Clones the Pokémon you show via Link Trade.")]
@@ -54,14 +47,8 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         await QueueHelper<T>.AddToQueueAsync(Context, tradeCode == 0 ? Info.GetRandomTradeCode(userID) : tradeCode, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone, Context.User, false, 1, 1, false, false, lgcode);
 
-        var confirmationMessage = await ReplyAsync("Processing your clone request...").ConfigureAwait(false);
-
-        await Task.Delay(2000).ConfigureAwait(false);
-        if (Context.Message is IUserMessage userMessage)
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-        if (confirmationMessage != null)
-            await confirmationMessage.DeleteAsync().ConfigureAwait(false);
     }
+
     [Command("clone")]
     [Alias("c")]
     [Summary("Clones the Pokémon you show via Link Trade.")]

@@ -43,12 +43,12 @@ public class TradeCodeStorage
 
 
     private const string FileName = "tradecodes.json";
-    private Dictionary<ulong, TradeCodeDetails> _tradeCodeDetails;
+    private Dictionary<ulong, TradeCodeDetails> _tradeCodeDetails = new Dictionary<ulong, TradeCodeDetails>();
 
     public class TradeCodeDetails
     {
         public int Code { get; set; }
-        public string OT { get; set; }
+        public string? OT { get; set; }
         public int TID { get; set; }
         public int SID { get; set; }
         public int TradeCount { get; set; }
@@ -132,7 +132,7 @@ public class TradeCodeStorage
         return 0;
     }
 
-    public TradeCodeDetails GetTradeDetails(ulong trainerID)
+    public TradeCodeDetails? GetTradeDetails(ulong trainerID)
     {
         LoadFromFile();
 
@@ -149,8 +149,6 @@ public class TradeCodeStorage
 
         if (_tradeCodeDetails.TryGetValue(trainerID, out var details))
         {
-            if (details != null)
-            {
                 details.OT = ot;
                 details.TID = tid;
                 details.SID = sid;
@@ -158,4 +156,3 @@ public class TradeCodeStorage
             }
         }
     }
-}

@@ -33,7 +33,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
     /// </summary>
     public bool ShouldWaitAtBarrier { get; private set; }
 
-    private SocketUser Trader { get; }
+    private SocketUser? Trader { get; }
 
     /// <summary>
     /// Tracks failed synchronized starts to attempt to re-sync.
@@ -687,7 +687,9 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         }
     }
 
-    private async Task<PB7> SetPkmWithTradePartnerDetails(PB7 toSend, SAV7b tradePartnerSav, CancellationToken token)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+    private async Task<PB7?> SetPkmWithTradePartnerDetails(PB7 toSend, SAV7b tradePartnerSav, CancellationToken token)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         var cln = (PB7)toSend.Clone();
 

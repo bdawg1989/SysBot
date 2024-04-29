@@ -15,7 +15,7 @@ namespace SysBot.Pokemon
         public bool IsFavored { get; }
 
         /// <summary> Customized trade parameters. </summary>
-        public Dictionary<string, object> Context = [];
+        public Dictionary<string, object> Context = new Dictionary<string, object>();
 
         /// <summary>
         /// Trade Code
@@ -63,7 +63,7 @@ namespace SysBot.Pokemon
             ID = Interlocked.Increment(ref CreatedCount) % 3000;
             Code = code;
             TradeData = pkm;
-            Trainer = info;
+            Trainer = info ?? throw new ArgumentNullException(nameof(info), "Trainer cannot be null.");
             Notifier = notifier;
             Type = type;
             Time = DateTime.Now;

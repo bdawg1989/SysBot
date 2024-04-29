@@ -42,7 +42,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
     /// Tracks failed synchronized starts to attempt to re-sync.
     /// </summary>
     public int FailedBarrier { get; private set; }
-    private SocketUser Trader { get; }
+    private SocketUser? Trader { get; }
     public object Context { get; private set; }
 
     // Cached offsets that stay the same per session.
@@ -562,11 +562,21 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
                     return PokeTradeResult.RecoverOpenBox;
                 }
             }
-            await Task.Delay(3_000 + Hub.Config.Timings.ExtraTimeOpenBox, token).ConfigureAwait(false);
+            await Task.Delay(3_000 + (Hub.Config?.Timings?.ExtraTimeOpenBox ?? 0), token).ConfigureAwait(false);
 
             var tradePartnerFullInfo = await GetTradePartnerFullInfo(token).ConfigureAwait(false);
+            if (tradePartnerFullInfo == null)
+            {
+                Log("Failed to retrieve full trade partner information.");
+            }
+
             var tradePartner = new TradePartnerSV(tradePartnerFullInfo);
             var trainerNID = await GetTradePartnerNID(TradePartnerNIDOffset, token).ConfigureAwait(false);
+            if (trainerNID == null)
+            {
+                Log("Failed to retrieve trade Nintendo ID information.");
+            }
+
             RecordUtil<PokeTradeBotSWSH>.Record($"Initiating\t{trainerNID:X16}\t{tradePartner.TrainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
             Log($"Found Link Trade partner: {tradePartner.TrainerName}-{tradePartner.TID7} (ID: {trainerNID})");
 
@@ -1102,7 +1112,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
     }
     private async Task SendNotificationAsync(PokeTradeDetail<PK9> detail, Embed embed)
     {
-        Trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
+        await Trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
     private async Task<(PK9 toSend, PokeTradeResult check)> HandleClone(SAV9SV sav, PokeTradeDetail<PK9> poke, PK9 offered, byte[] oldEC, CancellationToken token)
     {

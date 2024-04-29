@@ -20,7 +20,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
     private class TradeStartAction(ulong ChannelId, Action<PokeRoutineExecutorBase, PokeTradeDetail<T>> messager, string channel)
         : ChannelAction<PokeRoutineExecutorBase, PokeTradeDetail<T>>(ChannelId, messager, channel);
 
-    private static DiscordSocketClient _discordClient;
+    private static DiscordSocketClient _discordClient = new DiscordSocketClient();
 
     private static readonly Dictionary<ulong, TradeStartAction> Channels = [];
 

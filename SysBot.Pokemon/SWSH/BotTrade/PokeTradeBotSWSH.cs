@@ -39,7 +39,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
     /// </summary>
     public bool ShouldWaitAtBarrier { get; private set; }
 
-    private SocketUser Trader { get; }
+    private SocketUser? Trader { get; }
 
     /// <summary>
     /// Tracks failed synchronized starts to attempt to re-sync.
@@ -312,42 +312,46 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
 
         // Select Pokémon
         // pkm already injected to b1s1
-        await Task.Delay(5_500 + hub.Config.Timings.ExtraTimeOpenBox, token).ConfigureAwait(false); // necessary delay to get to the box properly
+        await Task.Delay(5_500 + (hub.Config?.Timings?.ExtraTimeOpenBox ?? 0), token).ConfigureAwait(false); // necessary delay to get to the box properly
 
         var trainerName = await GetTradePartnerName(TradeMethod.LinkTrade, token).ConfigureAwait(false);
         var trainerTID = await GetTradePartnerTID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
         var trainerNID = await GetTradePartnerNID(token).ConfigureAwait(false);
-        RecordUtil<PokeTradeBotSWSH>.Record($"Initiating\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
-        Log($"Found Link Trade partner: {trainerName}-{trainerTID} (ID: {trainerNID})");
 
-        var tradeCodeStorage = new TradeCodeStorage();
-        var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
-
-        bool shouldUpdateOT = existingTradeDetails?.OT != trainerName;
-        bool shouldUpdateTID = existingTradeDetails?.TID != int.Parse(trainerTID);
-        bool shouldUpdateSID = false;
-
-        if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
+        if (trainerName != null && trainerTID != null && trainerNID != null)
         {
-            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? trainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(trainerTID) : existingTradeDetails.TID, 0);
-        }
+            RecordUtil<PokeTradeBotSWSH>.Record($"Initiating\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
+            Log($"Found Link Trade partner: {trainerName}-{trainerTID} (ID: {trainerNID})");
 
-        var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
-        if (partnerCheck != PokeTradeResult.Success)
-        {
-            await ExitSeedCheckTrade(token).ConfigureAwait(false);
-            return partnerCheck;
-        }
+            var tradeCodeStorage = new TradeCodeStorage();
+            var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
 
-        if (!await IsInBox(token).ConfigureAwait(false))
-        {
-            await ExitTrade(true, token).ConfigureAwait(false);
-            return PokeTradeResult.RecoverOpenBox;
-        }
+            bool shouldUpdateOT = existingTradeDetails?.OT != trainerName;
+            bool shouldUpdateTID = existingTradeDetails?.TID != int.Parse(trainerTID);
+            bool shouldUpdateSID = false;
 
-        if (hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
-        {
-            await SetPkmWithSwappedIDDetails(toSend, trainerName, sav, token);
+            if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
+            {
+                tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? trainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(trainerTID) : existingTradeDetails.TID, 0);
+            }
+
+            var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
+            if (partnerCheck != PokeTradeResult.Success)
+            {
+                await ExitSeedCheckTrade(token).ConfigureAwait(false);
+                return partnerCheck;
+            }
+
+            if (!await IsInBox(token).ConfigureAwait(false))
+            {
+                await ExitTrade(true, token).ConfigureAwait(false);
+                return PokeTradeResult.RecoverOpenBox;
+            }
+
+            if (hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
+            {
+                await SetPkmWithSwappedIDDetails(toSend, trainerName, sav, token);
+            }
         }
 
         // Confirm Box 1 Slot 1
@@ -532,7 +536,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
                 .WithThumbnailUrl(imageUrl)
                 .Build();
 
-            trader.SendMessageAsync(embed: embedIllegal).ConfigureAwait(false);
+            await trader.SendMessageAsync(embed: embedIllegal).ConfigureAwait(false);
 
             return (offered, PokeTradeResult.IllegalTrade);
         }
@@ -548,7 +552,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
             .Build();
 
         // Send the embed to the appropriate channel
-        trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
+        await trader.SendMessageAsync(embed: embed).ConfigureAwait(false);
 
         Log($"Cloned a {(Species)clone.Species}. Waiting for the user to change their Pokémon...");
 
@@ -1075,7 +1079,10 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
                 clone = AbstractTrade<PK8>.CherishHandler(mg.First(), info);
             else clone = (PK8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
         }
-        else clone = (PK8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
+        else
+        {
+            clone = (PK8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
+        }
 
         clone = (PK8)AbstractTrade<PK8>.TrashBytes(clone, new LegalityAnalysis(clone));
         clone.ResetPartyStats();
@@ -1083,29 +1090,37 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         if (!la.Valid)
         {
             var trader = Trader;
-            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
-            var embedCloneError = new EmbedBuilder()
-                .WithTitle("Legality Error!")
-                .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
-                .WithColor(Discord.Color.DarkRed)
-                .WithThumbnailUrl(imageUrl)
-                .Build();
+            if (trader != null)
+            {
+                string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
+                var embedCloneError = new EmbedBuilder()
+                    .WithTitle("Legality Error!")
+                    .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
+                    .WithColor(Discord.Color.DarkRed)
+                    .WithThumbnailUrl(imageUrl)
+                    .Build();
 
-            var discordUser0 = trader as IUser;
-            await (discordUser0?.SendMessageAsync(embed: embedCloneError)).ConfigureAwait(false);
+                var discordUser0 = trader as IUser;
+                Task<IUserMessage>? task = discordUser0?.SendMessageAsync(embed: embedCloneError);
+                await task.ConfigureAwait(false);
+            }
             return (clone, PokeTradeResult.IllegalTrade);
         }
 
         var trader1 = Trader;
-        string imageLegal = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
-        var embedLegalized = new EmbedBuilder()
-            .WithTitle($"{(!laInit.Valid ? "Legalized!" : "Fixed Nickname/OT for")} {(Species)clone.Species}!")
-            .WithColor(Discord.Color.Green)
-            .WithThumbnailUrl(imageLegal)
-            .Build();
+        if (trader1 != null)
+        {
+            string imageLegal = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
+            var embedLegalized = new EmbedBuilder()
+                .WithTitle($"{(!laInit.Valid ? "Legalized!" : "Fixed Nickname/OT for")} {(Species)clone.Species}!")
+                .WithColor(Discord.Color.Green)
+                .WithThumbnailUrl(imageLegal)
+                .Build();
 
-        var discordUser1 = trader1 as IUser;
-        await (discordUser1?.SendMessageAsync(embed: embedLegalized)).ConfigureAwait(false);
+            var discordUser1 = trader1 as IUser;
+            Task<IUserMessage>? task = discordUser1?.SendMessageAsync(embed: embedLegalized);
+            await task.ConfigureAwait(false);
+        }
         Log($"{(!laInit.Valid ? "Legalized" : "Fixed Nickname/OT for")} {(Species)clone.Species}!");
 
         await Click(A, 0_800, token).ConfigureAwait(false);

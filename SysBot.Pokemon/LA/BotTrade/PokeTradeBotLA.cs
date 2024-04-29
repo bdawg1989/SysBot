@@ -40,7 +40,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
     /// Tracks failed synchronized starts to attempt to re-sync.
     /// </summary>
     public int FailedBarrier { get; private set; }
-    private SocketUser Trader { get; }
+    private SocketUser? Trader { get; }
 
     // Cached offsets that stay the same per session.
     private ulong BoxStartOffset;
@@ -285,14 +285,17 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
 
         var tradeCodeStorage = new TradeCodeStorage();
         var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
-
-        bool shouldUpdateOT = existingTradeDetails?.OT != tradePartner.TrainerName;
-        bool shouldUpdateTID = existingTradeDetails?.TID != int.Parse(tradePartner.TID7);
-        bool shouldUpdateSID = existingTradeDetails?.SID != int.Parse(tradePartner.SID7);
-
-        if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
+        if (existingTradeDetails != null)
         {
-            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? tradePartner.TrainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(tradePartner.TID7) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(tradePartner.SID7) : existingTradeDetails.SID);
+            bool shouldUpdateOT = existingTradeDetails.OT != tradePartner.TrainerName;
+            bool shouldUpdateTID = existingTradeDetails.TID != int.Parse(tradePartner.TID7);
+            bool shouldUpdateSID = existingTradeDetails.SID != int.Parse(tradePartner.SID7);
+
+
+            if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
+            {
+                tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? tradePartner.TrainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(tradePartner.TID7) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(tradePartner.SID7) : existingTradeDetails.SID);
+            }
         }
 
         var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, tradePartner.TrainerName, AbuseSettings, token);
@@ -602,286 +605,288 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
             if (DumpSetting.Dump)
                 DumpPokemon(DumpSetting.DumpFolder, "hacked", offered);
 
-            var report = la.Report();
-            Log(report);
             var trader = Trader;
-            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
-            var embed = new EmbedBuilder()
-                .WithTitle("Legality Error!")
-                .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
-                .WithColor(Discord.Color.DarkRed)
-                .WithThumbnailUrl(imageUrl)
-                .Build();
+            if (trader != null)
+            {
+                var report = la.Report();
+                Log(report);
+                string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
+                var embed = new EmbedBuilder()
+                    .WithTitle("Legality Error!")
+                    .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
+                    .WithColor(Discord.Color.DarkRed)
+                    .WithThumbnailUrl(imageUrl)
+                    .Build();
 
-            var discordUser = trader as IUser;
-            await (discordUser?.SendMessageAsync(embed: embed)).ConfigureAwait(false);
+                var discordUser = trader as IUser;
+                await (discordUser?.SendMessageAsync(embed: embed)).ConfigureAwait(false);
+            }
             return (offered, PokeTradeResult.IllegalTrade);
         }
+            var clone = offered.Clone();
+            if (Hub.Config.Legality.ResetHOMETracker)
+                clone.Tracker = 0;
 
-        var clone = offered.Clone();
-        if (Hub.Config.Legality.ResetHOMETracker)
-            clone.Tracker = 0;
+            string imageUrlCloned = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
+            var embedClone = new EmbedBuilder()
+                .WithTitle($"Cloned {GameInfo.GetStrings(1).Species[clone.Species]}!")
+                .WithDescription("**01)** Press B to cancel\n**02) Trade me a Pokémon you don't want\n**03)** Enjoy!")
+                .WithColor(Discord.Color.DarkGreen)
+                .WithThumbnailUrl(imageUrlCloned)
+                .Build();
 
-        string imageUrlCloned = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
-        var embedClone = new EmbedBuilder()
-            .WithTitle($"Cloned {GameInfo.GetStrings(1).Species[clone.Species]}!")
-            .WithDescription("**01)** Press B to cancel\n**02) Trade me a Pokémon you don't want\n**03)** Enjoy!")
-            .WithColor(Discord.Color.DarkGreen)
-            .WithThumbnailUrl(imageUrlCloned)
-            .Build();
+            Log($"Cloned a {(Species)clone.Species}. Waiting for user to change their Pokémon...");
 
-        Log($"Cloned a {(Species)clone.Species}. Waiting for user to change their Pokémon...");
-
-        if (!await CheckCloneChangedOffer(token).ConfigureAwait(false))
-        {
-            // They get one more chance.
-            poke.SendNotification(this, "### **Warning...**\n*Change the Pokémon now*");
             if (!await CheckCloneChangedOffer(token).ConfigureAwait(false))
+            {
+                // They get one more chance.
+                poke.SendNotification(this, "### **Warning...**\n*Change the Pokémon now*");
+                if (!await CheckCloneChangedOffer(token).ConfigureAwait(false))
+                {
+                    Log("Trade partner did not change their Pokémon.");
+                    return (offered, PokeTradeResult.TrainerTooSlow);
+                }
+            }
+
+            // If we got to here, we can read their offered Pokémon.
+            var pk2 = await ReadUntilPresentPointer(Offsets.LinkTradePartnerPokemonPointer, 5_000, 1_000, BoxFormatSlotSize, token).ConfigureAwait(false);
+            if (pk2 is null || SearchUtil.HashByDetails(pk2) == SearchUtil.HashByDetails(offered))
             {
                 Log("Trade partner did not change their Pokémon.");
                 return (offered, PokeTradeResult.TrainerTooSlow);
             }
+
+            await SetBoxPokemonAbsolute(BoxStartOffset, clone, token, sav).ConfigureAwait(false);
+
+            return (clone, PokeTradeResult.Success);
         }
 
-        // If we got to here, we can read their offered Pokémon.
-        var pk2 = await ReadUntilPresentPointer(Offsets.LinkTradePartnerPokemonPointer, 5_000, 1_000, BoxFormatSlotSize, token).ConfigureAwait(false);
-        if (pk2 is null || SearchUtil.HashByDetails(pk2) == SearchUtil.HashByDetails(offered))
+        private async Task<bool> CheckCloneChangedOffer(CancellationToken token)
         {
-            Log("Trade partner did not change their Pokémon.");
-            return (offered, PokeTradeResult.TrainerTooSlow);
-        }
-
-        await SetBoxPokemonAbsolute(BoxStartOffset, clone, token, sav).ConfigureAwait(false);
-
-        return (clone, PokeTradeResult.Success);
-    }
-
-    private async Task<bool> CheckCloneChangedOffer(CancellationToken token)
-    {
-        // Watch their status to indicate they canceled, then offered a new Pokémon.
-        var hovering = await ReadUntilChanged(TradePartnerOfferedOffset, [0x2], 25_000, 1_000, true, true, token).ConfigureAwait(false);
-        if (!hovering)
-        {
-            Log("Trade partner did not change their initial offer.");
-            await ExitTrade(false, token).ConfigureAwait(false);
-            return false;
-        }
-        var offering = await ReadUntilChanged(TradePartnerOfferedOffset, [0x3], 25_000, 1_000, true, true, token).ConfigureAwait(false);
-        if (!offering)
-        {
-            await ExitTrade(false, token).ConfigureAwait(false);
-            return false;
-        }
-        return true;
-    }
-
-    private async Task<(PA8 toSend, PokeTradeResult check)> HandleRandomLedy(SAV8LA sav, PokeTradeDetail<PA8> poke, PA8 offered, PA8 toSend, PartnerDataHolder partner, CancellationToken token)
-    {
-        // Allow the trade partner to do a Ledy swap.
-        var config = Hub.Config.Distribution;
-        var trade = Hub.Ledy.GetLedyTrade(offered, partner.TrainerOnlineID, config.LedySpecies);
-        if (trade != null)
-        {
-            if (trade.Type == LedyResponseType.AbuseDetected)
+            // Watch their status to indicate they canceled, then offered a new Pokémon.
+            var hovering = await ReadUntilChanged(TradePartnerOfferedOffset, [0x2], 25_000, 1_000, true, true, token).ConfigureAwait(false);
+            if (!hovering)
             {
-                var msg = $"Found {partner.TrainerName} has been detected for abusing Ledy trades.";
-                if (AbuseSettings.EchoNintendoOnlineIDLedy)
-                    msg += $"\nID: {partner.TrainerOnlineID}";
-                if (!string.IsNullOrWhiteSpace(AbuseSettings.LedyAbuseEchoMention))
-                    msg = $"{AbuseSettings.LedyAbuseEchoMention} {msg}";
-                EchoUtil.Echo(msg);
+                Log("Trade partner did not change their initial offer.");
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return false;
+            }
+            var offering = await ReadUntilChanged(TradePartnerOfferedOffset, [0x3], 25_000, 1_000, true, true, token).ConfigureAwait(false);
+            if (!offering)
+            {
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return false;
+            }
+            return true;
+        }
 
-                return (toSend, PokeTradeResult.SuspiciousActivity);
+        private async Task<(PA8 toSend, PokeTradeResult check)> HandleRandomLedy(SAV8LA sav, PokeTradeDetail<PA8> poke, PA8 offered, PA8 toSend, PartnerDataHolder partner, CancellationToken token)
+        {
+            // Allow the trade partner to do a Ledy swap.
+            var config = Hub.Config.Distribution;
+            var trade = Hub.Ledy.GetLedyTrade(offered, partner.TrainerOnlineID, config.LedySpecies);
+            if (trade != null)
+            {
+                if (trade.Type == LedyResponseType.AbuseDetected)
+                {
+                    var msg = $"Found {partner.TrainerName} has been detected for abusing Ledy trades.";
+                    if (AbuseSettings.EchoNintendoOnlineIDLedy)
+                        msg += $"\nID: {partner.TrainerOnlineID}";
+                    if (!string.IsNullOrWhiteSpace(AbuseSettings.LedyAbuseEchoMention))
+                        msg = $"{AbuseSettings.LedyAbuseEchoMention} {msg}";
+                    EchoUtil.Echo(msg);
+
+                    return (toSend, PokeTradeResult.SuspiciousActivity);
+                }
+
+                toSend = trade.Receive;
+                poke.TradeData = toSend;
+
+                poke.SendNotification(this, "Injecting the requested Pokémon.");
+                await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
+            }
+            else if (config.LedyQuitIfNoMatch)
+            {
+                return (toSend, PokeTradeResult.TrainerRequestBad);
             }
 
-            toSend = trade.Receive;
-            poke.TradeData = toSend;
-
-            poke.SendNotification(this, "Injecting the requested Pokémon.");
-            await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
-        }
-        else if (config.LedyQuitIfNoMatch)
-        {
-            return (toSend, PokeTradeResult.TrainerRequestBad);
+            return (toSend, PokeTradeResult.Success);
         }
 
-        return (toSend, PokeTradeResult.Success);
-    }
-
-    private void WaitAtBarrierIfApplicable(CancellationToken token)
-    {
-        if (!ShouldWaitAtBarrier)
-            return;
-        var opt = Hub.Config.Distribution.SynchronizeBots;
-        if (opt == BotSyncOption.NoSync)
-            return;
-
-        var timeoutAfter = Hub.Config.Distribution.SynchronizeTimeout;
-        if (FailedBarrier == 1) // failed last iteration
-            timeoutAfter *= 2; // try to re-sync in the event things are too slow.
-
-        var result = Hub.BotSync.Barrier.SignalAndWait(TimeSpan.FromSeconds(timeoutAfter), token);
-
-        if (result)
+        private void WaitAtBarrierIfApplicable(CancellationToken token)
         {
-            FailedBarrier = 0;
-            return;
+            if (!ShouldWaitAtBarrier)
+                return;
+            var opt = Hub.Config.Distribution.SynchronizeBots;
+            if (opt == BotSyncOption.NoSync)
+                return;
+
+            var timeoutAfter = Hub.Config.Distribution.SynchronizeTimeout;
+            if (FailedBarrier == 1) // failed last iteration
+                timeoutAfter *= 2; // try to re-sync in the event things are too slow.
+
+            var result = Hub.BotSync.Barrier.SignalAndWait(TimeSpan.FromSeconds(timeoutAfter), token);
+
+            if (result)
+            {
+                FailedBarrier = 0;
+                return;
+            }
+
+            FailedBarrier++;
+            Log($"Barrier sync timed out after {timeoutAfter} seconds. Continuing.");
         }
 
-        FailedBarrier++;
-        Log($"Barrier sync timed out after {timeoutAfter} seconds. Continuing.");
-    }
-
-    /// <summary>
-    /// Checks if the barrier needs to get updated to consider this bot.
-    /// If it should be considered, it adds it to the barrier if it is not already added.
-    /// If it should not be considered, it removes it from the barrier if not already removed.
-    /// </summary>
-    private void UpdateBarrier(bool shouldWait)
-    {
-        if (ShouldWaitAtBarrier == shouldWait)
-            return; // no change required
-
-        ShouldWaitAtBarrier = shouldWait;
-        if (shouldWait)
+        /// <summary>
+        /// Checks if the barrier needs to get updated to consider this bot.
+        /// If it should be considered, it adds it to the barrier if it is not already added.
+        /// If it should not be considered, it removes it from the barrier if not already removed.
+        /// </summary>
+        private void UpdateBarrier(bool shouldWait)
         {
-            Hub.BotSync.Barrier.AddParticipant();
-            Log($"Joined the Barrier. Count: {Hub.BotSync.Barrier.ParticipantCount}");
+            if (ShouldWaitAtBarrier == shouldWait)
+                return; // no change required
+
+            ShouldWaitAtBarrier = shouldWait;
+            if (shouldWait)
+            {
+                Hub.BotSync.Barrier.AddParticipant();
+                Log($"Joined the Barrier. Count: {Hub.BotSync.Barrier.ParticipantCount}");
+            }
+            else
+            {
+                Hub.BotSync.Barrier.RemoveParticipant();
+                Log($"Left the Barrier. Count: {Hub.BotSync.Barrier.ParticipantCount}");
+            }
         }
-        else
+        private async Task<(PA8 toSend, PokeTradeResult check)> HandleFixOT(SAV8LA sav, PokeTradeDetail<PA8> poke, PA8 offered, PartnerDataHolder partner, CancellationToken token)
         {
-            Hub.BotSync.Barrier.RemoveParticipant();
-            Log($"Left the Barrier. Count: {Hub.BotSync.Barrier.ParticipantCount}");
-        }
-    }
-    private async Task<(PA8 toSend, PokeTradeResult check)> HandleFixOT(SAV8LA sav, PokeTradeDetail<PA8> poke, PA8 offered, PartnerDataHolder partner, CancellationToken token)
-    {
-        var adOT = AbstractTrade<PA8>.HasAdName(offered, out _);
-        var laInit = new LegalityAnalysis(offered);
-        if (!adOT && laInit.Valid)
-        {
-            var imageUrlAd = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
-            var embed = new EmbedBuilder()
-                .WithTitle("Cannot Continue...")
-                .WithDescription($"**Issue:** No ad detected\n**Reason:** Pokémon is legal\n*Exiting trade*")
-                .WithColor(Discord.Color.Orange)
-                .WithThumbnailUrl(imageUrlAd)
-                .Build();
-            return (offered, PokeTradeResult.TrainerRequestBad);
-        }
+            var adOT = AbstractTrade<PA8>.HasAdName(offered, out _);
+            var laInit = new LegalityAnalysis(offered);
+            if (!adOT && laInit.Valid)
+            {
+                var imageUrlAd = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
+                var embed = new EmbedBuilder()
+                    .WithTitle("Cannot Continue...")
+                    .WithDescription($"**Issue:** No ad detected\n**Reason:** Pokémon is legal\n*Exiting trade*")
+                    .WithColor(Discord.Color.Orange)
+                    .WithThumbnailUrl(imageUrlAd)
+                    .Build();
+                return (offered, PokeTradeResult.TrainerRequestBad);
+            }
 
-        var clone = (PA8)offered.Clone();
-        if (Hub.Config.Legality.ResetHOMETracker)
-            clone.Tracker = 0;
+            var clone = (PA8)offered.Clone();
+            if (Hub.Config.Legality.ResetHOMETracker)
+                clone.Tracker = 0;
 
-        string shiny = string.Empty;
-        if (!AbstractTrade<PA8>.ShinyLockCheck(offered.Species, AbstractTrade<PA8>.FormOutput(offered.Species, offered.Form, out _), $"{(Ball)offered.Ball}"))
-            shiny = $"\nShiny: {(offered.ShinyXor == 0 ? "Square" : offered.IsShiny ? "Star" : "No")}";
-        else shiny = "\nShiny: No";
+            string shiny = string.Empty;
+            if (!AbstractTrade<PA8>.ShinyLockCheck(offered.Species, AbstractTrade<PA8>.FormOutput(offered.Species, offered.Form, out _), $"{(Ball)offered.Ball}"))
+                shiny = $"\nShiny: {(offered.ShinyXor == 0 ? "Square" : offered.IsShiny ? "Star" : "No")}";
+            else shiny = "\nShiny: No";
 
-        var name = partner.TrainerName;
-        var ball = $"\n{(Ball)offered.Ball}";
-        var extraInfo = $"OT: {name}{ball}{shiny}";
-        var set = ShowdownParsing.GetShowdownText(offered).Split('\n').ToList();
-        set.Remove(set.Find(x => x.Contains("Shiny")) ?? "");
-        set.InsertRange(1, extraInfo.Split('\n'));
+            var name = partner.TrainerName;
+            var ball = $"\n{(Ball)offered.Ball}";
+            var extraInfo = $"OT: {name}{ball}{shiny}";
+            var set = ShowdownParsing.GetShowdownText(offered).Split('\n').ToList();
+            set.Remove(set.Find(x => x.Contains("Shiny")) ?? "");
+            set.InsertRange(1, extraInfo.Split('\n'));
 
-        if (!laInit.Valid)
-        {
-            Log($"FixOT request has detected an illegal Pokémon from {name}: {(Species)offered.Species}");
-            var report = laInit.Report();
-            Log(laInit.Report());
-            var embedFixOT = new EmbedBuilder()
-                  .WithTitle("Illegal Pokémon Detected")
-                  .WithDescription($"**Issue:** Shown Pokémon is not legal\n*Attempting to regenerate...*\n\n```{report}```")
-                  .WithColor(Discord.Color.Red)
-                  .Build();
-            if (DumpSetting.Dump)
-                DumpPokemon(DumpSetting.DumpFolder, "hacked", offered);
-        }
+            if (!laInit.Valid)
+            {
+                Log($"FixOT request has detected an illegal Pokémon from {name}: {(Species)offered.Species}");
+                var report = laInit.Report();
+                Log(laInit.Report());
+                var embedFixOT = new EmbedBuilder()
+                      .WithTitle("Illegal Pokémon Detected")
+                      .WithDescription($"**Issue:** Shown Pokémon is not legal\n*Attempting to regenerate...*\n\n```{report}```")
+                      .WithColor(Discord.Color.Red)
+                      .Build();
+                if (DumpSetting.Dump)
+                    DumpPokemon(DumpSetting.DumpFolder, "hacked", offered);
+            }
 
-        if (clone.FatefulEncounter)
-        {
-            clone.SetDefaultNickname(laInit);
-            var info = new SimpleTrainerInfo { Gender = clone.OriginalTrainerGender, Language = clone.Language, OT = name, TID16 = clone.TID16, SID16 = clone.SID16, Generation = 8 };
-            var mg = EncounterEvent.GetAllEvents().Where(x => x.Species == clone.Species && x.Form == clone.Form && x.IsShiny == clone.IsShiny && x.OriginalTrainerName == clone.OriginalTrainerName).ToList();
-            if (mg.Count > 0)
-                clone = AbstractTrade<PA8>.CherishHandler(mg.First(), info);
+            if (clone.FatefulEncounter)
+            {
+                clone.SetDefaultNickname(laInit);
+                var info = new SimpleTrainerInfo { Gender = clone.OriginalTrainerGender, Language = clone.Language, OT = name, TID16 = clone.TID16, SID16 = clone.SID16, Generation = 8 };
+                var mg = EncounterEvent.GetAllEvents().Where(x => x.Species == clone.Species && x.Form == clone.Form && x.IsShiny == clone.IsShiny && x.OriginalTrainerName == clone.OriginalTrainerName).ToList();
+                if (mg.Count > 0)
+                    clone = AbstractTrade<PA8>.CherishHandler(mg.First(), info);
+                else clone = (PA8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
+            }
             else clone = (PA8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
-        }
-        else clone = (PA8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
 
-        clone = (PA8)AbstractTrade<PA8>.TrashBytes(clone, new LegalityAnalysis(clone));
-        clone.ResetPartyStats();
+            clone = (PA8)AbstractTrade<PA8>.TrashBytes(clone, new LegalityAnalysis(clone));
+            clone.ResetPartyStats();
 
-        var la = new LegalityAnalysis(clone);
-        if (!la.Valid)
-        {
-            string imageUrlCloned = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
-            var embedCloned = new EmbedBuilder()
-                .WithTitle($"Illegal Pokémon!")
-                .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
-                .WithColor(Discord.Color.DarkGreen)
-                .WithThumbnailUrl(imageUrlCloned)
-                .Build();
-            return (clone, PokeTradeResult.IllegalTrade);
-        }
-
-        string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
-        var embedLegalized = new EmbedBuilder()
-            .WithTitle($"{(!laInit.Valid ? "Legalized!" : "Fixed Nickname/OT for")} {(Species)clone.Species}!")
-            .WithColor(Discord.Color.Green)
-            .WithThumbnailUrl(imageUrl)
-            .Build();
-        Log($"{(!laInit.Valid ? "Legalized" : "Fixed Nickname/OT for")} {(Species)clone.Species}!");
-
-        if (await CheckCloneChangedOffer(token).ConfigureAwait(false))
-        {
-            // They get one more chance.
-            poke.SendNotification(this, "**Offer the originally shown Pokémon or I'm leaving!**");
-            Log($"{name} changed the offered Pokémon.");
-
-            if (!await CheckCloneChangedOffer(token).ConfigureAwait(false))
+            var la = new LegalityAnalysis(clone);
+            if (!la.Valid)
             {
-                Log("Trade partner changed their offered Pokémon.");
-                return (offered, PokeTradeResult.TrainerTooSlow);
+                string imageUrlCloned = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
+                var embedCloned = new EmbedBuilder()
+                    .WithTitle($"Illegal Pokémon!")
+                    .WithDescription("**Reason:** Pokémon is not legal\n**Result:** Exiting trade")
+                    .WithColor(Discord.Color.DarkGreen)
+                    .WithThumbnailUrl(imageUrlCloned)
+                    .Build();
+                return (clone, PokeTradeResult.IllegalTrade);
             }
+
+            string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-iscloned.gif";
+            var embedLegalized = new EmbedBuilder()
+                .WithTitle($"{(!laInit.Valid ? "Legalized!" : "Fixed Nickname/OT for")} {(Species)clone.Species}!")
+                .WithColor(Discord.Color.Green)
+                .WithThumbnailUrl(imageUrl)
+                .Build();
+            Log($"{(!laInit.Valid ? "Legalized" : "Fixed Nickname/OT for")} {(Species)clone.Species}!");
+
+            if (await CheckCloneChangedOffer(token).ConfigureAwait(false))
+            {
+                // They get one more chance.
+                poke.SendNotification(this, "**Offer the originally shown Pokémon or I'm leaving!**");
+                Log($"{name} changed the offered Pokémon.");
+
+                if (!await CheckCloneChangedOffer(token).ConfigureAwait(false))
+                {
+                    Log("Trade partner changed their offered Pokémon.");
+                    return (offered, PokeTradeResult.TrainerTooSlow);
+                }
+            }
+
+            await SetBoxPokemonAbsolute(BoxStartOffset, clone, token, sav).ConfigureAwait(false);
+            return (clone, PokeTradeResult.Success);
         }
 
-        await SetBoxPokemonAbsolute(BoxStartOffset, clone, token, sav).ConfigureAwait(false);
-        return (clone, PokeTradeResult.Success);
-    }
-
-    // based on https://github.com/Muchacho13Scripts/SysBot.NET/commit/f7879386f33bcdbd95c7a56e7add897273867106
-    // and https://github.com/berichan/SysBot.PLA/commit/84042d4716007dc6ff3100ad4be4a483d622ccf8
-    private async Task<bool> SetBoxPkmWithSwappedIDDetailsPLA(PA8 toSend, TradePartnerLA tradePartner, SAV8LA sav, CancellationToken token)
-    {
-        var cln = (PA8)toSend.Clone();
-        cln.OriginalTrainerGender = tradePartner.Gender;
-        cln.TrainerTID7 = uint.Parse(tradePartner.TID7);
-        cln.TrainerSID7 = uint.Parse(tradePartner.SID7);
-        cln.Language = tradePartner.Language;
-        cln.OriginalTrainerName = tradePartner.TrainerName;
-
-        if (!toSend.IsNicknamed)
-            cln.ClearNickname();
-
-        if (toSend.IsShiny)
-            cln.SetShiny();
-
-        cln.RefreshChecksum();
-
-        var tradela = new LegalityAnalysis(cln);
-        if (tradela.Valid)
+        // based on https://github.com/Muchacho13Scripts/SysBot.NET/commit/f7879386f33bcdbd95c7a56e7add897273867106
+        // and https://github.com/berichan/SysBot.PLA/commit/84042d4716007dc6ff3100ad4be4a483d622ccf8
+        private async Task<bool> SetBoxPkmWithSwappedIDDetailsPLA(PA8 toSend, TradePartnerLA tradePartner, SAV8LA sav, CancellationToken token)
         {
-            Log($"Pokemon is valid, applying AutoOT.");
-            await SetBoxPokemonAbsolute(BoxStartOffset, cln, token, sav).ConfigureAwait(false);
-        }
-        else
-        {
-            Log($"Pokemon not valid, can't apply AutoOT.");
-        }
+            var cln = (PA8)toSend.Clone();
+            cln.OriginalTrainerGender = tradePartner.Gender;
+            cln.TrainerTID7 = uint.Parse(tradePartner.TID7);
+            cln.TrainerSID7 = uint.Parse(tradePartner.SID7);
+            cln.Language = tradePartner.Language;
+            cln.OriginalTrainerName = tradePartner.TrainerName;
 
-        return tradela.Valid;
-    }
-}
+            if (!toSend.IsNicknamed)
+                cln.ClearNickname();
+
+            if (toSend.IsShiny)
+                cln.SetShiny();
+
+            cln.RefreshChecksum();
+
+            var tradela = new LegalityAnalysis(cln);
+            if (tradela.Valid)
+            {
+                Log($"Pokemon is valid, applying AutoOT.");
+                await SetBoxPokemonAbsolute(BoxStartOffset, cln, token, sav).ConfigureAwait(false);
+            }
+            else
+            {
+                Log($"Pokemon not valid, can't apply AutoOT.");
+            }
+
+            return tradela.Valid;
+        }
+    } 

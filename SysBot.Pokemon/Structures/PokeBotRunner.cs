@@ -32,7 +32,7 @@ public abstract class PokeBotRunner<T> : BotRunner<PokeBotState>, IPokeBotRunner
 {
     public readonly PokeTradeHub<T> Hub;
     private readonly BotFactory<T> Factory;
-    public event EventHandler BotStopped;
+    public event EventHandler? BotStopped;
 
     public PokeTradeHubConfig Config => Hub.Config;
 

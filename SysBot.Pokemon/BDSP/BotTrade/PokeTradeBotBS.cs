@@ -36,7 +36,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
     /// Synchronized start for multiple bots.
     /// </summary>
     public bool ShouldWaitAtBarrier { get; private set; }
-    private SocketUser Trader { get; }
+    private SocketUser? Trader { get; }
 
     /// <summary>
     /// Tracks failed synchronized starts to attempt to re-sync.
@@ -299,14 +299,16 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
 
         var tradeCodeStorage = new TradeCodeStorage();
         var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
-
-        bool shouldUpdateOT = existingTradeDetails?.OT != tradePartner.TrainerName;
-        bool shouldUpdateTID = existingTradeDetails?.TID != int.Parse(tradePartner.TID7);
-        bool shouldUpdateSID = existingTradeDetails?.SID != int.Parse(tradePartner.SID7);
-
-        if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
+        if (existingTradeDetails != null)
         {
-            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? tradePartner.TrainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(tradePartner.TID7) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(tradePartner.SID7) : existingTradeDetails.SID);
+            bool shouldUpdateOT = existingTradeDetails.OT != tradePartner.TrainerName;
+            bool shouldUpdateTID = existingTradeDetails.TID != int.Parse(tradePartner.TID7);
+            bool shouldUpdateSID = existingTradeDetails.SID != int.Parse(tradePartner.SID7);
+
+            if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
+            {
+                tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? tradePartner.TrainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(tradePartner.TID7) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(tradePartner.SID7) : existingTradeDetails.SID);
+            }
         }
 
         var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, tradePartner.TrainerName, AbuseSettings, token);
@@ -872,7 +874,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         var trader = Trader;
         if (trader != null && trader is SocketUser user)
         {
-            if (Hub.Config.Discord.ReturnPKMs)
+            if (Hub.Config?.Discord?.ReturnPKMs == true)
             {
                 var imageUrlShow = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-tradefinished.gif";
                 var embed = new EmbedBuilder()
@@ -899,12 +901,15 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
                 .Build();
 
             var discordUser = trader as IUser;
-            await (discordUser?.SendMessageAsync(embed: embed)).ConfigureAwait(false);
+            if (discordUser != null)
+            {
+                await discordUser.SendMessageAsync(embed: embed).ConfigureAwait(false);
+            }
             return (offered, PokeTradeResult.IllegalTrade);
         }
 
         var clone = (PB8)offered.Clone();
-        if (Hub.Config.Legality.ResetHOMETracker)
+        if (Hub.Config?.Legality?.ResetHOMETracker == true)
             clone.Tracker = 0;
 
         string shiny = string.Empty;
@@ -925,7 +930,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         {
             Log($"FixOT request has detected an illegal Pokémon from {name}: {(Species)offered.Species}");
             var report = laInit.Report();
-            Log(laInit.Report());
+            Log(report);
 
             var embedFixOT = new EmbedBuilder()
                 .WithTitle("Illegal Pokémon Detected")
@@ -934,10 +939,15 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
                 .Build();
 
             var discordUser = trader as IUser;
-            await (discordUser?.SendMessageAsync(embed: embedFixOT)).ConfigureAwait(false);
+            if (discordUser != null)
+            {
+                await discordUser.SendMessageAsync(embed: embedFixOT).ConfigureAwait(false);
+            }
 
             if (DumpSetting.Dump)
+            {
                 DumpPokemon(DumpSetting.DumpFolder, "hacked", offered);
+            }
         }
 
         if (clone.FatefulEncounter)
@@ -946,10 +956,18 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             var info = new SimpleTrainerInfo { Gender = clone.OriginalTrainerGender, Language = clone.Language, OT = name, TID16 = clone.TID16, SID16 = clone.SID16, Generation = 8 };
             var mg = EncounterEvent.GetAllEvents().Where(x => x.Species == clone.Species && x.Form == clone.Form && x.IsShiny == clone.IsShiny && x.OriginalTrainerName == clone.OriginalTrainerName).ToList();
             if (mg.Count > 0)
+            {
                 clone = AbstractTrade<PB8>.CherishHandler(mg.First(), info);
-            else clone = (PB8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
+            }
+            else
+            {
+                clone = (PB8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
+            }
         }
-        else clone = (PB8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
+        else
+        {
+            clone = (PB8)sav.GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet(string.Join("\n", set))), out _);
+        }
 
         clone = (PB8)AbstractTrade<PB8>.TrashBytes(clone, new LegalityAnalysis(clone));
         clone.ResetPartyStats();
@@ -965,7 +983,10 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
                 .Build();
 
             var discordUser = trader as IUser;
-            await (discordUser?.SendMessageAsync(embed: embedCloned)).ConfigureAwait(false);
+            if (discordUser != null)
+            {
+                await discordUser.SendMessageAsync(embed: embedCloned).ConfigureAwait(false);
+            }
             return (clone, PokeTradeResult.IllegalTrade);
         }
         string imageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dm-legalityerror.gif";
@@ -976,7 +997,10 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             .Build();
 
         var discordUser2 = trader as IUser;
-        await (discordUser2?.SendMessageAsync(embed: embedLegalized)).ConfigureAwait(false);
+        if (discordUser2 != null)
+        {
+            await discordUser2.SendMessageAsync(embed: embedLegalized).ConfigureAwait(false);
+        }
         Log($"{(!laInit.Valid ? "Legalized" : "Fixed Nickname/OT for")} {(Species)clone.Species}!");
 
         await SetBoxPokemonAbsolute(BoxStartOffset, clone, token, sav).ConfigureAwait(false);
@@ -994,7 +1018,9 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
 
             bool verify = await ReadUntilChanged(LinkTradePokemonOffset, comp, 10_000, 0_200, false, true, token).ConfigureAwait(false);
             if (verify)
+            {
                 verify = await ReadUntilChanged(LinkTradePokemonOffset, lastOffered, 5_000, 0_200, true, true, token).ConfigureAwait(false);
+            }
             changed = !verify && (pk2 == null || clone.Species != pk2.Species || offered.OriginalTrainerName != pk2.OriginalTrainerName);
         }
 
@@ -1012,14 +1038,19 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
                 .Build();
 
             var discordUser3 = trader as IUser;
-            await (discordUser3?.SendMessageAsync(embed: embedSwitched)).ConfigureAwait(false);
+            if (discordUser3 != null)
+            {
+                await discordUser3.SendMessageAsync(embed: embedSwitched).ConfigureAwait(false);
+            }
             Log("Trading partner did not wish to send away their ad-mon.");
             return (offered, PokeTradeResult.TrainerTooSlow);
         }
 
         await Click(A, 0_500, token).ConfigureAwait(false);
         for (int i = 0; i < 5; i++)
+        {
             await Click(A, 0_500, token).ConfigureAwait(false);
+        }
 
         return (clone, PokeTradeResult.Success);
     }

@@ -15,6 +15,7 @@ using AnimatedGif;
 using System.Drawing;
 using Color = System.Drawing.Color;
 using DiscordColor = Discord.Color;
+using System.Diagnostics;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -409,4 +410,83 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         Name = channel.Name,
         Comment = $"Added by {Context.User.Username} on {DateTime.Now:yyyy.MM.dd-hh:mm:ss}",
     };
+
+
+    [Command("startsysdvr")]
+    [Alias("dvrstart", "startdvr", "sysdvrstart")]
+    [Summary("Makes the bot open SysDVR to stream your Switch on the current PC.")]
+    [RequireOwner]
+    public async Task StartSysDvr()
+    {
+        try
+        {
+            var sysDvrBATPath = Path.Combine("SysDVR.bat");
+            if (File.Exists(sysDvrBATPath))
+            {
+                Process.Start(sysDvrBATPath);
+                await ReplyAsync("SysDVR has been initiated. You're now streaming your Switch on PC!");
+            }
+            else
+            {
+                await ReplyAsync("**SysDVR.bat** cannot be found at the specified location.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"**SysDVR Error:** {ex.Message}");
+        }
+    }
+
+    [Command("sysdvr")]
+    [Alias("stream")]
+    [Summary("Displays instructions on how to use SysDVR.")]
+    [RequireOwner]
+    public async Task SysDVRInstructionsAsync()
+    {
+        var embed0 = new EmbedBuilder()
+            .WithTitle("-----------SYSDVR SETUP INSTRUCTIONS-----------");
+
+        embed0.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
+        var message0 = await ReplyAsync(embed: embed0.Build());
+
+
+        var embed1 = new EmbedBuilder()
+            .AddField("01) SETTING UP THE SYSBOT WITH SYSDVR",
+                      "- [Click here](https://github.com/exelix11/SysDVR/releases) to download **SysDVR-Client-Windows-x64.7z**.\n" +
+                      "- Unpack the archive and place the extracted folder anywhere you want.\n" +
+                      "- Inside the folder, open **SysDVR-ClientGUI.exe.**\n" +
+                      "- Select either *Video* or *Both* under the channels to stream.\n" +
+                      "- Select **TCP Bridge** and enter your Switch's IP address.\n" +
+                      "- Select **Create quick launch shortcut** to create a **SysDVR Launcher.bat**.\n" +
+                      "- Exit the program window that launches.\n" +
+                      "- Place the **SysDVR Launcher.bat** in the same folder as your SysBot.\n" +
+                      "- Rename the bat file to **SysDVR.bat.**\n" +
+                      "- You can then use the `sysdvr start` command once you add SysDVR to your Switch.");
+
+        embed1.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
+        var message1 = await ReplyAsync(embed: embed1.Build());
+
+
+        var embed2 = new EmbedBuilder()
+            .AddField("02) SETTING UP SYSDVR ON THE SWITCH",
+                      "- [Click here](https://github.com/exelix11/SysDVR/releases) to download **SysDVR.zip**.\n" +
+                      "- Unpack the archive and place the extracted folders on the Switch SD card.\n" +
+                      "- Reboot your Switch.\n" +
+                      "- Open the SysDVR program in the Switch.\n" +
+                      "- Select **TCP Bridge.**\n" +
+                      "- Select **Save current mode as default.**\n" +
+                      "- Select **Save and exit.**\n" +
+                      "- As long as you followed Step 01, the `sysdvr start` command can be used.\n");
+
+        embed2.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
+        var message2 = await ReplyAsync(embed: embed2.Build());
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(90_000);
+            await message0.DeleteAsync();
+            await message1.DeleteAsync();
+            await message2.DeleteAsync();
+        });
+    }
 }

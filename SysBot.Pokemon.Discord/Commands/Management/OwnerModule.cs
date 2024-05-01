@@ -461,7 +461,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
                       "- Exit the program window that launches.\n" +
                       "- Place the **SysDVR Launcher.bat** in the same folder as your SysBot.\n" +
                       "- Rename the bat file to **SysDVR.bat.**\n" +
-                      "- You can then use the `sysdvr start` command once you add SysDVR to your Switch.");
+                      "- You can then use the `dvrstart` command once you add SysDVR to your Switch.");
 
         embed1.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message1 = await ReplyAsync(embed: embed1.Build());
@@ -476,7 +476,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
                       "- Select **TCP Bridge.**\n" +
                       "- Select **Save current mode as default.**\n" +
                       "- Select **Save and exit.**\n" +
-                      "- As long as you followed Step 01, the `sysdvr start` command can be used.\n");
+                      "- As long as you followed Step 01, the `dvrstart` command can be used.\n");
 
         embed2.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message2 = await ReplyAsync(embed: embed2.Build());

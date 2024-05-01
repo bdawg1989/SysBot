@@ -24,6 +24,7 @@ using System.Xml.Linq;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Reflection.Metadata;
+using System.Diagnostics;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -35,6 +36,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     private static readonly char[] separator = [' '];
     private static readonly char[] separatorArray = [' '];
     private static readonly char[] separatorArray0 = [' '];
+    private string _tradeSettings;
 
     [Command("listguilds")]
     [Alias("lg", "servers", "listservers")]
@@ -1728,14 +1730,12 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         embed4.WithImageUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/homereadybreak.png");
         var message4 = await ReplyAsync(embed: embed4.Build());
 
-        // Delay for 120 seconds
-        await Task.Delay(120_000);
-
-        // Delete the messages
-        await message0.DeleteAsync();
-        await message1.DeleteAsync();
-        await message2.DeleteAsync();
-        await message3.DeleteAsync();
-        await message4.DeleteAsync();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(90_000);
+            await message0.DeleteAsync();
+            await message1.DeleteAsync();
+            await message2.DeleteAsync();
+        });
     }
 }

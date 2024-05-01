@@ -17,6 +17,7 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
     private readonly List<TradeEntry<T>> UsersInQueue = [];
     public readonly PokeTradeHub<T> Hub = Hub;
     private readonly TradeCodeStorage _tradeCodeStorage = new();
+
     public bool IsUserInQueue(ulong userId)
     {
         lock (_sync)
@@ -55,21 +56,16 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
         lock (_sync)
         {
             var allTrades = Hub.Queues.AllQueues.SelectMany(q => q.Queue.Select(x => x.Value)).ToList();
-            var index = UsersInQueue.FindIndex(z => z.Equals(uid, uniqueTradeID, type));
+            var index = allTrades.FindIndex(z => z.Trainer.ID == uid && z.UniqueTradeID == uniqueTradeID);
             if (index < 0)
                 return QueueCheckResult<T>.None;
 
-            var entry = UsersInQueue[index];
-            var actualIndex = 1;
-            for (int i = 0; i < index; i++)
-            {
-                if (UsersInQueue[i].Type == entry.Type && UsersInQueue[i].UniqueTradeID < entry.UniqueTradeID)
-                    actualIndex++;
-            }
+            var entry = allTrades[index];
+            var actualIndex = index + 1;
 
-            var inQueue = UsersInQueue.Count(z => z.Type == entry.Type);
+            var inQueue = allTrades.Count;
 
-            return new QueueCheckResult<T>(true, entry, actualIndex, inQueue);
+            return new QueueCheckResult<T>(true, new TradeEntry<T>(entry, uid, type, entry.Trainer.TrainerName, uniqueTradeID), actualIndex, inQueue);
         }
     }
 
@@ -116,47 +112,53 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
         if (details.Count == 0)
             return QueueResultRemove.NotInQueue;
 
-        int removedCount = ClearTrade(details, Hub);
+        bool removedAll = true;
+        bool currentlyProcessing = false;
+        bool removedPending = false;
 
-        if (removedCount == details.Count)
+        foreach (var detail in details.ToList())
         {
+            if (detail.Trade.IsProcessing)
+            {
+                currentlyProcessing = true;
+                if (!Hub.Config.Queues.CanDequeueIfProcessing)
+                {
+                    removedAll = false;
+                    detail.Trade.IsCanceled = true;
+                    continue;
+                }
+            }
+
+            if (RemoveTradeEntry(detail))
+                removedPending = true;
+        }
+
+        if (!removedAll && currentlyProcessing && !removedPending)
+            return QueueResultRemove.CurrentlyProcessing;
+
+        if (currentlyProcessing && removedPending)
+            return QueueResultRemove.CurrentlyProcessingRemoved;
+
+        if (removedPending)
             return QueueResultRemove.Removed;
-        }
 
-        bool canRemoveWhileProcessing = Hub.Config.Queues.CanDequeueIfProcessing;
-        foreach (var detail in details)
-        {
-            if (detail.Trade.IsProcessing && !canRemoveWhileProcessing)
-                continue;
-            Remove(detail);
-        }
-
-        return canRemoveWhileProcessing
-            ? QueueResultRemove.CurrentlyProcessingRemoved
-            : QueueResultRemove.CurrentlyProcessing;
+        return QueueResultRemove.NotInQueue;
     }
 
-    public int ClearTrade(IEnumerable<TradeEntry<T>> details, PokeTradeHub<T> hub)
+    private bool RemoveTradeEntry(TradeEntry<T> entry)
     {
-        int removedCount = 0;
-        lock (_sync)
+        if (Remove(entry))
         {
-            var queues = hub.Queues.AllQueues;
-            foreach (var detail in details)
+            var queue = Hub.Queues.GetQueue(entry.Type);
+            var tradeDetail = queue.Queue.FirstOrDefault(x => x.Value.Equals(entry.Trade));
+            if (tradeDetail.Value != null)
             {
-                if (detail.Trade.IsProcessing && !Hub.Config.Queues.CanDequeueIfProcessing)
-                    continue;
-                foreach (var queue in queues)
-                {
-                    int removed = queue.Remove(detail.Trade);
-                    if (removed != 0)
-                        UsersInQueue.Remove(detail);
-                    removedCount += removed;
-                }
+                if (queue.Remove(tradeDetail.Value) > 0)
+                    return true;
             }
         }
 
-        return removedCount;
+        return false;
     }
 
     public IEnumerable<string> GetUserList(string fmt)
@@ -236,6 +238,7 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
         }
         return code;
     }
+
     public int UserCount(Func<TradeEntry<T>, bool> func)
     {
         lock (_sync)

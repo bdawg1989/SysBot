@@ -2,6 +2,8 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using PKHeX.Core;
+using SysBot.Base;
+using System;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
@@ -30,19 +32,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             msg = Context.User.Mention + " - You are not currently in the queue.";
         }
 
-        // Send the reply and capture the response message
-        var response = await ReplyAsync(msg).ConfigureAwait(false);
-
-        // Delay for 5 seconds
-        await Task.Delay(5000).ConfigureAwait(false);
-
-        // Delete user message
-        if (Context.Message is IUserMessage userMessage)
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-
-        // Delete bot response
-        if (response is IUserMessage responseMessage)
-            await responseMessage.DeleteAsync().ConfigureAwait(false);
+        await ReplyAndDeleteAsync(msg, 5, Context.Message).ConfigureAwait(false);
     }
 
     [Command("queueClear")]
@@ -50,22 +40,8 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Clears the user from the trade queues. Will not remove a user if they are being processed.")]
     public async Task ClearTradeAsync()
     {
-        string msg = ClearTrade();
-
-        // Send the reply and capture the response message
-        var response = await ReplyAsync(msg).ConfigureAwait(false);
-
-        // Wait for 5 seconds
-        await Task.Delay(5000).ConfigureAwait(false);
-
-        // Delete the user's command message if possible
-        if (Context.Message is IUserMessage userMessage)
-        {
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-        }
-
-        // Delete the bot's response message
-        await response.DeleteAsync().ConfigureAwait(false);
+        string msg = ClearTrade(Context.User.Id);
+        await ReplyAndDeleteAsync(msg, 5, Context.Message).ConfigureAwait(false);
     }
 
 
@@ -148,7 +124,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireSudo]
     public async Task ListUserQueue()
     {
-        var lines = SysCord<T>.Runner.Hub.Queues.Info.GetUserList("{3}");
+        var lines = SysCord<T>.Runner.Hub.Queues.Info.GetUserList("({3}");
         var msg = string.Join("\n", lines);
         if (msg.Length < 3)
             await ReplyAsync("Queue list is empty.").ConfigureAwait(false);
@@ -156,17 +132,55 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await Context.User.SendMessageAsync(msg).ConfigureAwait(false);
     }
 
-    private string ClearTrade()
+
+    [Command("deleteTradeCode")]
+    [Alias("dtc")]
+    [Summary("Deletes the stored trade code for the user.")]
+    public async Task DeleteTradeCodeAsync()
     {
         var userID = Context.User.Id;
-        return ClearTrade(userID);
+        string msg = QueueModule<T>.DeleteTradeCode(userID);
+        await ReplyAsync(msg).ConfigureAwait(false);
     }
 
-    //private static string ClearTrade(string username)
-    //{
-    //    var result = Info.ClearTrade(username);
-    //    return GetClearTradeMessage(result);
-    //}
+    private async Task ReplyAndDeleteAsync(string message, int delaySeconds, IMessage? messageToDelete = null)
+    {
+        try
+        {
+            var sentMessage = await ReplyAsync(message).ConfigureAwait(false);
+            _ = DeleteMessagesAfterDelayAsync(sentMessage, messageToDelete, delaySeconds);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(QueueModule<T>));
+        }
+    }
+
+    private async Task DeleteMessagesAfterDelayAsync(IMessage sentMessage, IMessage? messageToDelete, int delaySeconds)
+    {
+        try
+        {
+            await Task.Delay(delaySeconds * 1000);
+            await sentMessage.DeleteAsync();
+            if (messageToDelete != null)
+                await messageToDelete.DeleteAsync();
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(QueueModule<T>));
+        }
+    }
+
+    private static string DeleteTradeCode(ulong userID)
+    {
+        var tradeCodeStorage = new TradeCodeStorage();
+        bool success = tradeCodeStorage.DeleteTradeCode(userID);
+
+        if (success)
+            return "Your stored trade code has been deleted successfully.";
+        else
+            return "No stored trade code found for your user ID.";
+    }
 
     private static string ClearTrade(ulong userID)
     {
@@ -178,47 +192,11 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         return result switch
         {
-            QueueResultRemove.CurrentlyProcessing => "Looks like you're currently being processed! Did not remove from all queues.",
-            QueueResultRemove.CurrentlyProcessingRemoved => "Looks like you're currently being processed!",
-            QueueResultRemove.Removed => "Removed you from the queue.",
-            _ => "Sorry, you are not currently in the queue.",
+            QueueResultRemove.Removed => "Removed your pending trades from the queue.",
+            QueueResultRemove.CurrentlyProcessing => "Looks like you have trades currently being processed! Did not remove those from the queue.",
+            QueueResultRemove.CurrentlyProcessingRemoved => "Looks like you have trades currently being processed! Removed other pending trades from the queue.",
+            QueueResultRemove.NotInQueue => "Sorry, you are not currently in the queue.",
+            _ => throw new ArgumentOutOfRangeException(nameof(result), result, null),
         };
-     } 
-
-            [Command("addTradeCode")]
-    [Alias("atc")]
-    [Summary("Sets the trade code for the user.")]
-    public async Task SetTradeCodeAsync(int tradeCode, string? ot = null, int tid = 0, int sid = 0)
-    {
-        var user = Context.User as SocketGuildUser; // Change to SocketGuildUser
-        var userID = user.Id;
-        var userMention = user.Mention;
-        var botMention = Context.Client.CurrentUser.Mention;
-
-        if (IsValidTradeCode(tradeCode))
-        {
-            await Context.Message.DeleteAsync();
-            await SetTradeCode(userID, tradeCode, ot, tid, sid);
-
-            await Context.Channel.SendMessageAsync($"Your Link Trade Code for {botMention} has been successfully set.").ConfigureAwait(false);
-        }
-        else
-        {
-            await Context.Channel.SendMessageAsync($"Sorry, {userMention}. That's an invalid code.").ConfigureAwait(false);
-        }
-    }
-
-    private bool IsValidTradeCode(int tradeCode)
-    {
-        return tradeCode <= 99999999 && tradeCode >= 00000000;
-    }
-
-    private async Task SetTradeCode(ulong userID, int tradeCode, string? ot, int tid, int sid)
-    {
-        var tradeCodeStorage = new TradeCodeStorage();
-        bool success = tradeCodeStorage.AddOrUpdateTradeCode(userID, tradeCode, ot, tid, sid);
-
-        if (!success)
-            await Context.Channel.SendMessageAsync("Failed to update Trade Code.").ConfigureAwait(false);
     }
 }

@@ -24,11 +24,12 @@ public static class QueueHelper<T> where T : PKM, new()
     private const uint MaxTradeCode = 9999_9999;
 
     // A dictionary to hold batch trade file paths and their deletion status
-private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
+    private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
     private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
 
     private static DiscordColor embedColor = DiscordColor.Gold;
     private static GameVersion gameVersion;
+    private static object? image;
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false)
     {
@@ -105,7 +106,24 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
     }
 
     private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isHiddenTrade, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false)
-    {
+        {
+        try
+        {
+            if (image != null)
+            {
+                SaveImageLocally((System.Drawing.Image)image);
+            }
+            else
+            {
+                Console.WriteLine("Image is null. Skipping saving.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while adding to the trade queue: {ex.Message}");
+            return new TradeQueueResult(false);
+        }
+    
 
         var user = trader;
         var userID = user.Id;
@@ -520,19 +538,37 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
             return imagesFolder;
         }
 
-        private static string SaveImageLocally(System.Drawing.Image image)
+        public static string? SaveImageLocally(System.Drawing.Image image)
+    {
+        if (image != null)
         {
-            // Get the path to the images folder
-            string imagesFolderPath = GetImageFolderPath();
+            try
+            {
+                string fileName = Guid.NewGuid().ToString() + ".png";
+                string imagesFolderPath = GetImageFolderPath();
+                string filePath = Path.Combine(imagesFolderPath, fileName);
 
-            // Create a unique filename for the image
-            string filePath = Path.Combine(imagesFolderPath, $"image_{Guid.NewGuid()}.png");
+                if (!Directory.Exists(imagesFolderPath))
+                {
+                    Directory.CreateDirectory(imagesFolderPath);
+                }
 
-            // Save the image to the specified path
-            image.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+                image.Save(filePath);
 
-            return filePath;
+                return filePath;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving image: {ex.Message}");
+                return null;
+            }
         }
+        else
+        {
+            Console.WriteLine("Error: Image is null.");
+            return null;
+        }
+    }
 
         private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk)
         {
@@ -544,7 +580,8 @@ private static readonly Dictionary<int, List<string>> batchTradeFiles = new Dict
                 string eggImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/egg2.png";
                 speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true);
                 System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
-                embedImageUrl = SaveImageLocally(combinedImage);
+                string? savelocal = SaveImageLocally(combinedImage);
+                embedImageUrl = savelocal;
             }
             else
             {

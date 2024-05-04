@@ -298,13 +298,6 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
             }
         }
 
-        var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, tradePartner.TrainerName, AbuseSettings, token);
-        if (partnerCheck != PokeTradeResult.Success)
-        {
-            await ExitTrade(false, token).ConfigureAwait(false);
-            return partnerCheck;
-        }
-
         poke.SendNotification(this, $"**### Found You!**\n**Trainer:** {tradePartner.TrainerName}\n**TID:** {tradePartner.TID7}\n**SID:** {tradePartner.SID7}\n*Waiting for a Pokémon...*");
 
         if (poke.Type == PokeTradeType.Dump)

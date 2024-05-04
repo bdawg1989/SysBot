@@ -382,15 +382,6 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? tradePartner.TrainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(tradePartner.TID7) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(tradePartner.SID7) : existingTradeDetails.SID);
         }
 
-        var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, tradePartner.TrainerName, AbuseSettings, token);
-        if (partnerCheck != PokeTradeResult.Success)
-
-        {
-            await Click(A, 1_000, token).ConfigureAwait(false); // Ensures we dismiss a popup.
-            await ExitTradeToPortal(false, token).ConfigureAwait(false);
-            return partnerCheck;
-        }
-
         // Hard check to verify that the offset changed from the last thing offered from the previous trade.
         // This is because box opening times can vary per person, the offset persists between trades, and can also change offset between trades.
         var tradeOffered = await ReadUntilChanged(TradePartnerOfferedOffset, lastOffered, 10_000, 0_500, false, true, token).ConfigureAwait(false);
@@ -590,14 +581,6 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
             {
                 tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? tradePartner.TrainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(tradePartner.TID7) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(tradePartner.SID7) : existingTradeDetails.SID);
-            }
-
-            var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, tradePartner.TrainerName, AbuseSettings, token);
-            if (partnerCheck != PokeTradeResult.Success)
-            {
-                await Click(A, 1_000, token).ConfigureAwait(false); // Ensures we dismiss a popup.
-                await ExitTradeToPortal(false, token).ConfigureAwait(false);
-                return partnerCheck;
             }
 
             // Hard check to verify that the offset changed from the last thing offered from the previous trade.

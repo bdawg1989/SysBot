@@ -2,10 +2,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
-using Newtonsoft.Json.Linq;
-using Microsoft.VisualBasic;
 using PKHeX.Core;
-using PKHeX.Core.AutoMod;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
@@ -15,16 +12,9 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
-using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Reflection.Metadata;
-using System.Diagnostics;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -36,7 +26,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     private static readonly char[] separator = [' '];
     private static readonly char[] separatorArray = [' '];
     private static readonly char[] separatorArray0 = [' '];
-    private string _tradeSettings;
 
     [Command("listguilds")]
     [Alias("lg", "servers", "listservers")]
@@ -135,22 +124,24 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesFixOT))]
     public async Task FixAdOT()
     {
-        // Check if the user is already in the queue
         var userID = Context.User.Id;
+
+        // Check if the user is already in the queue
         if (Info.IsUserInQueue(userID))
         {
             _ = ReplyAndDeleteAsync("You already have an existing trade in the queue. Please wait until it is processed.", 2);
             return;
         }
+
         var code = Info.GetRandomTradeCode(userID);
         var trainerName = Context.User.Username;
         var lgcode = Info.GetRandomLGTradeCode();
         var sig = Context.User.GetFavor();
+
         await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, false, lgcode).ConfigureAwait(false);
         if (Context.Message is IUserMessage userMessage)
         {
-            await Task.Delay(2000);
-            await userMessage.DeleteAsync().ConfigureAwait(false);
+            _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
         }
     }
 
@@ -174,7 +165,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var lgcode = Info.GetRandomLGTradeCode();
 
         await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, false, lgcode).ConfigureAwait(false);
-        _ = DeleteMessagesAfterDelayAsync(null, Context.Message, 2);
+        if (Context.Message is IUserMessage userMessage)
+        {
+            _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
+        }
     }
 
     [Command("fixOTList")]
@@ -210,7 +204,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         var code = Info.GetRandomTradeCode(userID);
         await DittoTrade(code, keyword, language, nature).ConfigureAwait(false);
-        _ = DeleteMessagesAfterDelayAsync(null, Context.Message, 2);
+        if (Context.Message is IUserMessage userMessage)
+        {
+            _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
+        }
     }
 
     [Command("dittoTrade")]
@@ -258,7 +255,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         pk.ResetPartyStats();
         var sig = Context.User.GetFavor();
         await QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, pk, PokeRoutineType.LinkTrade, PokeTradeType.Specific).ConfigureAwait(false);
-        _ = DeleteMessagesAfterDelayAsync(null, Context.Message, 2);
+        if (Context.Message is IUserMessage userMessage)
+        {
+            _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
+        }
     }
 
     [Command("itemTrade")]
@@ -317,7 +317,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var sig = Context.User.GetFavor();
         await QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, pk, PokeRoutineType.LinkTrade, PokeTradeType.Specific).ConfigureAwait(false);
 
-        _ = DeleteMessagesAfterDelayAsync(null, Context.Message, 2);
+        if (Context.Message is IUserMessage userMessage)
+        {
+            _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
+        }
     }
 
     [Command("tradeList")]
@@ -391,6 +394,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
             _ = ReplyAndDeleteAsync("An error occurred while processing the request.", 2, Context.Message);
+        }
+        if (Context.Message is IUserMessage userMessage)
+        {
+            _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
         }
     }
 
@@ -1154,7 +1161,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         finally
         {
-            _ = DeleteMessagesAfterDelayAsync(null, Context.Message, 2);
+            if (Context.Message is IUserMessage userMessage)
+            {
+                _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
+            }
         }
     }
 
@@ -1315,7 +1325,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         finally
         {
-            _ = DeleteMessagesAfterDelayAsync(null, Context.Message, 2);
+            if (Context.Message is IUserMessage userMessage)
+            {
+                _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
+            }
         }
     }
 

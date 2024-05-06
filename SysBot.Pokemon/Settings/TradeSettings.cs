@@ -111,6 +111,10 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     {
         public override string ToString() => "Trade Embed Configuration Settings";
 
+
+        [Category(EmbedSettings), Description("If true, will show beautiful embeds in Discord. False will show simple, yet stylish text."), DisplayName("Use Embeds")]
+        public bool UseEmbeds { get; set; } = true;
+
         [Category(EmbedSettings), Description("Will show Move Type Icons next to moves in trade embed (Discord only). Requires user to upload the emojis to their server."), DisplayName("Show Move Type Emojis")]
         public bool MoveTypeEmojis { get; set; } = true;
 

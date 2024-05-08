@@ -112,6 +112,14 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     {
         public override string ToString() => "Auto Correct Showdown Settings";
 
+        private bool _autoCorrectEmbedIndicator = true;
+        [Category(nameof(AutoCorrectShowdownCategory)), Description("If set to True, we will put an indicator on Trade Embeds showing a trade was Auto-Corrected."), DisplayName("Show Auto-Correct Indicator")]
+        public bool AutoCorrectEmbedIndicator
+        {
+            get => EnableAutoCorrect && _autoCorrectEmbedIndicator;
+            set => _autoCorrectEmbedIndicator = value;
+        }
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("If set to True, each failed showdown set will go through auto correction."), DisplayName("Enable Auto Correct")]
         public bool EnableAutoCorrect { get; set; } = true;
 

@@ -308,12 +308,27 @@ public static class QueueHelper<T> where T : PKM, new()
         (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk);
 
         // Adjust image URL based on request type
-        embedImageUrl = isMysteryEgg ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg1.png" :
-                        isDumpRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dump.png" :
-                        isCloneRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/clone.png" :
-                        isSpecialRequest ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialrequest.gif" :
-                        FixOT ? "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/fixot.png" :
-                        embedImageUrl; // Keep original if none of the above
+        if (isMysteryEgg)
+        {
+            embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/mysteryegg1.png?raw=true&width=200&height=200";
+        }
+        else if (isDumpRequest)
+        {
+            embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dumpball.png?raw=true&width=200&height=200";
+        }
+        else if (isCloneRequest)
+        {
+            embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/cloneball.png?raw=true&width=200&height=200";
+        }
+        else if (isSpecialRequest)
+        {
+            embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialball.png?raw=true&width=200&height=200";
+        }
+        else if (FixOT)
+        {
+            embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/fixotball.png?raw=true&width=200&height=200";
+        }
+
 
         // Prepare held item image URL if available
         string heldItemUrl = string.Empty;
@@ -428,7 +443,7 @@ public static class QueueHelper<T> where T : PKM, new()
         // Adding thumbnails for clone and special requests, or held items
         if (isCloneRequest || isSpecialRequest)
         {
-            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/profoak.png");
+            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/professorgirl.png");
         }
         else if (!string.IsNullOrEmpty(heldItemUrl))
         {

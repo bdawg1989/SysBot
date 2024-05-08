@@ -123,19 +123,19 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 {
                     case PokeTradeType.Clone:
                         tradeTitle = "Cloned Pokémon";
-                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/clone.png";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/cloneball.png";
                         break;
                     case PokeTradeType.Dump:
                         tradeTitle = "Pokémon Dump";
-                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dump.png";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dumpball.png";
                         break;
                     case PokeTradeType.FixOT:
                         tradeTitle = "Cloned Pokémon (Fixing OT Info)";
-                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/fixot.png";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/fixotball.png";
                         break;
                     case PokeTradeType.Seed:
                         tradeTitle = "Cloned Pokémon (Special Request)";
-                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialrequest.gif";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialball.png";
                         break;
                     default:
                         tradeTitle = $"{speciesName}";

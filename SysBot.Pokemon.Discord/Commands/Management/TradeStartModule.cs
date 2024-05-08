@@ -147,6 +147,24 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             {
                 embedImageUrl = AbstractTrade<T>.PokeImg(detail.TradeData, false, true);
             }
+            else
+            {
+                switch (detail.Type)
+                {
+                    case PokeTradeType.Clone:
+                        ballImgUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/cloneball.png";
+                        break;
+                    case PokeTradeType.Dump:
+                        ballImgUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/dumpball.png";
+                        break;
+                    case PokeTradeType.FixOT:
+                        ballImgUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/fixotball.png";
+                        break;
+                    case PokeTradeType.Seed:
+                        ballImgUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/seedball.png";
+                        break;
+                }
+            }
 
             var embedColor = new DiscordColor(0, 0, 0); // Example: Red color
 

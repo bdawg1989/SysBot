@@ -413,7 +413,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 
 
     [Command("startsysdvr")]
-    [Alias("dvrstart", "startdvr", "sysdvrstart")]
+    [Alias("dvrstart", "startdvr", "sysdvrstart", "sdvrstart")]
     [Summary("Makes the bot open SysDVR to stream your Switch on the current PC.")]
     [RequireOwner]
     public async Task StartSysDvr()
@@ -438,7 +438,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     }
 
     [Command("sysdvr")]
-    [Alias("stream")]
+    [Alias("stream", "sdvr")]
     [Summary("Displays instructions on how to use SysDVR.")]
     [RequireOwner]
     public async Task SysDVRInstructionsAsync()
@@ -488,5 +488,43 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
             await message1.DeleteAsync();
             await message2.DeleteAsync();
         });
+    }
+
+    [Command("startcontroller")]
+    [Alias("controllerstart", "startcontrol", "controlstart", "startsysbotremote", "sbrstart")]
+    [Summary("Makes the bot open SysBotRemote - a GUI game controller for your Switch.")]
+    [RequireOwner]
+    public async Task StartSysRemote()
+    {
+        try
+        {
+            var sysBotRemotePath = SysCord<T>.Runner.Config.SysBotRemoteFolder;
+
+            if (Directory.Exists(sysBotRemotePath))
+            {
+                string executablePath = Path.Combine(sysBotRemotePath, "SysBotRemote.exe");
+
+                if (File.Exists(executablePath))
+                {
+                    ProcessStartInfo startInfo = new ProcessStartInfo(executablePath);
+                    startInfo.WorkingDirectory = sysBotRemotePath;
+                    Process.Start(startInfo);
+
+                    await ReplyAsync("SysBotRemote has been initiated. You can now control your Switch!");
+                }
+                else
+                {
+                    await ReplyAsync("**SysBotRemote.exe** cannot be found in the specified folder.");
+                }
+            }
+            else
+            {
+                await ReplyAsync("The SysBotRemote folder does not exist.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"**SysBotRemote Error:** {ex.Message}");
+        }
     }
 }

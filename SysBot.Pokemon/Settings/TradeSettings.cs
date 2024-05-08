@@ -138,6 +138,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(nameof(AutoCorrectShowdownCategory)), Description("If set to True, auto correction will correct wrong level."), DisplayName("Auto Correct Level")]
         public bool AutoCorrectLevel { get; set; } = true;
 
+        [Category(nameof(AutoCorrectShowdownCategory)), Description("If set to True, auto correction will correct wrong ball."), DisplayName("Auto Correct Ball")]
+        public bool AutoCorrectBall { get; set; } = true;
+
         private bool _autoCorrectGender = true;
         [Category(nameof(AutoCorrectShowdownCategory)), Description("If set to True, auto correction will correct wrong gender."), DisplayName("Auto Correct Gender")]
         public bool AutoCorrectGender

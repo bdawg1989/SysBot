@@ -55,7 +55,8 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         if (autoCorrectConfig.AutoCorrectLevel)
             levelVerifier.Verify(la);
 
-        gender = ValidateGender(pk, gender, speciesName);
+        if (autoCorrectConfig.AutoCorrectLevel)
+            gender = ValidateGender(pk, gender, speciesName);
 
         if (autoCorrectConfig.AutoCorrectMovesLearnset)
             ValidateMoves(lines, pk, la, gameStrings, correctedSpeciesName, correctedFormName);

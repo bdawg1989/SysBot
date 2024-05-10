@@ -406,11 +406,12 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Alias("ht")]
     [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set without showing the trade embed details.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public Task HideTradeAsync([Summary("Showdown Set")][Remainder] string content)
+    public async Task HideTradeAsync([Summary("Showdown Set")][Remainder] string content)
     {
         var userID = Context.User.Id;
         var code = Info.GetRandomTradeCode(userID);
-        return HideTradeAsync(code, content);
+        await HideTradeAsync(code, content).ConfigureAwait(false);
+        _ = DeleteMessagesAfterDelayAsync(Context.Message, null, 1);
     }
 
     [Command("hidetrade")]
@@ -557,7 +558,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
             var msg = $"Oops! An unexpected problem happened with this Showdown Set:\n```{string.Join("\n", set.GetSetLines())}```";
 
-            _ = ReplyAndDeleteAsync(msg, 2, Context.Message);
+            _ = DeleteMessagesAfterDelayAsync(Context.Message, null, 1);
         }
     }
 
@@ -570,6 +571,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         [Summary("Ignore AutoOT")] bool ignoreAutoOT = false)
     {
         var sig = Context.User.GetFavor();
+        _ = DeleteMessagesAfterDelayAsync(Context.Message, null, 1);
         return HideTradeAsyncAttach(code, sig, Context.User, ignoreAutoOT);
     }
 
@@ -583,10 +585,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var code = Info.GetRandomTradeCode(userID);
         var sig = Context.User.GetFavor();
         await HideTradeAsyncAttach(code, sig, Context.User, ignoreAutoOT).ConfigureAwait(false);
-        if (Context.Message is IUserMessage userMessage)
-        {
-            _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
-        }
+        _ = DeleteMessagesAfterDelayAsync(Context.Message, null, 1);
     }
 
     [Command("trade")]

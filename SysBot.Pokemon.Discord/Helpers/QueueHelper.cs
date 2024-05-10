@@ -206,7 +206,7 @@ var typeEmojis = new Dictionary<MoveType, string>
         };
 
         // Basic Pokémon details
-        int[] ivs = pk.IVs;
+        int[] ivs = [pk.IV_HP, pk.IV_ATK, pk.IV_DEF, pk.IV_SPA, pk.IV_SPD, pk.IV_SPE];
         int[] evs = [pk.EV_HP, pk.EV_ATK, pk.EV_DEF, pk.EV_SPA, pk.EV_SPD, pk.EV_SPE];
         ushort[] moves = new ushort[4];
         pk.GetMoves(moves.AsSpan());
@@ -277,7 +277,8 @@ var typeEmojis = new Dictionary<MoveType, string>
         bool isSpecialRequest = type == PokeRoutineType.SeedCheck;
 
         // Display elements
-        string ivsDisplay = ivs.All(iv => iv == 31) ? "6IV" : $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
+        string ivsDisplay = ivs.All(iv => iv == 31) ? "6IV" : $"" +
+            $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
         string evsDisplay = string.Join(" / ", new[]{
                (evs[0] != 0 ? $"{evs[0]} HP" : ""),
                (evs[1] != 0 ? $"{evs[1]} Atk" : ""),

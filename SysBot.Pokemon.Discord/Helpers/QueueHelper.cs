@@ -105,7 +105,7 @@ public static class QueueHelper<T> where T : PKM, new()
         }
     }
 
-    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isHiddenTrade, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false, bool setEdited = false)
+    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isHiddenTrade, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false, bool setEdited = false, string[] markTitles = null)
     {
 
         var user = trader;
@@ -142,6 +142,7 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showWasEgg = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowWasEgg;
         bool showMetDate = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowMetDate;
         bool showLanguage = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowLanguage;
+        string markTitle = string.Empty;
         var tradeCodeStorage = new TradeCodeStorage();
         int totalTradeCount = tradeCodeStorage.GetTradeCount(trader.Id);
         var tradeDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
@@ -152,8 +153,13 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             return new TradeQueueResult(false);
         }
+    
+        if (pk is IRibbonIndex ribbonIndex)
+        {
+            AbstractTrade<T>.HasMark(ribbonIndex, out RibbonIndex result, out markTitle);
+        }
 
-        var typeEmojis = new Dictionary<MoveType, string>
+var typeEmojis = new Dictionary<MoveType, string>
         {
             [MoveType.Bug] = "<:bug_type:1218977628246245427>",
             [MoveType.Fire] = "<:fire_type:1218977624093626399>",
@@ -243,7 +249,7 @@ public static class QueueHelper<T> where T : PKM, new()
         natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == (int)pk.Nature)?.Text ?? "";
         speciesName = GameInfo.GetStrings(1).Species[pk.Species];
         string alphaMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkAlpha && showAlphaMark ? "<:alpha_mark:1218977873805967533> " : string.Empty;
-        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest && showMightiestMark ? "<:MightiestMark:1218977612580261908> " : string.Empty;
+        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest && showMightiestMark ? "<:MightiestMark:1218977612580261908> " : string.Empty;        
         string alphaSymbol = pk is IAlpha alpha && alpha.IsAlpha ? "<:alpha:1218977646269038672> " : string.Empty;
         string shinySymbol = pk.ShinyXor == 0 ? "◼ " : pk.IsShiny ? "★ " : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
@@ -259,7 +265,7 @@ public static class QueueHelper<T> where T : PKM, new()
             toppingName = $"-{topping}";
             formName += toppingName;
         }
-        speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")} {displayGender}**";
+        speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")}{(!string.IsNullOrEmpty(markTitle) ? markTitle : "")} {displayGender}**";
         heldItemName = strings.itemlist[pk.HeldItem];
         ballName = strings.balllist[pk.Ball];
 

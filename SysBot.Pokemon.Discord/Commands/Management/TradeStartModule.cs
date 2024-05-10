@@ -135,7 +135,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                         break;
                     case PokeTradeType.Seed:
                         tradeTitle = "Cloned Pokémon (Special Request)";
-                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialball.png";
+                        embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/seedball.png";
                         break;
                     default:
                         tradeTitle = $"{speciesName}";

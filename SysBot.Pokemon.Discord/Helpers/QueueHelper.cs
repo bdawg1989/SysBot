@@ -322,7 +322,7 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         else if (isSpecialRequest)
         {
-            embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/specialball.png?raw=true&width=200&height=200";
+            embedImageUrl = "https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/seedball.png?raw=true&width=200&height=200";
         }
         else if (FixOT)
         {
@@ -443,7 +443,7 @@ public static class QueueHelper<T> where T : PKM, new()
         // Adding thumbnails for clone and special requests, or held items
         if (isCloneRequest || isSpecialRequest)
         {
-            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/Secludedly/ZE-FusionBot-Sprite-Images/main/professorgirl.png");
+
         }
         else if (!string.IsNullOrEmpty(heldItemUrl))
         {

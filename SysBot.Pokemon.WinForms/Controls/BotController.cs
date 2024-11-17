@@ -24,6 +24,7 @@ public enum BotControlCommand
     RebootAndStop,
 }
 
+
 public partial class BotController : UserControl
 {
     public EventHandler? Remove;
@@ -31,6 +32,9 @@ public partial class BotController : UserControl
     private DateTime LastUpdateStatus = DateTime.Now;
 
     private IPokeBotRunner? Runner;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public PokeBotState State { get; private set; } = new();
 
     public BotController()
     {
@@ -58,8 +62,6 @@ public partial class BotController : UserControl
             c.MouseLeave += BotController_MouseLeave;
         }
     }
-
-    public PokeBotState State { get; private set; } = new();
 
     public void Initialize(IPokeBotRunner runner, PokeBotState cfg)
     {

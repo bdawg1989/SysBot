@@ -92,26 +92,28 @@ public static class DetailsExtractor<T> where T : PKM, new()
         }
         else
         {
-            ivsDisplay = string.Join("/", [
-                ivs[0].ToString(),
-                ivs[1].ToString(),
-                ivs[2].ToString(),
-                ivs[4].ToString(),
-                ivs[5].ToString(),
-                ivs[3].ToString()
-            ]);
+            string[] ivStrings = new string[]
+            {
+            ivs[0].ToString(),
+            ivs[1].ToString(),
+            ivs[2].ToString(),
+            ivs[4].ToString(),
+            ivs[5].ToString(),
+            ivs[3].ToString()
+            };
+            ivsDisplay = string.Join("/", ivStrings);
         }
         embedData.IVsDisplay = ivsDisplay;
 
         int[] evs = GetEVs(pk);
         embedData.EVsDisplay = string.Join(" / ", new[] {
-            (evs[0] != 0 ? $"{evs[0]} HP" : ""),
-            (evs[1] != 0 ? $"{evs[1]} Atk" : ""),
-            (evs[2] != 0 ? $"{evs[2]} Def" : ""),
-            (evs[4] != 0 ? $"{evs[4]} SpA" : ""),
-            (evs[5] != 0 ? $"{evs[5]} SpD" : ""),
-            (evs[3] != 0 ? $"{evs[3]} Spe" : "") // correct pkhex/ALM ordering of stats
-        }.Where(s => !string.IsNullOrEmpty(s)));
+        (evs[0] != 0 ? $"{evs[0]} HP" : ""),
+        (evs[1] != 0 ? $"{evs[1]} Atk" : ""),
+        (evs[2] != 0 ? $"{evs[2]} Def" : ""),
+        (evs[4] != 0 ? $"{evs[4]} SpA" : ""),
+        (evs[5] != 0 ? $"{evs[5]} SpD" : ""),
+        (evs[3] != 0 ? $"{evs[3]} Spe" : "") // correct pkhex/ALM ordering of stats
+    }.Where(s => !string.IsNullOrEmpty(s)));
         embedData.MetDate = pk.MetDate.ToString();
         embedData.MovesDisplay = string.Join("\n", embedData.Moves);
         embedData.PokemonDisplayName = pk.IsNicknamed ? pk.Nickname : embedData.SpeciesName;

@@ -60,9 +60,6 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
     // Cached offsets that stay the same per session.
     private ulong OverworldOffset;
 
-    // Flag to indicate that a reboot has been requested.
-    private bool RebootAndStopRequested = false;
-
     public override async Task MainLoop(CancellationToken token)
     {
         try
@@ -93,12 +90,16 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         return CleanExit(CancellationToken.None);
     }
 
-    public override Task RebootAndStop(CancellationToken t)
+    public override async Task RebootAndStop(CancellationToken t)
     {
-        // Set the flag instead of rebooting immediately.
-        RebootAndStopRequested = true;
-        Log("Reboot and Stop has been requested. Will reboot at the next safe point.");
-        return Task.CompletedTask;
+        await ReOpenGame(Hub.Config, t).ConfigureAwait(false);
+        await HardStop().ConfigureAwait(false);
+        await Task.Delay(2_000, t).ConfigureAwait(false);
+        if (!t.IsCancellationRequested)
+        {
+            Log("Restarting the main loop.");
+            await MainLoop(t).ConfigureAwait(false);
+        }
     }
 
     private async Task InnerLoop(SAV8SWSH sav, CancellationToken token)
@@ -166,23 +167,6 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
             hub.Queues.StartTrade(this, detail);
 
             await PerformTrade(sav, detail, type, priority, token).ConfigureAwait(false);
-
-            // Check if a reboot has been requested after completing a trade.
-            if (RebootAndStopRequested)
-            {
-                Log("Reboot and Stop requested. Initiating reboot.");
-                await ReOpenGame(Hub.Config, token).ConfigureAwait(false);
-                await HardStop().ConfigureAwait(false);
-
-                await Task.Delay(2_000, token).ConfigureAwait(false);
-                if (!token.IsCancellationRequested)
-                {
-                    Log("Restarting the main loop.");
-                    RebootAndStopRequested = false; // Reset the flag
-                    await MainLoop(token).ConfigureAwait(false);
-                }
-                return; // Exit the DoTrades method
-            }
         }
     }
 

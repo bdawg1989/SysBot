@@ -43,6 +43,8 @@ public abstract class PokeRoutineExecutor7LGPE : PokeRoutineExecutor<PB7>
     public async Task CloseGame(PokeTradeHubConfig config, CancellationToken token)
     {
         var timing = config.Timings;
+
+        await Click(B, 0_500, token).ConfigureAwait(false);
         await Click(HOME, 2_000 + timing.ClosingGameSettings.ExtraTimeReturnHome, token).ConfigureAwait(false);
         await Click(X, 1_000, token).ConfigureAwait(false);
         await Click(A, 5_000 + timing.ClosingGameSettings.ExtraTimeCloseGame, token).ConfigureAwait(false);

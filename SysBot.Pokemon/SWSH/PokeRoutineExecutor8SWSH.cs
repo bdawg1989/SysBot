@@ -36,6 +36,7 @@ public abstract class PokeRoutineExecutor8SWSH(PokeBotState Config) : PokeRoutin
         var timing = config.Timings;
 
         // Close out of the game
+        await Click(B, 0_500, token).ConfigureAwait(false);
         await Click(HOME, 2_000 + timing.ClosingGameSettings.ExtraTimeReturnHome, token).ConfigureAwait(false);
         await Click(X, 1_000, token).ConfigureAwait(false);
         await Click(A, 5_000 + timing.ClosingGameSettings.ExtraTimeCloseGame, token).ConfigureAwait(false);

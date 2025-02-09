@@ -7,7 +7,6 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   version-check:
     runs-on: ubuntu-latest
     outputs:
@@ -64,7 +63,7 @@ jobs:
       - name: Publish
         run: dotnet publish ${{ env.Project_Name }} --configuration Release --output ./publish /p:PublishSingleFile=true /p:SelfContained=false /p:RuntimeIdentifier=win-x86
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MergeBot
           path: ./publish
@@ -97,7 +96,7 @@ jobs:
           echo "$RECENT_CHANGES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: MergeBot
           path: ./publish

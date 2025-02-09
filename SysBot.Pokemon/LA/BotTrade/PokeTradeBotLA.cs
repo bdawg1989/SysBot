@@ -97,9 +97,8 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
 
     public override async Task RebootAndStop(CancellationToken t)
     {
-        await ReOpenGame(new PokeTradeHubConfig(), t).ConfigureAwait(false);
+        await ReOpenGame(Hub.Config, t).ConfigureAwait(false);
         await HardStop().ConfigureAwait(false);
-
         await Task.Delay(2_000, t).ConfigureAwait(false);
         if (!t.IsCancellationRequested)
         {

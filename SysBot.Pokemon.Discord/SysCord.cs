@@ -432,24 +432,30 @@ public sealed class SysCord<T> where T : PKM, new()
                 return;
             }
 
-            var correctPrefix = SysCordSettings.Settings.CommandPrefix;
+            var correctPrefixes = SysCordSettings.Settings.CommandPrefix; // Assuming this is now a List<string>
             var content = msg.Content;
             var argPos = 0;
 
-            if (msg.HasMentionPrefix(_client.CurrentUser, ref argPos) || msg.HasStringPrefix(correctPrefix, ref argPos))
+            // Check if the message has a mention prefix or matches any of the valid string prefixes
+            if (msg.HasMentionPrefix(_client.CurrentUser, ref argPos) ||
+                correctPrefixes.Any(prefix => msg.HasStringPrefix(prefix, ref argPos)))
             {
                 var context = new SocketCommandContext(_client, msg);
                 var handled = await TryHandleCommandAsync(msg, context, argPos);
                 if (handled)
                     return;
             }
-            else if (content.Length > 1 && content[0] != correctPrefix[0])
+            else if (content.Length > 1 && !correctPrefixes.Any(prefix => content.StartsWith(prefix)))
             {
                 var potentialPrefix = content[0].ToString();
                 var command = content.Split(' ')[0][1..];
                 if (_validCommands.Contains(command))
                 {
-                    await SafeSendMessageAsync(msg.Channel, $"Incorrect prefix! The correct command is **{correctPrefix}{command}**").ConfigureAwait(false);
+                    var correctPrefixExample = correctPrefixes.FirstOrDefault() ?? "$"; // Default fallback
+                    await SafeSendMessageAsync(
+                        msg.Channel,
+                        $"Incorrect prefix! The correct command is **{correctPrefixExample}{command}**"
+                    ).ConfigureAwait(false);
                     return;
                 }
             }

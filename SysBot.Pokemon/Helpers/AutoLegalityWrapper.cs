@@ -28,7 +28,7 @@ public static class AutoLegalityWrapper
     private static void InitializeAutoLegality(LegalitySettings cfg)
     {
         InitializeCoreStrings();
-        EncounterEvent.RefreshMGDB(cfg.MGDBPath);
+        EncounterEvent.RefreshMGDB(new[] { cfg.MGDBPath }.AsSpan());
         InitializeTrainerDatabase(cfg);
         InitializeSettings(cfg);
     }
@@ -76,9 +76,9 @@ public static class AutoLegalityWrapper
 
         // Seed the Trainer Database with enough fake save files so that we return a generation sensitive format when needed.
         var fallback = GetDefaultTrainer(cfg);
-        for (byte generation = 1; generation <= PKX.Generation; generation++)
+        for (byte generation = 1; generation <= GameUtil.GetGeneration(GameVersion.Gen9); generation++)
         {
-            var versions = GameUtil.GetVersionsInGeneration(generation, PKX.Version);
+            var versions = GameUtil.GetVersionsInGeneration(generation, GameVersion.Any);
             foreach (var version in versions)
                 RegisterIfNoneExist(fallback, generation, version);
         }

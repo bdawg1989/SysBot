@@ -133,7 +133,7 @@ namespace SysBot.Pokemon.Helpers.ShowdownHelpers
                             .Where(m => !string.IsNullOrEmpty(m)));
 
                         // TM moves
-                        var tmMoves = LearnSource8BDSP.TMHM_BDSP.ToArray();
+                        var tmMoves = PersonalInfo8BDSP.MachineMoves.ToArray();
                         validMoves.AddRange(tmMoves
                             .Where(m => personalInfo.GetIsLearnTM(Array.IndexOf(tmMoves, m)))
                             .Select(m => gameStrings.movelist[m])

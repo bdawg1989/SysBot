@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace SysBot.Pokemon.WinForms;
 
@@ -23,6 +24,7 @@ public sealed partial class Main : Form
 
     private ProgramConfig Config { get; set; }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public static bool IsUpdating { get; set; } = false;
 
     private bool _isFormLoading = true;

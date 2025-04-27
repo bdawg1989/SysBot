@@ -152,7 +152,7 @@ namespace SysBot.Pokemon.WinForms
 
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Add("User-Agent", "MergeBot");
+                client.DefaultRequestHeaders.Add("User-Agent", "SysBot");
                 var response = await client.GetAsync(downloadUrl);
                 response.EnsureSuccessStatusCode();
                 var fileBytes = await response.Content.ReadAsByteArrayAsync();

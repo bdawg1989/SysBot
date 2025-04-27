@@ -59,6 +59,7 @@ public partial class BotController : UserControl
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public PokeBotState State { get; private set; } = new();
 
     public void Initialize(IPokeBotRunner runner, PokeBotState cfg)

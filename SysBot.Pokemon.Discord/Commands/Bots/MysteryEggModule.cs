@@ -6,7 +6,6 @@ using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord
@@ -14,6 +13,7 @@ namespace SysBot.Pokemon.Discord
     public class MysteryEggModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
     {
         private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
+        private static readonly Random Random = new();
 
         [Command("mysteryegg")]
         [Alias("me")]
@@ -42,52 +42,55 @@ namespace SysBot.Pokemon.Discord
             });
         }
 
-        public static T? GenerateLegalMysteryEgg(int maxAttempts = 5)
+        public static T? GenerateLegalMysteryEgg(int maxAttempts = 10)
         {
             var gameVersion = GetGameVersion();
-            var speciesList = GetBreedableSpecies(gameVersion, "en");
-            int attempts = 0;
 
-            while (attempts < maxAttempts)
+            // PLA doesn't have breeding
+            if (gameVersion == GameVersion.PLA)
+                return null;
+
+            var breedableSpecies = GetBreedableSpecies(gameVersion);
+
+            if (breedableSpecies.Count == 0)
+                return null;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                var randomIndex = new Random().Next(speciesList.Count);
-                ushort speciesId = speciesList[randomIndex];
+                // Pick a random species from our filtered list
+                var speciesId = breedableSpecies[Random.Next(breedableSpecies.Count)];
                 var speciesName = GameInfo.GetStrings("en").specieslist[speciesId];
+
                 var showdownSet = new ShowdownSet(speciesName);
                 var template = AutoLegalityWrapper.GetTemplate(showdownSet);
                 var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
                 var pk = sav.GetLegal(template, out _);
-                if (pk != null)
-                {
-                    pk = EntityConverter.ConvertToType(pk, typeof(T), out _) ?? pk;
-                    if (pk is T validPk)
-                    {
-                        var la = new LegalityAnalysis(validPk);
-                        if (la.Valid)
-                        {
-                            TradeExtensions<T>.EggTrade(validPk, template);
-                            SetHaX(validPk);
-                            la = new LegalityAnalysis(validPk);
-                            if (!la.Valid)
-                            {
-                                attempts++;
-                                continue;
-                            }
-                            return validPk;
-                        }
-                    }
-                }
-                attempts++;
+
+                if (pk == null)
+                    continue;
+
+                pk = EntityConverter.ConvertToType(pk, typeof(T), out _) ?? pk;
+                if (pk is not T validPk)
+                    continue;
+
+                // Convert to egg
+                TradeExtensions<T>.EggTrade(validPk, template);
+                SetHaX(validPk);
+
+                var la = new LegalityAnalysis(validPk);
+                if (la.Valid)
+                    return validPk;
             }
+
             return null;
         }
 
         private async Task ProcessMysteryEggTradeAsync(int code)
         {
-            var mysteryEgg = GenerateLegalMysteryEgg(5);
+            var mysteryEgg = GenerateLegalMysteryEgg(10);
             if (mysteryEgg == null)
             {
-                await ReplyAsync("Failed to generate a legal mystery egg after 5 attempts. Please try again later.").ConfigureAwait(false);
+                await ReplyAsync("Failed to generate a legal mystery egg. Please try again later.").ConfigureAwait(false);
                 return;
             }
 
@@ -108,7 +111,7 @@ namespace SysBot.Pokemon.Discord
 
         public static void SetHaX(PKM pk)
         {
-            pk.IVs = new[] { 31, 31, 31, 31, 31, 31 };
+            pk.IVs = [31, 31, 31, 31, 31, 31];
             pk.SetShiny();
             pk.RefreshAbility(2);
             pk.MaximizeFriendship();
@@ -129,31 +132,67 @@ namespace SysBot.Pokemon.Discord
                 throw new ArgumentException("Unsupported game version.");
         }
 
-        public static List<ushort> GetBreedableSpecies(GameVersion gameVersion, string language = "en")
+        public static List<ushort> GetBreedableSpecies(GameVersion gameVersion)
         {
-            var gameStrings = GameInfo.GetStrings(language);
-            var availableSpeciesList = gameStrings.specieslist
-                .Select((name, index) => (Name: name, Index: index))
-                .Where(item => !string.IsNullOrEmpty(item.Name))
-                .ToList();
-
             var breedableSpecies = new List<ushort>();
-            var pt = GetPersonalTable(gameVersion);
-            foreach (var species in availableSpeciesList)
+
+            // Get the appropriate personal table based on game version
+            var personalTable = GetPersonalTable(gameVersion);
+
+            // Get the max species ID based on the PersonalTable
+            ushort maxSpecies = GetMaxSpeciesID(personalTable);
+
+            for (ushort speciesId = 1; speciesId <= maxSpecies; speciesId++)
             {
-                var speciesId = (ushort)species.Index;
-                var pi = GetFormEntry(pt, speciesId, 0);
+                // Skip species that aren't in the game
+                if (!IsSpeciesInGame(personalTable, speciesId))
+                    continue;
+
+                var pi = GetFormEntry(personalTable, speciesId, 0);
+
+                // Check if the species is breedable and is a base form
                 if (IsBreedable(pi) && pi.EvoStage == 1)
                 {
                     breedableSpecies.Add(speciesId);
                 }
             }
+
             return breedableSpecies;
+        }
+
+        private static bool IsSpeciesInGame(object personalTable, ushort species)
+        {
+            return personalTable switch
+            {
+                PersonalTable9SV pt => pt.IsSpeciesInGame(species),
+                PersonalTable8SWSH pt => pt.IsSpeciesInGame(species),
+                PersonalTable8BDSP pt => pt.IsSpeciesInGame(species),
+                _ => false,
+            };
+        }
+
+        private static ushort GetMaxSpeciesID(object personalTable)
+        {
+            return personalTable switch
+            {
+                PersonalTable9SV pt => pt.MaxSpeciesID,
+                PersonalTable8SWSH pt => pt.MaxSpeciesID,
+                PersonalTable8BDSP pt => pt.MaxSpeciesID,
+                _ => throw new ArgumentException("Unsupported personal table type."),
+            };
         }
 
         private static bool IsBreedable(PersonalInfo pi)
         {
-            return pi.EggGroup1 != 0 || pi.EggGroup2 != 0;
+            // If either egg group is "Undiscovered" (15), then the Pokémon can't breed
+            if (pi.EggGroup1 == 15 || pi.EggGroup2 == 15)
+                return false;
+
+            // If both egg groups are "Invalid" (0), then the Pokémon can't breed
+            if (pi.EggGroup1 == 0 && pi.EggGroup2 == 0)
+                return false;
+
+            return true;
         }
 
         private static PersonalInfo GetFormEntry(object personalTable, ushort species, byte form)
@@ -162,7 +201,6 @@ namespace SysBot.Pokemon.Discord
             {
                 PersonalTable9SV pt => pt.GetFormEntry(species, form),
                 PersonalTable8SWSH pt => pt.GetFormEntry(species, form),
-                PersonalTable8LA pt => pt.GetFormEntry(species, form),
                 PersonalTable8BDSP pt => pt.GetFormEntry(species, form),
                 _ => throw new ArgumentException("Unsupported personal table type."),
             };
@@ -172,10 +210,9 @@ namespace SysBot.Pokemon.Discord
         {
             return gameVersion switch
             {
+                GameVersion.SV => PersonalTable.SV,
                 GameVersion.SWSH => PersonalTable.SWSH,
                 GameVersion.BDSP => PersonalTable.BDSP,
-                GameVersion.PLA => PersonalTable.LA,
-                GameVersion.SV => PersonalTable.SV,
                 _ => throw new ArgumentException("Unsupported game version."),
             };
         }
@@ -227,13 +264,12 @@ namespace SysBot.Pokemon.Discord
 
         private static List<Pictocodes> GenerateRandomPictocodes(int count)
         {
-            Random rnd = new();
             List<Pictocodes> randomPictocodes = new();
-            Array pictocodeValues = Enum.GetValues(typeof(Pictocodes));
+            Array pictocodeValues = Enum.GetValues<Pictocodes>();
 
             for (int i = 0; i < count; i++)
             {
-                Pictocodes randomPictocode = (Pictocodes)pictocodeValues.GetValue(rnd.Next(pictocodeValues.Length));
+                Pictocodes randomPictocode = (Pictocodes)pictocodeValues.GetValue(Random.Next(pictocodeValues.Length));
                 randomPictocodes.Add(randomPictocode);
             }
 

@@ -255,7 +255,7 @@ namespace SysBot.Pokemon
 
                 LegalizeIfNotLegal(ref pk, caller, detail, TrainerName);
 
-                pk9.SetRecordFlags(Array.Empty<ushort>());
+                SimpleEdits.SetRecordFlags(pk9, Array.Empty<ushort>());
                 pk9.HeldItem = heldItemNew; // Free master
 
                 sst = SpecialTradeType.TeraChange;

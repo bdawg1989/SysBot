@@ -92,14 +92,15 @@ public static class DetailsExtractor<T> where T : PKM, new()
         }
         else
         {
-            ivsDisplay = string.Join("/", [
+            ivsDisplay = string.Join("/", new[]
+             {
                 ivs[0].ToString(),
                 ivs[1].ToString(),
                 ivs[2].ToString(),
                 ivs[4].ToString(),
                 ivs[5].ToString(),
                 ivs[3].ToString()
-            ]);
+            });
         }
         embedData.IVsDisplay = ivsDisplay;
 

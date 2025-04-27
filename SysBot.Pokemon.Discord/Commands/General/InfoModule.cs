@@ -18,19 +18,12 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 {
     private const string detail = "I am an open-source Discord bot powered by PKHeX.Core and other open-source software.";
 
-    private const ulong DisallowedUserId = 195756980873199618;
-
-    private const string repo = "https://github.com/bdawg1989/MergeBot";
+    private const string repo = "https://github.com/bdawg1989/SysBot";
 
     [Command("info")]
     [Alias("about", "whoami", "owner")]
     public async Task InfoAsync()
     {
-        if (Context.User.Id == DisallowedUserId)
-        {
-            await ReplyAsync("We don't let shady people use this command.").ConfigureAwait(false);
-            return;
-        }
         var app = await Context.Client.GetApplicationInfoAsync().ConfigureAwait(false);
 
         var builder = new EmbedBuilder
@@ -47,7 +40,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             $"- {Format.Bold("Runtime")}: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.ProcessArchitecture} " +
             $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n" +
             $"- {Format.Bold("Buildtime")}: {GetVersionInfo("SysBot.Base", false)}\n" +
-            $"- {Format.Bold("Mergebot Version")}: {TradeBot.Version}\n" +
+            $"- {Format.Bold("SysBot+ Version")}: {TradeBot.Version}\n" +
             $"- {Format.Bold("Core Version")}: {GetVersionInfo("PKHeX.Core")}\n" +
             $"- {Format.Bold("AutoLegality Version")}: {GetVersionInfo("PKHeX.Core.AutoMod")}\n"
         );

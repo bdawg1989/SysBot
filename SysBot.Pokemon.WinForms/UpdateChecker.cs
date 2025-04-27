@@ -11,7 +11,7 @@ namespace SysBot.Pokemon.WinForms
     public class UpdateChecker
     {
         private const string RepositoryOwner = "bdawg1989";
-        private const string RepositoryName = "MergeBot";
+        private const string RepositoryName = "SysBot";
 
         public static async Task<(bool UpdateAvailable, bool UpdateRequired, string NewVersion)> CheckForUpdatesAsync(bool forceShow = false)
         {
@@ -52,7 +52,7 @@ namespace SysBot.Pokemon.WinForms
             using var client = new HttpClient();
             try
             {
-                client.DefaultRequestHeaders.Add("User-Agent", "MergeBot");
+                client.DefaultRequestHeaders.Add("User-Agent", "SysBot");
 
                 string releasesUrl = $"https://api.github.com/repos/{RepositoryOwner}/{RepositoryName}/releases/latest";
                 HttpResponseMessage response = await client.GetAsync(releasesUrl);

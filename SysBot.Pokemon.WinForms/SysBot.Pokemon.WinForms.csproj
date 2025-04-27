@@ -4,7 +4,7 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <RuntimeIdentifier>win-x86</RuntimeIdentifier>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>SysBot+</AssemblyName>
+    <AssemblyName>SysBot</AssemblyName>
     <SelfContained>false</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <DebugType>pdbonly</DebugType>

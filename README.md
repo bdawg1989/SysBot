@@ -11,6 +11,8 @@
   <i align="center">A community-driven and inspired SysBot.NET project, uniting code from everyone!</i>
 </p>
 
+![Discord Banner 2](https://discord.com/api/guilds/1369342739581505536/widget.png?style=banner2)
+
 <h4 align="center">
   <a href="https://github.com/Daiivr/DaiBot.NET">
     <i>Versión en Español mantenida por Daiivr</i>

@@ -29,11 +29,7 @@ public class BotSource<T>(RoutineExecutor<T> Bot)
 
     public void RebootAndStop()
     {
-        if (IsPaused)
-            Stop(); // can't soft-resume; just re-launch
-
-        if (IsRunning || IsStopping)
-            return;
+        Stop();
 
         Task.Run(() => Bot.RebootAndStopAsync(Source.Token)
             .ContinueWith(ReportFailure, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously)

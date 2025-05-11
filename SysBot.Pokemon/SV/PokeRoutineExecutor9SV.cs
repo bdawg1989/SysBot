@@ -241,11 +241,6 @@ public abstract class PokeRoutineExecutor9SV : PokeRoutineExecutor<PK9>
             await Task.Delay(2_000 + timing.OpeningGameSettings.ExtraTimeCheckGame, token).ConfigureAwait(false);
         }
 
-        await Click(A, 1_000 + timing.OpeningGameSettings.ExtraTimeCheckDLC, token).ConfigureAwait(false);
-
-        // If they have DLC on the system and can't use it, requires pressing UP + A to start the game.
-        // Should be harmless otherwise since they'll be in loading screen.
-        await Click(DUP, 0_600, token).ConfigureAwait(false);
         await Click(A, 0_600, token).ConfigureAwait(false);
 
         Log("Restarting the game!");
@@ -273,7 +268,7 @@ public abstract class PokeRoutineExecutor9SV : PokeRoutineExecutor<PK9>
             }
         }
 
-        await Task.Delay(5_000 + timing.OpeningGameSettings.ExtraTimeLoadOverworld, token).ConfigureAwait(false);
+        await Task.Delay(2_000 + timing.OpeningGameSettings.ExtraTimeLoadOverworld, token).ConfigureAwait(false);
         Log("Back in the overworld!");
     }
 

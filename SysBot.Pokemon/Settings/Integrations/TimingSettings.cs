@@ -65,13 +65,10 @@ namespace SysBot.Pokemon
     {
         public override string ToString() => "Opening the Game";
 
-        [Description("Extra time in milliseconds to wait to check if DLC is usable.")]
-        public int ExtraTimeCheckDLC { get; set; }
-
         [Description("Extra time in milliseconds to wait before clicking A in title screen.")]
         public int ExtraTimeLoadGame { get; set; } = 5000;
 
-        [Description("[BDSP] Extra time in milliseconds to wait for the overworld to load after the title screen.")]
+        [Description("Extra time in milliseconds to wait for the overworld to load after the title screen.")]
         public int ExtraTimeLoadOverworld { get; set; } = 3000;
 
         [Description("Enable this if you need to select a profile when starting the game.")]

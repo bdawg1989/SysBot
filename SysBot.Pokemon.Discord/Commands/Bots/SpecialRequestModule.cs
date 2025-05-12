@@ -59,7 +59,15 @@ namespace SysBot.Pokemon.Discord
         [Summary("Lists available wondercard events from the specified generation or game or requests a specific event if a number is provided.")]
         public async Task ListSpecialEventsAsync(string generationOrGame, [Remainder] string args = "")
         {
-            var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+            var botPrefixes = SysCordSettings.Settings.CommandPrefix; // Assuming CommandPrefixes is a List<string>
+            if (botPrefixes == null || !botPrefixes.Any())
+            {
+                await ReplyAsync("No valid command prefixes are configured. Please check the bot settings.").ConfigureAwait(false);
+                return;
+            }
+
+            var defaultPrefix = botPrefixes.First(); // Use the first prefix as the default for feedback.
+
             var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length == 1 && int.TryParse(parts[0], out int index))
@@ -97,8 +105,10 @@ namespace SysBot.Pokemon.Discord
 
             var pageCount = (int)Math.Ceiling((double)allEvents.Count() / itemsPerPage);
             page = Math.Clamp(page, 1, pageCount);
-            var embed = BuildEventListEmbed(generationOrGame, allEvents, page, pageCount, botPrefix);
+
+            var embed = BuildEventListEmbed(generationOrGame, allEvents, page, pageCount, defaultPrefix);
             await SendEventListAsync(embed).ConfigureAwait(false);
+
             await CleanupMessagesAsync().ConfigureAwait(false);
         }
 
